@@ -1,7 +1,24 @@
 {
   "name": "sniply-blog",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "author": "Mohsen Fallahnejad",
+  "license": "MIT",
+  "homepage": "sniply-sable.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mohsenfallahnjd/sniply.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mohsenfallahnjd/sniply/issues"
+  },
+  "keywords": [
+    "blog",
+    "sniply",
+    "nextjs",
+    "react",
+    "typescript"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
