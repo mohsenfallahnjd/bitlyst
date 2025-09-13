@@ -4,7 +4,7 @@ import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export async function GET() {
   const posts = loadMarkdownDocs();
-  const site = "https://sniply.blog";
+  const site = "https://sniply-blog.vercel.app/";
   const items = posts
     .map(
       (p: DocMeta) => `

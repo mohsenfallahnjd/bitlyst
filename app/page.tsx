@@ -1,5 +1,6 @@
 import PostCard from "@/components/PostCard";
 import { loadMarkdownDocs } from "@/lib/mdSource";
+import Link from "next/link";
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   const all = loadMarkdownDocs();
@@ -21,16 +22,16 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       </div>
 
       <div className="pt-2 flex items-center gap-3 text-sm">
-        <a href="/blog" className="underline">
+        <Link href="/blog" className="underline">
           Browse all posts →
-        </a>
+        </Link>
         {tag && (
-          <a
+          <Link
             href="/"
             className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900"
           >
             Clear “{tag}”
-          </a>
+          </Link>
         )}
       </div>
     </section>

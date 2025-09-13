@@ -3,7 +3,7 @@ import type { DocMeta } from "@/lib/mdSource";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const site = "https://sniply.blog";
+  const site = "https://sniply-blog.vercel.app";
   const base = [
     { url: site, lastModified: new Date() },
     { url: `${site}/blog`, lastModified: new Date() },

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PostMeta({
   publishedTime,
   tags = [],
@@ -25,14 +27,14 @@ export default function PostMeta({
       )}
 
       {tags.map((t) => (
-        <a
+        <Link
           key={t}
           href={`/blog?tag=${encodeURIComponent(t)}`}
           className="rounded-full border border-gray-200 px-3 py-1 text-gray-600
                        hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900"
         >
           #{t}
-        </a>
+        </Link>
       ))}
     </div>
   );
