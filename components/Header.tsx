@@ -16,6 +16,9 @@ export default function Header() {
           <Link href="/blog" className="hover:underline">
             Blog
           </Link>
+          <Link href="/about" className="hover:underline">
+            About
+          </Link>
           <ThemeToggle />
         </nav>
       </div>
