@@ -13,10 +13,10 @@ export default function Header() {
           <SniplyRoundedMark /> Sniply Blog
         </Link>
         <nav className="flex items-center gap-4">
-          <Link href="/blog" className="hover:underline">
+          <Link href="/blog" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
             Blog
           </Link>
-          <Link href="/about" className="hover:underline">
+          <Link href="/about" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
             About
           </Link>
           <ThemeToggle />
