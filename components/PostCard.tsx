@@ -3,24 +3,25 @@
 import clsx from "clsx";
 import type { DocMeta } from "@/lib/mdSource";
 import Link from "next/link";
+import PublishTime from "./PublishTime";
+
 export default function PostCard({ post, className }: { post: DocMeta; className?: string }) {
   return (
     <article className="space-y-2 relative h-full">
       <Link href={`/blog/${post.slug}`} className={clsx("block group", className)} onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold tracking-tight group-hover:underline">{post.title}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-tight group-hover:underline">{post.title}</h2>
+
+          {post.publishedTime && new Date(post.publishedTime) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7) && (
+            <span className="text-green-500 text-xs uppercase font-bold">New</span>
+          )}
+        </div>
         {post.summary && <p className="text-sm text-gray-600 dark:text-gray-300">{post.summary}</p>}
       </Link>
 
-      <div className="text-xs flex md:items-center gap-3 text-gray-500 dark:text-gray-400 md:flex-row flex-col justify-between">
-        {post.publishedTime && (
-          <time dateTime={post.publishedTime}>
-            {new Date(post.publishedTime).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </time>
-        )}
+      <div className="text-xs flex md:items-center gap-3 text-gray-500 dark:text-gray-400 md:flex-row flex-col">
+        {post.publishedTime && <PublishTime publishedTime={post.publishedTime} />}
+
         {post.tags && post.tags.length > 0 && (
           <span className="flex flex-wrap gap-2">
             {post.tags.map((t: string) => (

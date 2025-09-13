@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PublishTime from "./PublishTime";
 
 export default function PostMeta({
   publishedTime,
@@ -15,16 +16,7 @@ export default function PostMeta({
 
   return (
     <div className={`my-3 flex flex-wrap items-center gap-2 text-xs ${className}`}>
-      {publishedTime && (
-        <time dateTime={publishedTime} className="pr-3 py-1 text-gray-600 dark:text-gray-300">
-          {new Date(publishedTime).toLocaleDateString("en-US", {
-            year: "numeric",
-
-            month: "long",
-            day: "numeric",
-          })}
-        </time>
-      )}
+      {publishedTime && <PublishTime publishedTime={publishedTime} />}
 
       {tags.map((t) => (
         <Link

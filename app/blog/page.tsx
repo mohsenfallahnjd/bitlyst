@@ -23,11 +23,14 @@ export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">{tag ? `Posts tagged “${tag}”` : "All posts"}</h1>
+        <h1 className="md:text-2xl text-xl font-semibold tracking-tight flex-1">
+          {tag ? `Posts tagged “${tag}”` : "All posts"}
+        </h1>
 
         {/* Active filter pill */}
         {tag && (
           <Link
+            style={{ width: 98 }}
             href="/blog"
             className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1
                        hover:bg-gray-50 dark:hover:bg-gray-900"
@@ -39,9 +42,9 @@ export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
         )}
         {author && (
           <Link
+            style={{ width: 98 }}
             href="/blog"
-            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1
-                       hover:bg-gray-50 dark:hover:bg-gray-900"
+            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 hover:bg-gray-50 dark:hover:bg-gray-900"
             aria-label="Clear author filter"
             title="Clear author filter"
           >
