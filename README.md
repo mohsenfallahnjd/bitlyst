@@ -1,6 +1,6 @@
-# Sniply Blog Starter
+# Sniply Blog
 
-A minimal, fast, and beautiful blog starter built with Next.js 15, designed for sharing bite-sized tech tips and insights. Perfect for developers who want to quickly publish short, focused content.
+A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing bite-sized tech tips and insights. Perfect for developers who want to quickly publish short, focused content.
 
 ## ✨ Features
 
