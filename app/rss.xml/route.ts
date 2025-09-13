@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { getAllPosts } from "@/lib/posts";
+import type { DocMeta } from "@/lib/mdSource";
+import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export async function GET() {
-  const posts = getAllPosts();
+  const posts = loadMarkdownDocs();
   const site = "https://sniply.blog";
   const items = posts
     .map(
-      (p) => `
+      (p: DocMeta) => `
     <item>
       <title><![CDATA[${p.title}]]></title>
       <link>${site}/blog/${p.slug}</link>
       <guid>${site}/blog/${p.slug}</guid>
       <description><![CDATA[${p.summary || ""}]]></description>
-      <pubDate>${p.date ? new Date(p.date).toUTCString() : ""}</pubDate>
+      <pubDate>${p.publishedTime ? new Date(p.publishedTime).toUTCString() : ""}</pubDate>
     </item>
   `
     )

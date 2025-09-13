@@ -1,10 +1,10 @@
 import PostCard from "@/components/PostCard";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
-export default async function HomePage({ searchParams }: { searchParams?: { tag?: string } }) {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
   const all = loadMarkdownDocs();
   const awaitSearchParams = await searchParams;
-  const tag = awaitSearchParams?.tag?.toLowerCase() || "";
+  const tag = awaitSearchParams?.tag?.toString()?.toLowerCase() || "";
   const posts = tag ? all.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag)) : all;
 
   return (

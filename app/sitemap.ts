@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { getAllPosts, type PostMeta } from "@/lib/posts";
+import type { DocMeta } from "@/lib/mdSource";
+import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const site = "https://sniply.blog";
@@ -7,9 +8,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: site, lastModified: new Date() },
     { url: `${site}/blog`, lastModified: new Date() },
   ];
-  const posts = getAllPosts().map((p: PostMeta) => ({
+  const posts = loadMarkdownDocs().map((p: DocMeta) => ({
     url: `${site}/blog/${p.slug}`,
-    lastModified: p.date ? new Date(p.date) : new Date(),
+    lastModified: p.publishedTime ? new Date(p.publishedTime) : new Date(),
   }));
   return [...base, ...posts];
 }

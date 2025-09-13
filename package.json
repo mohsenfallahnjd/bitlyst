@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "format-lint": "bun run format && bun run lint:fix",
     "lint:fix": "biome lint --write .",
     "format": "biome format . --write",

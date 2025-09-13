@@ -1,13 +1,14 @@
-import { loadMarkdownDocs } from "@/lib/mdSource";
+import Link from "next/link";
 import PostCard from "@/components/PostCard";
 import type { DocMeta } from "@/lib/mdSource";
+import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export const metadata = { title: "Blog" };
 
-export default async function BlogIndex({ searchParams }: { searchParams?: { tag?: string } }) {
+export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
   const all = loadMarkdownDocs();
   const awaitSearchParams = await searchParams;
-  const tag = awaitSearchParams?.tag?.toLowerCase() || "";
+  const tag = awaitSearchParams?.tag?.toString()?.toLowerCase() || "";
   const posts = tag ? all.filter((p) => (p.tags || []).some((t: string) => t.toLowerCase() === tag)) : all;
 
   const uniqueTags = Array.from(new Set(all.flatMap((p: DocMeta) => p.tags || []))).sort((a, b) => a.localeCompare(b));
@@ -19,7 +20,7 @@ export default async function BlogIndex({ searchParams }: { searchParams?: { tag
 
         {/* Active filter pill */}
         {tag && (
-          <a
+          <Link
             href="/blog"
             className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1
                        hover:bg-gray-50 dark:hover:bg-gray-900"
@@ -27,14 +28,14 @@ export default async function BlogIndex({ searchParams }: { searchParams?: { tag
             title="Clear tag filter"
           >
             Clear filter ✕
-          </a>
+          </Link>
         )}
       </div>
 
       {/* Tag cloud */}
       <div className="flex flex-wrap gap-2">
         {uniqueTags.map((t) => (
-          <a
+          <Link
             key={t}
             href={`/blog?tag=${encodeURIComponent(t)}`}
             className={`text-xs rounded-full px-3 py-1 border
@@ -45,7 +46,7 @@ export default async function BlogIndex({ searchParams }: { searchParams?: { tag
                         }`}
           >
             #{t}
-          </a>
+          </Link>
         ))}
       </div>
 
@@ -53,9 +54,9 @@ export default async function BlogIndex({ searchParams }: { searchParams?: { tag
       {posts.length === 0 ? (
         <p className="text-sm text-gray-600 dark:text-gray-400">
           No posts for “{tag}”.{" "}
-          <a className="underline" href="/blog">
+          <Link className="underline" href="/blog">
             See all posts
-          </a>
+          </Link>
           .
         </p>
       ) : (
