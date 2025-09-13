@@ -1,0 +1,4 @@
+# Todo
+
+[ ] tricks
+[ ] snipped codes
