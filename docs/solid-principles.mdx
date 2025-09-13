@@ -1,0 +1,86 @@
+---
+title: "SOLID Principles Explained Simply"
+summary: "An easy-to-understand guide to SOLID principles for cleaner, more maintainable code."
+publishedTime: "2025-09-13"
+tags: ["solid", "principles"]
+---
+
+# SOLID Principles Explained Simply
+
+> The SOLID principles are five guidelines that help developers write software that’s easy to maintain, flexible, and easy to change.
+
+---
+
+## 1. **S — Single-Responsibility Principle (SRP)**
+
+Each module or class should have **one reason to change**.  
+In simple terms: **do one job, and do it well**.
+
+Bad:
+```ts
+class Report {
+  generate() {/* ... */}
+  saveToDatabase() {/* ... */} // ❌ different responsibility
+}
+```
+
+Good:
+```ts
+class ReportGenerator { generate() {/* ... */} }
+class ReportSaver { saveToDatabase() {/* ... */} }
+```
+
+---
+
+## 2. **O — Open-Closed Principle (OCP)**
+
+Software entities should be **open for extension** but **closed for modification**.  
+You should be able to **add new behavior** without touching existing, stable code.
+
+Example:  
+Instead of editing a payment processor class every time you add a new method, create a new class implementing the same interface.
+
+---
+
+## 3. **L — Liskov Substitution Principle (LSP)**
+
+Subclasses should behave like their parent classes.  
+Replacing a parent object with a child should **not break your program**.
+
+---
+
+## 4. **I — Interface Segregation Principle (ISP)**
+
+Clients should **not depend on methods they don’t use**.  
+Create many **small, specific interfaces** instead of a single “god” interface.
+
+---
+
+## 5. **D — Dependency Inversion Principle (DIP)**
+
+High-level modules should **depend on abstractions**, not on low-level details.  
+Abstractions shouldn’t depend on details—**details should depend on abstractions**.
+
+---
+
+### ✨ **Why SOLID Matters**
+
+- ✅ **Easier to maintain** – changes in one place have fewer ripple effects.  
+- 🧪 **More testable** – smaller, focused units are easier to test.  
+- 🔁 **Reusable & scalable** – modular code can grow without chaos.
+
+---
+
+### 📌 **Quick Reference**
+
+| Principle | Meaning (Simplified)        |
+|-----------|-----------------------------|
+| SRP       | One job per module/class    |
+| OCP       | Extend without modifying    |
+| LSP       | Subclasses act like parents |
+| ISP       | Use only what you need      |
+| DIP       | Depend on abstractions      |
+
+---
+
+That’s SOLID—five simple habits that make your code **cleaner, safer, and easier to grow**.

@@ -1,0 +1,43 @@
+{
+  "name": "sniply-blog",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "format-lint": "bun run format && bun run lint:fix",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format . --write",
+    "check": "biome check --apply .",
+    "typegen": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@next/mdx": "^15.5.3",
+    "@types/mdx": "^2.0.13",
+    "clsx": "2.1.1",
+    "fast-glob": "^3.3.3",
+    "gray-matter": "^4.0.3",
+    "next": "^15.5.3",
+    "next-mdx-remote": "5.0.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.4",
+    "@mdx-js/loader": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
+    "@types/node": "20.14.12",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.17",
+    "eslint": "9.8.0",
+    "eslint-config-next": "14.2.5",
+    "postcss": "8.4.38",
+    "remark-frontmatter": "5.0.0",
+    "remark-mdx-frontmatter": "^5.2.0",
+    "tailwindcss": "3.4.10",
+    "typescript": "5.5.3"
+  }
+}
