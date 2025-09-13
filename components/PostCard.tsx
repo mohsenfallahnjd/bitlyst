@@ -35,7 +35,7 @@ export default function PostCard({ post, className }: { post: DocMeta; className
           </span>
         )}
 
-        {post.authors && post.authors.length > 0 && (
+        {/* {post.authors && post.authors.length > 0 && (
           <span className="flex flex-wrap gap-2">
             {" • "}
             {post.authors.map((a: { name: string; url: string }) => (
@@ -64,7 +64,7 @@ export default function PostCard({ post, className }: { post: DocMeta; className
               </Link>
             ))}
           </span>
-        )}
+        )} */}
       </div>
     </article>
   );

@@ -1,0 +1,75 @@
+---
+title: "Event Bubbling vs Event Capturing in JavaScript"
+summary: "Understand how events travel through the DOM: bubbling (bottom-up) vs capturing (top-down) with simple examples and mental models."
+publishedTime: "2025-09-13"
+tags: ["javascript", "events", "dom", "basics"]
+pinned: true
+draft: false
+---
+
+When you click on an element inside nested elements, the event doesn’t just happen on that element — it travels through the DOM. There are **two ways** this can happen: capturing and bubbling.
+
+---
+
+## 1. Event Capturing (trickle down)
+
+- The event starts at the **top** (`document`) and goes **down** through each parent until it reaches the target.  
+- Analogy: a grandparent tells a message → parent → child.
+
+---
+
+## 2. Event Bubbling (bubble up)
+
+- The event starts at the **target** element and then goes **up** through the parents until the root (`document`).  
+- Analogy: bubbles rise from the bottom of a glass to the top.
+
+---
+
+## 3. Default in JavaScript
+
+- By default, JavaScript uses **bubbling**.  
+- To use capturing, pass `true` as the third parameter in `addEventListener`.
+
+```javascript
+// Bubbling (default)
+button.addEventListener("click", () => {
+  console.log("Button clicked!");
+});
+
+// Capturing
+div.addEventListener(
+  "click",
+  () => {
+    console.log("DIV clicked during capturing!");
+  },
+  true // 👈 capturing enabled
+);
+```
+
+---
+
+## 4. Event Flow Order
+
+When you click the button:
+
+1. **Capturing phase**: document → body → div → button  
+2. **Target phase**: the button itself  
+3. **Bubbling phase**: button → div → body → document
+
+---
+
+## 5. Why does this matter?
+
+- **Capturing**: less common, useful if you want to intercept early.  
+- **Bubbling**: very common, great for **event delegation** (attach one listener to a parent instead of every child).
+
+---
+
+## 🧠 Quick Mental Model
+
+- **Capturing = trickle down** (parent → child)  
+- **Bubbling = bubble up** (child → parent)
+
+---
+
+⚡ That’s it! Now you know how events travel in JavaScript.

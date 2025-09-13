@@ -22,7 +22,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
       <MDXRemote source={post.content} components={useMDXComponents()} />
 
       {!!post.authors?.length && (
-        <div className="mt-10 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800 pt-5">
+        <div className="mt-10 text-sm text-gray-500 dark:text-gray-400 border-t border-dashed border-gray-200 dark:border-gray-800 pt-5">
           By{" "}
           {post.authors?.map((author) => (
             <Link

@@ -4,7 +4,7 @@ import { SniplyRoundedMark } from "./sniply-typography-icons/SniplyIcons";
 export default function Footer() {
   return (
     <footer className="border-t dark:border-gray-800 mt-16">
-      <div className="container py-10 text-sm text-gray-500 flex items-center justify-between">
+      <div className="container py-10 text-sm text-gray-500 flex items-center justify-between flex-col md:flex-row gap-4 md:gap-0">
         <p className="flex items-center gap-2">
           © {new Date().getFullYear()} • <SniplyRoundedMark size={16} /> Sniply Blog
         </p>

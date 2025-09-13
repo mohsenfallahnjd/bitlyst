@@ -10,6 +10,8 @@ export type DocMeta = {
   tags?: string[];
   content: string;
   authors: { name: string; url: string }[];
+  pinned?: boolean;
+  draft?: boolean;
 };
 
 const BLOG_DIR = path.resolve("docs");
@@ -31,9 +33,14 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
         publishedTime: data.publishedTime ?? "",
         tags: (data.tags as string[] | undefined) ?? [],
         authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
+        pinned: data.pinned ?? false,
+        draft: data.draft ?? false,
         content,
       };
-    });
+    })
+    .filter((p) => !p.draft)
+    .sort((a, b) => (a.pinned ? -1 : 1))
+    .sort((a, b) => new Date(b.publishedTime).getTime() - new Date(a.publishedTime).getTime());
 }
 
 /** ✅ Load a single post by its slug */
@@ -46,6 +53,10 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
   const src = fs.readFileSync(file, "utf8");
   const { data, content } = matter(src);
 
+  if (data.draft) {
+    return null;
+  }
+
   return {
     slug,
     title: data.title ?? slug,
@@ -53,6 +64,8 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
     publishedTime: data.publishedTime ?? "",
     tags: (data.tags as string[] | undefined) ?? [],
     authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
+    pinned: data.pinned ?? false,
+    draft: data.draft ?? false,
     content,
   };
 }

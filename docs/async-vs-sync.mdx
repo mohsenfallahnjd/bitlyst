@@ -1,0 +1,73 @@
+---
+title: "Async vs Sync in JavaScript"
+summary: "Understand the difference between synchronous and asynchronous code in JavaScript with simple examples and analogies."
+publishedTime: "2025-09-13"
+tags: ["javascript", "async", "sync", "basics"]
+pinned: false
+draft: false
+---
+
+Let’s make it super simple.
+
+---
+
+## 1. What does synchronous mean?
+
+- **Sync = one by one, in order.**
+- Like standing in line at a bakery: the cashier serves one customer at a time. The next person must wait until the first is done.
+
+```
+console.log("Step 1");
+console.log("Step 2");
+console.log("Step 3");
+```
+
+Output:
+```
+Step 1
+Step 2
+Step 3
+```
+
+---
+
+## 2. What does asynchronous mean?
+
+- **Async = tasks can run in the background, don’t block others.**
+- Like ordering food at a restaurant: you order, then do something else while the food is being prepared.
+
+```javascript
+console.log("Step 1");
+
+setTimeout(() => {
+  console.log("Step 2 (after 2 seconds)");
+}, 2000);
+
+console.log("Step 3");
+```
+
+Output:
+```
+Step 1
+Step 3
+Step 2 (after 2 seconds)
+```
+
+---
+
+## 3. Why does JavaScript care about async?
+
+- JS runs on a **single thread** (one line at a time).
+- If everything were synchronous, one slow task (like fetching data) would freeze the whole page.
+- Async lets long tasks happen in the background → page stays smooth.
+
+---
+
+## 4. Quick mental model 🧠
+
+- **Sync = waiting in line at the bank.**
+- **Async = taking a number at the bank, sitting down, and getting called later while you can do other stuff.**
+
+---
+
+⚡ That’s the core difference!

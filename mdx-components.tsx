@@ -29,9 +29,7 @@ const components: MDXComponents = {
   blockquote: (props) => (
     <blockquote {...props} className="border-l-4 border-cyan-500 pl-4 italic my-4 text-gray-600 dark:text-gray-400" />
   ),
-  code: (props) => (
-    <code {...props} className="rounded px-1.5 py-0.5 text-sm font-mono text-pink-600 dark:text-pink-400" />
-  ),
+  code: (props) => <code {...props} className="rounded py-0.5 text-sm font-mono text-pink-600 dark:text-pink-400" />,
   pre: (props) => (
     <pre {...props} className="my-4 overflow-x-auto rounded-lg bg-gray-900 p-4 text-gray-100 text-sm leading-snug" />
   ),
