@@ -9,9 +9,11 @@ export type DocMeta = {
   publishedTime?: string;
   tags?: string[];
   content: string;
+  authors: { name: string; url: string }[];
 };
 
 const BLOG_DIR = path.resolve("docs");
+const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://www.linkedin.com/in/mohsenfallahnjd/" }];
 
 /** Read all Markdown posts (already provided) */
 export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
@@ -28,6 +30,7 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
         summary: data.summary ?? "",
         publishedTime: data.publishedTime ?? "",
         tags: (data.tags as string[] | undefined) ?? [],
+        authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
         content,
       };
     });
@@ -49,6 +52,7 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
     summary: data.summary ?? "",
     publishedTime: data.publishedTime ?? "",
     tags: (data.tags as string[] | undefined) ?? [],
+    authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
     content,
   };
 }

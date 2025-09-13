@@ -27,10 +27,40 @@ export default function PostCard({ post, className }: { post: DocMeta; className
               <Link
                 key={t}
                 href={`/blog?tag=${encodeURIComponent(t)}`}
-                className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5
-                             hover:bg-gray-50 dark:hover:bg-gray-900"
+                className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900"
               >
                 #{t}
+              </Link>
+            ))}
+          </span>
+        )}
+
+        {post.authors && post.authors.length > 0 && (
+          <span className="flex flex-wrap gap-2">
+            {" • "}
+            {post.authors.map((a: { name: string; url: string }) => (
+              <Link
+                key={a.name}
+                href={`/blog?author=${encodeURIComponent(a.name.toLowerCase().replaceAll(" ", "-"))}`}
+                className="text-brand-dark dark:text-brand-dark hover:text-white
+                dark:hover:text-brand-dark flex items-center gap-1
+                rounded-full hover:bg-brand-dark dark:hover:bg-brand-dark px-2 py-0.5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="size-4"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                  />
+                </svg>
+                {a.name}
               </Link>
             ))}
           </span>

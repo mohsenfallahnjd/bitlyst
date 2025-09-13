@@ -96,6 +96,7 @@ title: "Your Post Title"
 summary: "A brief description of your post"
 publishedTime: "2025-01-20"
 tags: ["javascript", "react", "tips"]
+authors: [{ name: "", url: "" }]
 ---
 
 # Your Post Title

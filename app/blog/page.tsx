@@ -9,7 +9,14 @@ export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
   const all = loadMarkdownDocs();
   const awaitSearchParams = await searchParams;
   const tag = awaitSearchParams?.tag?.toString()?.toLowerCase() || "";
-  const posts = tag ? all.filter((p) => (p.tags || []).some((t: string) => t.toLowerCase() === tag)) : all;
+  const author = awaitSearchParams?.author?.toString()?.toLowerCase()?.replaceAll(" ", "-") || "";
+  const posts = tag
+    ? all.filter((p) => (p.tags || []).some((t: string) => t.toLowerCase() === tag))
+    : author
+      ? all.filter((p) =>
+          p.authors?.some((a: { name: string }) => a.name.toLowerCase().replaceAll(" ", "-") === author)
+        )
+      : all;
 
   const uniqueTags = Array.from(new Set(all.flatMap((p: DocMeta) => p.tags || []))).sort((a, b) => a.localeCompare(b));
 
@@ -26,6 +33,17 @@ export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
                        hover:bg-gray-50 dark:hover:bg-gray-900"
             aria-label="Clear tag filter"
             title="Clear tag filter"
+          >
+            Clear filter ✕
+          </Link>
+        )}
+        {author && (
+          <Link
+            href="/blog"
+            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1
+                       hover:bg-gray-50 dark:hover:bg-gray-900"
+            aria-label="Clear author filter"
+            title="Clear author filter"
           >
             Clear filter ✕
           </Link>
