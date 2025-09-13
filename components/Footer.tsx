@@ -7,12 +7,6 @@ export default function Footer() {
         <p className="flex items-center gap-2">
           © {new Date().getFullYear()} . <SniplyRoundedMark size={16} /> Sniply
         </p>
-        <p>
-          Built with Next.js + MDX.{" "}
-          <a className="underline" href="https://vercel.com/new">
-            Deploy
-          </a>
-        </p>
       </div>
     </footer>
   );
