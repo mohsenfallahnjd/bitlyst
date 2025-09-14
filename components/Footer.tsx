@@ -29,6 +29,10 @@ export default function Footer() {
           <Link href="mailto:mohsenfallahnjd@gmail.com" target="_blank" className="hover:underline">
             Contact
           </Link>
+          <span>•</span>
+          <Link href="/about" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
+            About
+          </Link>
         </div>
       </div>
     </footer>

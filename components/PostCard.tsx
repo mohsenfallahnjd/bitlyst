@@ -9,13 +9,14 @@ export default function PostCard({ post, className }: { post: DocMeta; className
   return (
     <article className="space-y-2 relative h-full">
       <Link href={`/blog/${post.slug}`} className={clsx("block group", className)} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold tracking-tight group-hover:underline">{post.title}</h2>
+        <h2 className="text-lg font-semibold tracking-tight group-hover:underline">
+          {post.title}
 
           {post.publishedTime && new Date(post.publishedTime) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7) && (
-            <span className="text-green-500 text-xs uppercase font-bold">New</span>
+            <span className="text-green-500 text-xs uppercase font-bold ml-2">New</span>
           )}
-        </div>
+        </h2>
+
         {post.summary && <p className="text-sm text-gray-600 dark:text-gray-300">{post.summary}</p>}
       </Link>
 
