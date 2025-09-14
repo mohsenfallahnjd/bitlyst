@@ -15,7 +15,7 @@ const PublishTime: FunctionComponent<PublishTimeProps> = ({ publishedTime }) => 
           )
         : " on " +
           new Date(publishedTime).toLocaleDateString("en-US", {
-            year: "numeric",
+            // year: "numeric",
             month: "long",
             day: "numeric",
           })}
