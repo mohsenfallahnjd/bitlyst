@@ -32,6 +32,7 @@
   "dependencies": {
     "@next/mdx": "^15.5.3",
     "@types/mdx": "^2.0.13",
+    "@vercel/speed-insights": "^1.2.0",
     "clsx": "2.1.1",
     "fast-glob": "^3.3.3",
     "gray-matter": "^4.0.3",
