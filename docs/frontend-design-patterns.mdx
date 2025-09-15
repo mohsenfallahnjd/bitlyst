@@ -25,7 +25,7 @@ This guide focuses on **practical patterns** you can apply today in React/Next.j
 - **Presentational**: UI only, gets data via props.
 - **Container**: handles data fetching/state, passes props down.
 
-```tsx
+```jsx
 // Container
 function UserCardContainer() {
   const { data } = useQuery({ queryKey: ['user'], queryFn: fetchUser })
@@ -42,7 +42,7 @@ function UserCard({ user }) {
 - **Controlled**: value lives in React state.
 - **Uncontrolled**: DOM keeps the value; you read refs when needed.
 
-```tsx
+```jsx
 // Controlled
 function NameInputControlled() {
   const [name, setName] = useState('')
@@ -60,7 +60,7 @@ function NameInputUncontrolled() {
 ### 3) Compound Components
 Let parent own state; children communicate via context.
 
-```tsx
+```jsx
 const TabsContext = createContext(null)
 
 export function Tabs({ children }) {
@@ -82,7 +82,7 @@ Tabs.Panel = function Panel({ index, children }) {
 ### 4) Render Props / HOCs / Custom Hooks
 - Prefer **custom hooks** in modern React for logic reuse.
 
-```tsx
+```jsx
 // Custom hook (logic)
 function useCountdown(ms: number) {
   const [left, setLeft] = useState(ms)
@@ -106,7 +106,7 @@ function OfferTimer() {
 - **Global state**: only for cross‑cutting data (auth, theme). Use Context, Zustand, Redux Toolkit, or Jotai.
 - **Server state**: use **React Query/SWR** (caching, refetching, dedup).
 
-```tsx
+```jsx
 // Server state example with React Query
 const { data, isLoading, error } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
 ```
@@ -122,7 +122,7 @@ const { data, isLoading, error } = useQuery({ queryKey: ['todos'], queryFn: fetc
 - **Skeletons** for perceived performance.
 - **Pagination/Infinite loading** to avoid large payloads.
 
-```tsx
+```jsx
 // Error boundary (simplified)
 class ErrorBoundary extends React.Component {
   state = { hasError: false }
@@ -140,7 +140,7 @@ class ErrorBoundary extends React.Component {
 - **CSS‑in‑JS** (MUI emotion/styled-components): dynamic styles, theming.
 - **Design tokens**: one source of truth for colors/spacing/typography.
 
-```tsx
+```jsx
 // MUI theme tokens
 const theme = createTheme({
   palette: { primary: { main: '#0d6efd' } },
@@ -155,7 +155,7 @@ const theme = createTheme({
 - **Page → Section → Component** hierarchy.
 - **Slot pattern** for flexible composition.
 
-```tsx
+```jsx
 function Card({ header, children, footer }) {
   return (<div className="card">
     <div className="card__header">{header}</div>
@@ -174,7 +174,7 @@ function Card({ header, children, footer }) {
 - **Code splitting**: dynamic imports to reduce initial JS.
 - **Avoid re‑renders**: key props, stable handlers, co-locate state.
 
-```tsx
+```jsx
 const Chart = dynamic(() => import('./Chart'), { ssr: false })
 ```
 
@@ -195,7 +195,7 @@ const Chart = dynamic(() => import('./Chart'), { ssr: false })
 - **Integration**: components with real children (React Testing Library).
 - **E2E**: user flows (Playwright/Cypress). Prefer testing **behavior**, not implementation details.
 
-```tsx
+```jsx
 // RTL example
 render(<Button onClick={fn} />)
 await user.click(screen.getByRole('button'))
@@ -218,7 +218,7 @@ expect(fn).toHaveBeenCalled()
 - Graceful fallbacks, retry with backoff, offline/optimistic UI.
 - Centralized toast/alert system.
 
-```tsx
+```jsx
 toast.promise(api.save(data), {
   loading: 'Saving…',
   success: 'Saved!',

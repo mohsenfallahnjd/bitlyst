@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import rehypeSlug from "rehype-slug";
+import rehypeStarryNight from "rehype-starry-night";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkGfm from "remark-gfm";
+import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import PostMeta from "@/components/PostMeta";
 import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
@@ -49,7 +54,16 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
         </div>
       )}
 
-      <MDXRemote source={post.content} components={useMDXComponents()} />
+      <MDXRemote
+        source={post.content}
+        components={useMDXComponents()}
+        options={{
+          mdxOptions: {
+            remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
+            rehypePlugins: [rehypeSlug, rehypeStarryNight],
+          },
+        }}
+      />
     </div>
   );
 }

@@ -32,7 +32,7 @@ This post gives you crisp mental models and **copy‑pasteable patterns** for th
 **View** = React UI.  
 **ViewModel** = state + behaviors the View needs (pure, testable, no DOM).
 
-```tsx
+```jsx
 // /features/todos/viewmodel/useTodosVM.ts
 import { useState, useMemo, useEffect } from 'react'
 import { fetchTodos, toggleTodo } from '../services/todoApi'
@@ -68,7 +68,7 @@ export function useTodosVM() {
 }
 ```
 
-```tsx
+```jsx
 // /features/todos/components/TodoList.tsx (View)
 import { useEffect } from 'react'
 import { useTodosVM } from '../viewmodel/useTodosVM'

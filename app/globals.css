@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "./highlight.css";
 
 /* Optional: smooth transitions for theme change */
 * {
