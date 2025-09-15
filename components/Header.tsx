@@ -1,6 +1,6 @@
+import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SniplyRoundedMark } from "./sniply-typography-icons/SniplyIcons";
-import Link from "next/link";
 
 export default function Header() {
   return (

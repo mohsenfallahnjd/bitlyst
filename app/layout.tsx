@@ -1,8 +1,8 @@
 import "./globals.css";
-import type { Metadata, Viewport } from "next";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import type { Metadata, Viewport } from "next";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 
 export const viewport: Viewport = {
   width: "device-width",

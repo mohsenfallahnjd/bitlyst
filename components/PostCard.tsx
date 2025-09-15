@@ -1,8 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import type { DocMeta } from "@/lib/mdSource";
 import Link from "next/link";
+import type { DocMeta } from "@/lib/mdSource";
 import PublishTime from "./PublishTime";
 
 export default function PostCard({ post, className }: { post: DocMeta; className?: string }) {

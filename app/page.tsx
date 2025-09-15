@@ -1,6 +1,6 @@
+import Link from "next/link";
 import PostCard from "@/components/PostCard";
 import { loadMarkdownDocs } from "@/lib/mdSource";
-import Link from "next/link";
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   const all = loadMarkdownDocs();

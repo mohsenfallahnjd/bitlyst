@@ -1,11 +1,10 @@
-import { notFound } from "next/navigation";
-
-import { loadMarkdownBySlug } from "@/lib/mdSource";
-import { MDXRemote } from "next-mdx-remote/rsc";
-import { useMDXComponents } from "@/mdx-components";
 import type { Metadata } from "next";
-import PostMeta from "@/components/PostMeta";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { MDXRemote } from "next-mdx-remote/rsc";
+import PostMeta from "@/components/PostMeta";
+import { loadMarkdownBySlug } from "@/lib/mdSource";
+import { useMDXComponents } from "@/mdx-components";
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const params = await props.params;
