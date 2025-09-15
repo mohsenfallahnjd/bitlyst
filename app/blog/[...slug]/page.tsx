@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypeSlug from "rehype-slug";
+import rehypeStarryNight from "rehype-starry-night";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
@@ -59,7 +60,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
         options={{
           mdxOptions: {
             remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
-            rehypePlugins: [rehypeSlug],
+            rehypePlugins: [rehypeSlug, rehypeStarryNight],
           },
         }}
       />
