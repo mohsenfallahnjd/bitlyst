@@ -33,7 +33,13 @@ const components: MDXComponents = {
   ),
   code: (props) => <code {...props} />,
   pre: (props) => (
-    <pre {...props} className="my-4 overflow-x-auto rounded-lg bg-gray-900 p-4 text-gray-100 text-sm leading-snug" />
+    <pre
+      {...props}
+      style={{ backgroundColor: "#282c34" }}
+      className={"my-4 overflow-x-auto rounded-lg p-4 text-gray-100 text-sm leading-snug ".concat(
+        props.className || ""
+      )}
+    />
   ),
   table: (props) => (
     <table {...props} className="my-6 w-full border-collapse border border-gray-200 dark:border-gray-700 text-sm" />

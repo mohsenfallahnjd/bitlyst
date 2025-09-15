@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
-import rehypeStarryNight from "rehype-starry-night";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import PostMeta from "@/components/PostMeta";
 import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
+import "highlight.js/styles/atom-one-dark.css";
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const params = await props.params;
@@ -60,7 +61,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
         options={{
           mdxOptions: {
             remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
-            rehypePlugins: [rehypeSlug, rehypeStarryNight],
+            rehypePlugins: [rehypeSlug, rehypeHighlight],
           },
         }}
       />
