@@ -20,7 +20,7 @@ export default function PostCard({ post, className }: { post: DocMeta; className
         {post.summary && <p className="text-sm text-gray-600 dark:text-gray-300">{post.summary}</p>}
       </Link>
 
-      <div className="text-xs flex md:items-center gap-3 text-gray-500 dark:text-gray-400 md:flex-row flex-col">
+      <div className="text-xs flex md:items-center gap-3 text-gray-500 dark:text-gray-400 md:flex-row flex-col flex-wrap-reverse">
         {post.publishedTime && <PublishTime publishedTime={post.publishedTime} />}
 
         {post.tags && post.tags.length > 0 && (

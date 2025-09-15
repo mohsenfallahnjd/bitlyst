@@ -10,7 +10,7 @@ const PublishTime: FunctionComponent<PublishTimeProps> = ({ publishedTime }) => 
       Posted{" "}
       {new Date(publishedTime) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7)
         ? new Intl.RelativeTimeFormat("en-US", { style: "long", numeric: "auto" }).format(
-            Math.floor((new Date(publishedTime).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
+            Math.ceil((new Date(publishedTime).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
             "days"
           )
         : "on " +
