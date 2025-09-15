@@ -1,0 +1,267 @@
+---
+title: "MVVM, Micro‑Frontends, and Domain‑Driven Frontend — A Practical Guide"
+summary: "Clear, practical explanations of MVVM, micro‑frontends, and domain‑driven design for modern React/Next.js teams, with examples, folder structures, and trade‑offs."
+publishedTime: "2025-09-15"
+tags: ["architecture", "frontend", "mvvm", "micro-frontends", "ddd", "react", "nextjs"]
+---
+
+This post gives you crisp mental models and **copy‑pasteable patterns** for three frequently‑confused topics:
+- **MVVM** (Model–View–ViewModel)
+- **Micro‑Frontends** (MFE)
+- **Domain‑Driven Design** applied to the frontend (**DDF/DDD**)
+
+> TL;DR: Use **MVVM** to structure components, **DDD** to structure the *system/domain*, and **micro‑frontends** only when org/scale complexity requires independent deploys.
+
+---
+
+## Quick Compare (When to use what)
+
+| Concern | MVVM | DDD (frontend) | Micro‑Frontends |
+|---|---|---|---|
+| Primary goal | Decouple UI from state/logic | Align codebase with business domains & boundaries | Scale teams with independent deploys |
+| Granularity | Component/feature level | App/system architecture | App/organization level |
+| Key benefits | Testable UI logic, clearer components | Low coupling, shared language, safer changes | Team autonomy, parallel delivery |
+| Typical cost | Extra layer (ViewModel) | Upfront modeling + boundaries | Runtime integration, perf, shared deps |
+| Use if… | Components mix view & logic | Features cross‑contaminate domains | Many teams, large app, diff release cycles |
+
+---
+
+## MVVM in React (practical)
+
+**Model** = domain data (entities/value objects).  
+**View** = React UI.  
+**ViewModel** = state + behaviors the View needs (pure, testable, no DOM).
+
+```tsx
+// /features/todos/viewmodel/useTodosVM.ts
+import { useState, useMemo, useEffect } from 'react'
+import { fetchTodos, toggleTodo } from '../services/todoApi'
+
+export function useTodosVM() {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function load() {
+    setLoading(true); setError(null)
+    try {
+      const data = await fetchTodos()
+      setItems(data)
+    } catch (e) {
+      setError('Failed to load')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function toggle(id) {
+    setItems(xs => xs.map(x => x.id === id ? { ...x, done: !x.done } : x))
+    try { await toggleTodo(id) } catch {}
+  }
+
+  const stats = useMemo(() => ({
+    total: items.length,
+    done: items.filter(x => x.done).length,
+  }), [items])
+
+  return { items, loading, error, load, toggle, stats }
+}
+```
+
+```tsx
+// /features/todos/components/TodoList.tsx (View)
+import { useEffect } from 'react'
+import { useTodosVM } from '../viewmodel/useTodosVM'
+
+export function TodoList() {
+  const vm = useTodosVM()
+  useEffect(() => { vm.load() }, [])
+  if (vm.loading) return <p>Loading…</p>
+  if (vm.error) return <p role="alert">{vm.error}</p>
+
+  return (
+    <div>
+      <p>{vm.stats.done}/{vm.stats.total} done</p>
+      <ul>
+        {vm.items.map(t => (
+          <li key={t.id}>
+            <label>
+              <input type="checkbox" checked={t.done} onChange={() => vm.toggle(t.id)} />
+              {t.title}
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+```
+
+**Why MVVM here works**
+- ViewModel exposes only what the View needs → easier to mock/test.
+- UI stays dumb; side‑effects and decisions live in the ViewModel.
+
+> Tip: A **custom hook** *is* a great ViewModel. For shared state, use a store (Zustand/Jotai) and export **selectors** as VM surface.
+
+---
+
+## Domain‑Driven Frontend (DDD for UI teams)
+
+Goal: mirror business **domains** and **bounded contexts** so features don’t leak across layers.
+
+**Core ideas**
+- **Ubiquitous Language**: same terms in code and meetings (e.g., *Campaign*, *Offer*).
+- **Bounded Contexts**: define clear borders; inside, a term has one meaning.
+- **Entities & Value Objects**: explicit types (e.g., `PhoneNumber`, `Money`).
+- **Application services**: orchestrate use‑cases; **domain services**: pure domain logic.
+
+**Foldering (Feature‑Sliced/Domain‑First)**
+
+```
+src/
+  app/                # app shell, routing, providers
+  shared/             # cross‑cutting (ui, lib, api, styles, tokens)
+  entities/           # reusable domain entities (User, Campaign, Money)
+  features/           # user‑visible capabilities (CreateCampaign, SendSMS)
+  pages/              # Next.js routes (compose features)
+  widgets/            # page sections composed from features/entities
+```
+
+**Example: Value Object**
+```ts
+// /entities/money/money.ts
+export class Money {
+  constructor(readonly amount: number, readonly currency: 'EUR'|'USD'|'IRR') {
+    if (!Number.isFinite(amount)) throw new Error('Invalid amount')
+  }
+  add(x: Money) { if (x.currency !== this.currency) throw new Error('Currency mismatch'); return new Money(this.amount + x.amount, this.currency) }
+  format() { return new Intl.NumberFormat(undefined, { style:'currency', currency: this.currency }).format(this.amount) }
+}
+```
+
+**Application Service (use‑case)**
+```ts
+// /features/create-campaign/application/createCampaign.ts
+import { Money } from '@/entities/money/money'
+import { CampaignRepo } from '../infrastructure/CampaignRepo'
+
+export async function createCampaign(input: { title: string; budget: number; currency: 'EUR' }) {
+  const budget = new Money(input.budget, 'EUR')
+  // business rules…
+  return CampaignRepo.create({ title: input.title, budget })
+}
+```
+
+> Outcome: Separation between **domain** and **delivery (React/UI)**; safer refactors, clearer ownership.
+
+---
+
+## Micro‑Frontends (MFE)
+
+Split a large UI into independently built & deployed parts. Useful for **many teams**, **different release cycles**, or **poly‑stacks**.
+
+**Integration styles**
+1. **Build‑time**: compose artifacts during CI (simpler, less dynamic).
+2. **Runtime via Module Federation**: load remote bundles at runtime (`webpack` MF) — most common.
+3. **iframes/Web Components**: hard isolation; tradeoffs in UX/sharing.
+
+**What to share**
+- **Design system** (tokens, components) pinned to a **version**.
+- **Contracts**: types/protocols between MFEs (e.g., events, URL contracts).
+- **Auth & routing**: centralized shell or clearly defined hand‑offs.
+
+**Minimal Module Federation sketch**
+```js
+// host/next.config.mjs (webpack override)
+module.exports = {
+  webpack: (config) => {
+    const ModuleFederationPlugin = require('webpack').container.ModuleFederationPlugin
+    config.plugins.push(new ModuleFederationPlugin({
+      name: 'host',
+      remotes: { billing: 'billing@https://cdn.example.com/billing/remoteEntry.js' },
+      shared: { react: { singleton: true, requiredVersion: false }, 'react-dom': { singleton: true } },
+    }))
+    return config
+  }
+}
+```
+
+**Routing + Ownership**
+- Each MFE owns **its routes** (`/billing/**`), telemetry, error boundaries.
+- Shell owns the **top‑level layout**, auth/session, cross‑app nav.
+
+**Pitfalls & mitigations**
+- **Duplicate deps** → enforce shared versions; analyze bundle.
+- **Design drift** → versioned DS + visual regression tests.
+- **Cross‑MFE state** → avoid if possible; communicate via URL/events.
+
+> Use MFEs when organizational complexity dominates. If one team, one repo, **don’t** start here.
+
+---
+
+## Putting it together
+
+- Use **DDD** to split the product into **domains/bounded contexts**.
+- Within each domain/feature, structure UI with **MVVM** (custom hooks as ViewModels).
+- If the org demands independent deploys per domain → **consider MFEs** and expose each domain UI as a remote module.
+- Keep **contracts** explicit (types, events, URL schemas).
+
+**Diagram (text)**
+```
+[ App Shell ]
+   ├── [ Domain A MFE ] -- MVVM inside
+   ├── [ Domain B MFE ] -- MVVM inside
+   └── [ Shared DS/Auth/Telemetry ]
+```
+
+---
+
+## Decision Guide
+
+1. **Single team, growing app?** → Start with **DDD foldering + MVVM**.
+2. **Multiple teams, conflicting releases?** → Add **MFE** for those domains.
+3. **Migration**: carve out a bounded context → expose via Module Federation → route traffic gradually.
+
+---
+
+## Testing & Observability
+
+- **Domain tests** for entities/services (pure).
+- **ViewModel tests** for behavior without DOM.
+- **Contract tests** between MFEs.
+- **E2E** across shell + MFEs (Playwright).
+- **Telemetry** per MFE: errors, web vitals, perf budgets.
+
+---
+
+## Starter Folder Blueprint (Next.js App Router)
+
+```
+src/
+  app/
+    layout.tsx
+    (routes)...
+  shared/
+    ui/ (design system)
+    lib/ (utils)
+    api/ (clients)
+  entities/
+  features/
+  widgets/
+```
+
+---
+
+## Cheatsheet
+
+- **MVVM**: put UI logic in a **ViewModel** (custom hook/store). Keep views dumb.
+- **DDD**: align code with **business domains** and **bounded contexts**.
+- **MFE**: only when org scaling needs **independent deploys**; share DS & contracts.
+- Prefer **URL/event‑based** integration over shared global state.
+
+---
+
+If you want, I can generate a **minimal Next.js template** that implements:
+- Domain‑first foldering
+- MVVM feature example
+- Optional Module Federation host + one remote
