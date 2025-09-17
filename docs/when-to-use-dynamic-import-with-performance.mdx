@@ -1,0 +1,156 @@
+---
+title: "When Should You Use Dynamic Import in React/Next.js? (With Performance Comparison)"
+summary: "A practical guide to dynamic imports with real-world examples and a before/after bundle-size comparison using next-bundle-analyzer."
+publishedTime: "2025-09-17"
+tags: ["react", "nextjs", "dynamic-import", "performance", "bundle-size"]
+---
+
+Dynamic import lets you **lazy load components** so they’re only loaded when needed, instead of bundling everything up front.
+
+---
+
+## 1) What is Dynamic Import?
+
+```tsx
+// Static import (always in initial bundle)
+import BigChart from "./BigChart"
+
+// Dynamic import (code-split, loaded on demand)
+import dynamic from "next/dynamic"
+const BigChart = dynamic(() => import("./BigChart"))
+```
+
+---
+
+## 2) Why Use It?
+
+✅ **Faster initial load** (smaller JS)  
+✅ **Conditional loading** (only when needed)  
+✅ **Avoid SSR issues** for client-only libs (`{ ssr: false }`)  
+
+---
+
+## 3) Good Use Cases
+
+- Heavy, optional widgets: **charts**, **maps**, **rich editors**, **modals**  
+- Client-only libs that access `window`  
+- Feature flags / A/B tests  
+- Dashboards with many expandable panels
+
+---
+
+## 4) Real-World Examples
+
+### a) Rich text editor (`react-quill`)
+
+```tsx
+import dynamic from "next/dynamic"
+const RichTextEditor = dynamic(() => import("react-quill"), { ssr: false })
+
+export default function Page() {
+  return (
+    <div>
+      <h1>Create Post</h1>
+      <RichTextEditor theme="snow" />
+    </div>
+  )
+}
+```
+
+### b) Charts (`react-chartjs-2`)
+
+```tsx
+import dynamic from "next/dynamic"
+const Chart = dynamic(() => import("react-chartjs-2"), { ssr: false })
+
+export default function Dashboard() {
+  return (
+    <section>
+      <h2>Analytics</h2>
+      <Chart type="bar" data={{ labels: ["A","B","C"], datasets: [{ data: [12,19,3] }] }} />
+    </section>
+  )
+}
+```
+
+---
+
+## 5) Performance Comparison (Before vs After)
+
+Below is a **sample** comparison showing how dynamic import can change bundle breakdown.  
+Use the **measurement steps** in the next section to produce your **actual numbers**.
+
+| Chunk/Metric                       | Before (static import) | After (dynamic import) |
+|-----------------------------------|-------------------------|------------------------|
+| Initial JS (first load)           | 420 KB                  | 240 KB                 |
+| `react-quill` in initial bundle   | 170 KB                  | 0 KB (lazy)            |
+| `react-chartjs-2` in initial      | 95 KB                   | 0 KB (lazy)            |
+| Route JS (dashboard page)         | 210 KB                  | 80 KB                  |
+| Number of JS chunks               | 9                       | 13                     |
+| Largest Contentful Paint (LCP)*   | 2.4s                    | 1.8s                   |
+
+\* LCP depends on network/device; treat this as illustrative. Your actual metrics may vary.
+
+---
+
+## 6) How to Measure It in Your App
+
+### Option A — `@next/bundle-analyzer`
+
+1. **Install**
+```bash
+npm i -D @next/bundle-analyzer
+```
+
+2. **Configure** `next.config.js`
+```js
+// next.config.js
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+})
+
+module.exports = withBundleAnalyzer({
+  // your Next.js config
+})
+```
+
+3. **Build & Analyze**
+```bash
+ANALYZE=true next build
+# Then open the generated treemaps (usually in .next/analyze) to inspect chunks.
+```
+
+### Option B — Inspect build output
+
+```bash
+next build
+# Check "First Load JS shared by all" and per-route sizes in terminal output.
+```
+
+### Option C — Web Vitals in production
+- Track **LCP/TTFB/CLS** before vs after with your analytics (e.g., Vercel Web Analytics, Sentry, or custom).
+
+---
+
+## 7) When NOT to Use It
+
+- Small, shared UI primitives (buttons, inputs)  
+- Components present on **every** route (header, footer)  
+- Over-splitting into too many tiny chunks (extra requests/latency)
+
+---
+
+## 8) Cheatsheet (TL;DR)
+
+| Situation                                  | Use Dynamic Import? |
+|-------------------------------------------|----------------------|
+| Heavy/optional components                  | ✔️ Yes               |
+| Client-only libraries (need `window`)      | ✔️ Yes               |
+| Feature flags / A/B features               | ✔️ Yes               |
+| Always-used layout (navbar/footer)         | ❌ No                |
+| Small common components                    | ❌ No                |
+
+---
+
+**Pro tip:** Pair dynamic imports with **skeletons** or **loading placeholders** so the UI feels responsive while chunks load.
+
