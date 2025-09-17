@@ -1,0 +1,125 @@
+---
+title: "React useRef vs useState — When to Use Which"
+summary: "A simple guide to understanding when to use useRef and useState in React, with examples, mental models, and a quick cheatsheet."
+publishedTime: "2025-09-17"
+tags: ["react", "hooks", "useRef", "useState", "frontend"]
+---
+
+React gives us `useState` and `useRef` to store values across renders. But they behave differently.
+
+---
+
+## 1. useState
+
+- Stores **data that affects rendering**.  
+- When state changes → component **re-renders**.  
+- Best for values you want to **show in the UI**.
+
+```tsx
+function Counter() {
+  const [count, setCount] = useState(0) // 🔄 triggers re-render
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Count: {count}
+    </button>
+  )
+}
+```
+
+Every click updates `count` → React re-renders → UI shows new value.
+
+---
+
+## 2. useRef
+
+- Stores a **mutable value** that survives re-renders.  
+- Updating `.current` **does NOT trigger re-render**.  
+- Best for storing **DOM nodes** or values that don’t affect UI.
+
+```tsx
+function Timer() {
+  const intervalRef = useRef<number | null>(null) // 🗃️ stable across renders
+
+  function start() {
+    intervalRef.current = window.setInterval(() => {
+      console.log("tick")
+    }, 1000)
+  }
+
+  function stop() {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+  }
+
+  return (
+    <>
+      <button onClick={start}>Start</button>
+      <button onClick={stop}>Stop</button>
+    </>
+  )
+}
+```
+
+Here, `intervalRef` keeps the timer ID but doesn’t cause re-renders.
+
+---
+
+## 3. When to Use Which?
+
+✅ **Use `useState` when…**  
+- The value **affects rendering**.  
+- UI should update when value changes.  
+- Examples: counters, form fields, theme toggles, fetched data.
+
+✅ **Use `useRef` when…**  
+- The value should **persist across renders** but doesn’t affect UI.  
+- You want to avoid unnecessary re-renders.  
+- Examples:  
+  - Accessing DOM elements (`ref={myRef}`)  
+  - Storing timer IDs, WebSocket connections  
+  - Holding previous values for comparison
+
+---
+
+## 4. Example: Using Both Together
+
+```tsx
+function InputFocus() {
+  const [text, setText] = useState("")       // shows in UI
+  const inputRef = useRef<HTMLInputElement>(null) // reference to DOM
+
+  return (
+    <>
+      <input ref={inputRef} value={text} onChange={e => setText(e.target.value)} />
+      <button onClick={() => inputRef.current?.focus()}>
+        Focus input
+      </button>
+    </>
+  )
+}
+```
+
+- `useState` stores the text (triggers render).  
+- `useRef` stores a DOM reference (no render needed).
+
+---
+
+## 5. Quick Mental Model 🧠
+
+- **useState = for UI** → change → re-render.  
+- **useRef = for storage** → change → no re-render.  
+
+---
+
+## 6. Cheatsheet Table
+
+| Feature             | `useState` ✅ | `useRef` ✅ |
+|---------------------|---------------|-------------|
+| **Triggers re-render on change** | ✔️ Yes | ❌ No |
+| **Best for**        | UI values (text, count, toggles) | DOM refs, timers, storage |
+| **Persists across renders** | ✔️ Yes | ✔️ Yes |
+| **Mutable without causing render** | ❌ No | ✔️ Yes |
+| **Common uses**     | Form inputs, counters, fetched data | Focus input, store IDs, previous values, WebSocket refs |
+
+---
+
+⚡ That’s it! Now you know when to reach for `useState` and when to grab `useRef` — and have a cheatsheet for quick reference.
