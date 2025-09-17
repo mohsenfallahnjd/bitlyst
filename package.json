@@ -1,20 +1,20 @@
 {
-  "name": "sniply-blog",
+  "name": "bitlyst-blog",
   "version": "1.0.0",
   "private": true,
   "author": "Mohsen Fallahnejad",
   "license": "MIT",
-  "homepage": "sniply-sable.vercel.app",
+  "homepage": "bitlyst.vercel.app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mohsenfallahnjd/sniply.git"
+    "url": "https://github.com/mohsenfallahnjd/bitlyst.git"
   },
   "bugs": {
-    "url": "https://github.com/mohsenfallahnjd/sniply/issues"
+    "url": "https://github.com/mohsenfallahnjd/bitlyst/issues"
   },
   "keywords": [
     "blog",
-    "sniply",
+    "bitlyst",
     "nextjs",
     "react",
     "typescript"

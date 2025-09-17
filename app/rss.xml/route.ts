@@ -4,7 +4,7 @@ import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export async function GET() {
   const posts = loadMarkdownDocs();
-  const site = "https://sniply-blog.vercel.app/";
+  const site = "https://bitlyst.vercel.app/";
   const items = posts
     .map(
       (p: DocMeta) => `
@@ -22,7 +22,7 @@ export async function GET() {
   const rss = `<?xml version="1.0" encoding="UTF-8" ?>
   <rss version="2.0">
     <channel>
-      <title>sniply.blog</title>
+      <title>Bitlyst</title>
       <link>${site}</link>
       <description>Bite-sized tech tips—simple, minimal, useful.</description>
       ${items}

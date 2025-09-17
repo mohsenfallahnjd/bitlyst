@@ -6,7 +6,7 @@ export const AboutPage: FC = () => {
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          About Sniply
+          About Bitlyst
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
           Bite-sized tech tips—simple, minimal, useful.
@@ -15,10 +15,10 @@ export const AboutPage: FC = () => {
 
       <div className="prose prose-lg max-w-none dark:prose-invert">
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-8 border border-blue-200/50 dark:border-blue-800/50">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-900 dark:text-blue-100">What is Sniply?</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-blue-900 dark:text-blue-100">What is Bitlyst?</h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-            Sniply is a minimal blog focused on delivering concise, actionable tech insights. In a world overflowing
-            with lengthy tutorials and overwhelming documentation, Sniply cuts through the noise to bring you the
+            Bitlyst is a minimal blog focused on delivering concise, actionable tech insights. In a world overflowing
+            with lengthy tutorials and overwhelming documentation, Bitlyst cuts through the noise to bring you the
             essential knowledge you need.
           </p>
         </div>

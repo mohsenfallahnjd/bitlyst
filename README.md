@@ -1,4 +1,4 @@
-# Sniply Blog
+# Bitlyst Blog
 
 A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing bite-sized tech tips and insights. Perfect for developers who want to quickly publish short, focused content.
 
@@ -47,8 +47,8 @@ A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/mohsenfallahnjd/sniply.git
-   cd sniply
+   git clone https://github.com/mohsenfallahnjd/bitlyst.git
+   cd bitlyst
    ```
 
 2. **Install dependencies**

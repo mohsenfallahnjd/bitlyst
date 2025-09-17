@@ -14,27 +14,27 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sniply-blog.vercel.app/"),
+  metadataBase: new URL("https://bitlyst.vercel.app/"),
   icons: {
     icon: "/favicon.svg",
   },
   title: {
-    default: "Sniply Blog",
-    template: "%s · Sniply",
+    default: "Bitlyst Blog",
+    template: "%s · Bitlyst",
   },
   description: "Bite-sized tech tips—simple, minimal, useful.",
   authors: [{ name: "Mohsen Fallahnejad", url: "https://www.linkedin.com/in/mohsenfallahnjd/" }],
-  alternates: { types: { "application/rss+xml": [{ url: "/rss.xml", title: "Sniply RSS" }] } },
+  alternates: { types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] } },
   openGraph: {
-    title: "Sniply",
+    title: "Bitlyst",
     description: "Bite-sized tech tips—simple, minimal, useful.",
-    url: "https://sniply-blog.vercel.app/",
-    siteName: "Sniply",
+    url: "https://bitlyst.vercel.app/",
+    siteName: "Bitlyst",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Sniply",
+    title: "Bitlyst",
     description: "Bite-sized tech tips—simple, minimal, useful.",
   },
 };

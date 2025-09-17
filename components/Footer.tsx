@@ -6,11 +6,11 @@ export default function Footer() {
     <footer className="border-t dark:border-gray-800 mt-16">
       <div className="container py-10 text-sm text-gray-500 flex items-center justify-between flex-col md:flex-row gap-4 md:gap-0">
         <p className="flex items-center gap-2">
-          © {new Date().getFullYear()} • <SniplyRoundedMark size={16} /> Sniply Blog
+          © {new Date().getFullYear()} • <SniplyRoundedMark size={16} /> Bitlyst
         </p>
 
         <div className="flex items-center gap-2">
-          <Link href="https://github.com/mohsenfallahnjd/sniply" target="_blank" className="hover:underline">
+          <Link href="https://github.com/mohsenfallahnjd/bitlyst" target="_blank" className="hover:underline">
             GitHub
           </Link>
           <span>•</span>

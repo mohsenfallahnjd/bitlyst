@@ -31,9 +31,9 @@ export const DonateSection: FC = () => {
       id="donate"
     >
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">Support Sniply</h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-3">Support Bitlyst</h2>
         <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Enjoying the bite-sized tech tips? Your support helps keep Sniply running and enables more high-quality
+          Enjoying the bite-sized tech tips? Your support helps keep Bitlyst running and enables more high-quality
           content creation.
         </p>
       </div>
@@ -122,7 +122,7 @@ export const DonateSection: FC = () => {
 
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Thank you for supporting Sniply! 🙏 <br /> Every contribution helps make better content possible.
+          Thank you for supporting Bitlyst! 🙏 <br /> Every contribution helps make better content possible.
         </p>
       </div>
     </div>

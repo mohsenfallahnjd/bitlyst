@@ -10,7 +10,7 @@ export default function Header() {
           href="/"
           className="text-lg font-semibold tracking-tight hover:text-brand-light dark:hover:text-brand-dark flex items-center gap-2"
         >
-          <SniplyRoundedMark /> Sniply Blog
+          <SniplyRoundedMark /> Bitlyst Blog
         </Link>
         <nav className="flex items-center gap-4">
           <Link href="/blog" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
