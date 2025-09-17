@@ -124,16 +124,3 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Failed to update reactions" }, { status: 500 });
   }
 }
-
-// Helper function to get user's reactions for a post
-export async function getUserReactions(slug: string, userId: string) {
-  try {
-    const client = await connectRedis();
-    const userReactionKey = `user-reactions:${userId}:${slug}`;
-    const userReactions = await client.sMembers(userReactionKey);
-    return userReactions;
-  } catch (error) {
-    console.error("Error fetching user reactions:", error);
-    return [];
-  }
-}
