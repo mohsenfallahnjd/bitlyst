@@ -8,6 +8,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import PostMeta from "@/components/PostMeta";
+import PostReactions from "@/components/PostReactions";
 import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
 import "highlight.js/styles/atom-one-dark.css";
@@ -65,6 +66,11 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
           },
         }}
       />
+
+      <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">How did you like this post?</h3>
+        <PostReactions postSlug={post.slug} />
+      </div>
     </div>
   );
 }

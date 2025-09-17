@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import type { DocMeta } from "@/lib/mdSource";
+import PostReactions from "./PostReactions";
 import PublishTime from "./PublishTime";
 
 export default function PostCard({ post, className }: { post: DocMeta; className?: string }) {
@@ -67,6 +68,10 @@ export default function PostCard({ post, className }: { post: DocMeta; className
             ))}
           </span>
         )} */}
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+        <PostReactions postSlug={post.slug} showLabels={false} className="scale-90 origin-left" />
       </div>
     </article>
   );
