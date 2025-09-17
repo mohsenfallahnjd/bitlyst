@@ -43,7 +43,7 @@ const components: MDXComponents = {
   ),
   table: (props) => (
     <div className="my-6 w-full border-collapse border border-gray-200 dark:border-gray-700 text-sm overflow-x-auto">
-      <table {...props} />
+      <table {...props} className="w-full" />
     </div>
   ),
   th: (props) => (
