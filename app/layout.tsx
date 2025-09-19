@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s · Bitlyst",
   },
   description: "Bite-sized tech tips—simple, minimal, useful.",
-  authors: [{ name: "Mohsen Fallahnejad", url: "https://www.linkedin.com/in/mohsenfallahnjd/" }],
+  authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }],
   alternates: { types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] } },
   openGraph: {
     title: "Bitlyst",
