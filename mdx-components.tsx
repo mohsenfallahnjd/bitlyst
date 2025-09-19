@@ -1,5 +1,4 @@
 import type { MDXComponents } from "mdx/types";
-import SyntaxHighlighter from "react-syntax-highlighter";
 
 /**
  * Reusable Tailwind classes for consistent MDX styling.
@@ -7,7 +6,6 @@ import SyntaxHighlighter from "react-syntax-highlighter";
  */
 const baseHeading = "font-semibold tracking-tight text-gray-900 dark:text-gray-100 scroll-m-20";
 const proseText = "text-gray-700 dark:text-gray-300 leading-relaxed";
-const _CustomSyntaxHighlighter: any = SyntaxHighlighter;
 
 const components: MDXComponents = {
   h1: (props) => <h1 {...props} className={`${baseHeading} text-3xl mt-8 mb-4`} />,

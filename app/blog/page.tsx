@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PostCard from "@/components/PostCard";
+import TagsFilter from "@/components/TagsFilter";
 import type { DocMeta } from "@/lib/mdSource";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
@@ -18,7 +19,24 @@ export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
         )
       : all;
 
-  const uniqueTags = Array.from(new Set(all.flatMap((p: DocMeta) => p.tags || []))).sort((a, b) => a.localeCompare(b));
+  const tagDisplayByKey: Record<string, string> = {};
+  const tagCounts = all
+    .flatMap((p: DocMeta) => p.tags || [])
+    .reduce<Record<string, number>>((acc, raw) => {
+      const display = String(raw || "");
+      const key = display.toLowerCase();
+      if (!key) {
+        return acc;
+      }
+      if (!(key in tagDisplayByKey)) {
+        tagDisplayByKey[key] = display;
+      }
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  const tags = Object.entries(tagCounts)
+    .map(([key, count]) => ({ key, name: tagDisplayByKey[key] || key, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-8">
@@ -53,23 +71,8 @@ export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
         )}
       </div>
 
-      {/* Tag cloud */}
-      <div className="flex flex-wrap gap-2">
-        {uniqueTags.map((t) => (
-          <Link
-            key={t}
-            href={`/blog?tag=${encodeURIComponent(t)}`}
-            className={`text-xs rounded-full px-3 py-1 border
-                        ${
-                          t.toLowerCase() === tag
-                            ? "border-cyan-600 text-cyan-700 dark:text-cyan-300 dark:border-cyan-400 bg-cyan-50/60 dark:bg-cyan-950/30"
-                            : "border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900"
-                        }`}
-          >
-            #{t}
-          </Link>
-        ))}
-      </div>
+      {/* Tags filter */}
+      <TagsFilter tags={tags} selectedTag={tag} />
 
       {/* List */}
       {posts.length === 0 ? (
