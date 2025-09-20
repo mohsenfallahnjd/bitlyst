@@ -76,6 +76,28 @@ export const AboutPage: FC = () => {
               </svg>
               LinkedIn
             </a>
+            <a
+              href="https://themohsen.me"
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="w-4 h-4"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.5 6H18m0 0v4.5M18 6l-7.5 7.5M15 18H6a2 2 0 01-2-2V9"
+                />
+              </svg>
+              Website
+            </a>
           </div>
         </div>
       </div>

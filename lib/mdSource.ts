@@ -15,7 +15,7 @@ export type DocMeta = {
 };
 
 const BLOG_DIR = path.resolve("docs");
-const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://www.linkedin.com/in/mohsenfallahnjd/" }];
+const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }];
 
 /** Read all Markdown posts (already provided) */
 export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
