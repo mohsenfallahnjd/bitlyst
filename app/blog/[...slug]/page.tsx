@@ -8,7 +8,9 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import PostMeta from "@/components/PostMeta";
+import PostNav from "@/components/PostNav";
 import PostReactions from "@/components/PostReactions";
+import TOC from "@/components/TOC";
 import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
 import "highlight.js/styles/atom-one-dark.css";
@@ -29,7 +31,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
       <PostMeta publishedTime={post.publishedTime} tags={post.tags} />
 
       {!!post.authors?.length && (
-        <div className="mb-10 text-sm text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 pb-5 flex items-center gap-2">
+        <div className="mb-5 text-sm text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 pb-5 flex items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -57,21 +59,32 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
           ))}
         </div>
       )}
+      {/* Content layout - single column; TOC handled in route layout for wide screens */}
+      <div className="mt-8">
+        {/* Mobile TOC (inline, non-sticky) */}
+        <div className="xl:hidden mb-6">
+          <TOC />
+        </div>
 
-      <MDXRemote
-        source={post.content}
-        components={useMDXComponents()}
-        options={{
-          mdxOptions: {
-            remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
-            rehypePlugins: [rehypeSlug, rehypeHighlight],
-          },
-        }}
-      />
+        <MDXRemote
+          source={post.content}
+          components={useMDXComponents()}
+          options={{
+            mdxOptions: {
+              remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
+              rehypePlugins: [rehypeSlug, rehypeHighlight],
+            },
+          }}
+        />
+      </div>
 
       <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">How did you like this post?</h3>
         <PostReactions postSlug={post.slug} />
+      </div>
+
+      <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
+        <PostNav current={post.slug} />
       </div>
     </div>
   );

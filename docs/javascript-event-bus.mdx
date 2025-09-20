@@ -1,0 +1,16 @@
+---
+title: "JavaScript's Event Bus — Visual Diagram"
+summary: "A simple SVG diagram showing how a publisher emits events to an Event Bus, which then notifies multiple subscribers."
+publishedTime: "2025-09-20"
+tags: ["javascript", "event-bus", "architecture", "pubsub", "diagram"]
+---
+
+This diagram illustrates the **pub/sub flow**: a **Publisher** emits → the **Event Bus** routes → multiple **Subscribers** react.
+
+## SVG Diagram
+
+![JavaScript's Event Bus — Visual Diagram](/assets/event-bus-diagram.svg)
+
+---
+
+**Tip:** Keep event names scoped (e.g., `user:login`, `cart:itemAdded`) and document them in a small contract file so publishers and subscribers stay aligned.

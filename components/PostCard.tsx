@@ -12,7 +12,7 @@ export default function PostCard({ post, className }: { post: DocMeta; className
         <h2 className="text-lg font-semibold tracking-tight group-hover:underline">
           {post.title}
 
-          {post.publishedTime && new Date(post.publishedTime) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7) && (
+          {post.publishedTime && new Date(post.publishedTime) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 3) && (
             <span className="text-green-500 text-xs uppercase font-bold ml-2">New</span>
           )}
         </h2>
