@@ -15,27 +15,31 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://bitlyst.vercel.app/"),
-  icons: {
-    icon: "/favicon.svg",
-  },
-  title: {
-    default: "Bitlyst Blog",
-    template: "%s · Bitlyst",
-  },
+  icons: { icon: "/favicon.svg" },
+  title: { default: "Bitlyst Blog", template: "%s · Bitlyst" },
   description: "Bite-sized tech tips—simple, minimal, useful.",
   authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }],
-  alternates: { types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] } },
+  alternates: {
+    types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] },
+    canonical: "https://bitlyst.vercel.app/",
+  },
   openGraph: {
     title: "Bitlyst",
     description: "Bite-sized tech tips—simple, minimal, useful.",
     url: "https://bitlyst.vercel.app/",
     siteName: "Bitlyst",
     type: "website",
+    images: "/favicon.svg",
+    locale: "en_US",
+    countryName: "United States",
   },
   twitter: {
     card: "summary",
     title: "Bitlyst",
     description: "Bite-sized tech tips—simple, minimal, useful.",
+    images: "/favicon.svg",
+    site: "https://bitlyst.vercel.app/",
+    creator: "@mohsenfallahnjd",
   },
 };
 

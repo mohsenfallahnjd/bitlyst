@@ -86,15 +86,19 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
     title: page.title,
     description: page.summary,
     keywords: page.tags?.join(", "),
+    authors: page.authors,
     openGraph: {
       title: page.title,
       description: page.summary,
       publishedTime: page.publishedTime as string,
+      tags: page.tags,
+      url: `https://bitlyst.vercel.app/blog/${params.slug}`,
     },
     twitter: {
       card: "summary",
       title: page.title,
       description: page.summary,
     },
+    alternates: { canonical: `https://bitlyst.vercel.app/blog/${params.slug}` },
   };
 }

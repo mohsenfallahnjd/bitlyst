@@ -4,7 +4,20 @@ import TagsFilter from "@/components/TagsFilter";
 import type { DocMeta } from "@/lib/mdSource";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
-export const metadata = { title: "Blog" };
+export const metadata = {
+  title: "Blog",
+  alternates: { canonical: "https://bitlyst.vercel.app/blog" },
+  openGraph: {
+    title: "Bitlyst Blog",
+    description: "Bite-sized tech tips—simple, minimal, useful.",
+    url: "https://bitlyst.vercel.app/blog",
+    siteName: "Bitlyst Blog",
+    type: "website",
+    images: "/favicon.svg",
+    locale: "en_US",
+    countryName: "United States",
+  },
+};
 
 export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
   const all = loadMarkdownDocs();
