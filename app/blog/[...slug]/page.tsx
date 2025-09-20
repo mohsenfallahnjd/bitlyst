@@ -15,7 +15,9 @@ import "highlight.js/styles/atom-one-dark.css";
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const params = await props.params;
-  const post = loadMarkdownBySlug(params.slug?.toString()!);
+  const slugParam = params.slug as string | string[] | undefined;
+  const slugPath = Array.isArray(slugParam) ? slugParam.join("/") : (slugParam ?? "");
+  const post = loadMarkdownBySlug(slugPath);
 
   if (!post) {
     notFound();
@@ -77,7 +79,9 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
 
 export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Promise<Metadata> {
   const params = await props.params;
-  const page = loadMarkdownBySlug(params.slug?.toString()!);
+  const slugParam = params.slug as string | string[] | undefined;
+  const slugPath = Array.isArray(slugParam) ? slugParam.join("/") : (slugParam ?? "");
+  const page = loadMarkdownBySlug(slugPath);
   if (!page) {
     notFound();
   }
@@ -92,13 +96,14 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       description: page.summary,
       publishedTime: page.publishedTime as string,
       tags: page.tags,
-      url: `https://bitlyst.vercel.app/blog/${params.slug}`,
+      url: `https://bitlyst.vercel.app/blog/${slugPath}`,
+      type: "article",
     },
     twitter: {
       card: "summary",
       title: page.title,
       description: page.summary,
     },
-    alternates: { canonical: `https://bitlyst.vercel.app/blog/${params.slug}` },
+    alternates: { canonical: `https://bitlyst.vercel.app/blog/${slugPath}` },
   };
 }
