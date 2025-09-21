@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { JsonLd, OrgJsonLd } from "@/components/JsonLD";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -60,10 +61,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <GoogleTagManager gtmId={process.env.NEXT_PUBLIC_GTM_ID || ""} />
+        <OrgJsonLd />
+        <JsonLd />
       </head>
       <body className="font-sans antialiased bg-background-light text-foreground-light dark:bg-background-dark dark:text-foreground-dark transition-colors duration-300">
         <Header />
-        <main className="container py-10">{children}</main>
+        <main className="container py-10 min-h-[calc(100dvh-233px)]">{children}</main>
         <Footer />
         <SpeedInsights />
         <Analytics />

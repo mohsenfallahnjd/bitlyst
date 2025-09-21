@@ -7,6 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = [
     { url: site, lastModified: new Date() },
     { url: `${site}/blog`, lastModified: new Date() },
+    { url: `${site}/search`, lastModified: new Date() },
   ];
   const posts = loadMarkdownDocs().map((p: DocMeta) => ({
     url: `${site}/blog/${p.slug}`,

@@ -14,7 +14,10 @@ export default function Header() {
         </Link>
         <nav className="flex items-center gap-4">
           <Link href="/blog" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
-            Blog
+            Posts
+          </Link>
+          <Link href="/search" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
+            Search
           </Link>
           <Link href="/links" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
             Links
