@@ -3,7 +3,7 @@ import { loadMarkdownDocs } from "@/lib/mdSource";
 import { searchDocs } from "@/lib/search";
 import SearchClient from "./SearchClient";
 
-export default async function SearchPage({ searchParams }: { searchParams?: { q?: string } }) {
+export default async function SearchPage({ searchParams }: PageProps<"/search">) {
   const awaited = await searchParams;
   const initialQuery = (awaited?.q || "").toString();
   const docs = loadMarkdownDocs();
@@ -45,7 +45,7 @@ export default async function SearchPage({ searchParams }: { searchParams?: { q?
   );
 }
 
-export async function generateMetadata({ searchParams }: { searchParams?: { q?: string } }): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: PageProps<"/search">): Promise<Metadata> {
   const awaited = await searchParams;
   const q = (awaited?.q || "").toString().trim();
   const title = q ? `Search: ${q}` : "Search";
