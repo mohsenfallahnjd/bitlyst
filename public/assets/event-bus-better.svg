@@ -1,0 +1,52 @@
+
+<svg width="920" height="320" viewBox="0 0 920 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Event Bus flow: Publisher -> Bus -> Subscribers">
+  <defs>
+    <style>
+      .box { fill: #fff; stroke: #2563eb; stroke-width: 2; rx: 12; }
+      .bus { fill: #ecfeff; stroke: #06b6d4; stroke-width: 2; rx: 16; }
+      .label { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-size: 14px; fill: #0f172a; }
+      .title { font-weight: 700; font-size: 16px; }
+      .arrow { stroke: #0f172a; stroke-width: 2; marker-end: url(#arrow); }
+      .hint { fill: #64748b; font-size: 12px; }
+      .tag { fill: #10b981; font-size: 12px; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0f172a"/>
+    </marker>
+  </defs>
+
+  <!-- Publisher -->
+  <rect x="40" y="110" width="180" height="90" class="box"/>
+  <text x="130" y="135" text-anchor="middle" class="label title">Publisher</text>
+  <text x="130" y="155" text-anchor="middle" class="label">LoginForm</text>
+  <text x="130" y="175" text-anchor="middle" class="hint">emit("user:login")</text>
+
+  <!-- Bus -->
+  <rect x="340" y="80" width="240" height="140" class="bus"/>
+  <text x="460" y="105" text-anchor="middle" class="label title">Event Bus</text>
+  <text x="460" y="125" text-anchor="middle" class="label">on / off / once / emit</text>
+  <text x="460" y="145" text-anchor="middle" class="hint">wildcards & tags optional</text>
+
+  <!-- Subscribers -->
+  <rect x="720" y="40" width="160" height="80" class="box"/>
+  <text x="800" y="65" text-anchor="middle" class="label title">Navbar</text>
+  <text x="800" y="85" text-anchor="middle" class="hint">on("user:login")</text>
+
+  <rect x="720" y="120" width="160" height="80" class="box"/>
+  <text x="800" y="145" text-anchor="middle" class="label title">Analytics</text>
+  <text x="800" y="165" text-anchor="middle" class="hint">on("user:*")</text>
+
+  <rect x="720" y="200" width="160" height="80" class="box"/>
+  <text x="800" y="225" text-anchor="middle" class="label title">Toasts</text>
+  <text x="800" y="245" text-anchor="middle" class="hint">on("user:login", once)</text>
+
+  <!-- Arrows -->
+  <line x1="220" y1="155" x2="340" y2="150" class="arrow"/>
+  <text x="280" y="140" class="tag">emit("user:login", {name})</text>
+
+  <line x1="580" y1="110" x2="720" y2="80" class="arrow"/>
+  <line x1="580" y1="150" x2="720" y2="160" class="arrow"/>
+  <line x1="580" y1="190" x2="720" y2="230" class="arrow"/>
+
+  <text x="460" y="290" text-anchor="middle" class="hint">Publish once → many subscribers respond independently</text>
+</svg>

@@ -1,16 +1,193 @@
 ---
-title: "JavaScript's Event Bus — Visual Diagram"
-summary: "A simple SVG diagram showing how a publisher emits events to an Event Bus, which then notifies multiple subscribers."
-publishedTime: "2025-09-20"
-tags: ["javascript", "event-bus", "architecture", "pubsub", "diagram"]
+title: "JavaScript Event Bus 🚍 (JS + TypeScript)"
+summary: "A polished, practical event bus pattern with minimal JS, a strongly-typed TS version, wildcards, once-handlers, and React usage tips."
+publishedTime: "2025-09-21"
+tags: ["javascript", "event-bus", "pubsub", "architecture", "typescript", "react"]
 ---
 
-This diagram illustrates the **pub/sub flow**: a **Publisher** emits → the **Event Bus** routes → multiple **Subscribers** react.
+**Event Bus** = simple **publish/subscribe** hub so modules can talk **without direct references**.
 
-## SVG Diagram
-
-![JavaScript's Event Bus — Visual Diagram](/assets/event-bus-diagram.svg)
+![JavaScript Event Bus](/assets/event-bus-better.svg)
 
 ---
 
-**Tip:** Keep event names scoped (e.g., `user:login`, `cart:itemAdded`) and document them in a small contract file so publishers and subscribers stay aligned.
+## 1) Why use an Event Bus?
+
+- **Decoupling**: publishers don't import subscribers.  
+- **Reusable communication**: one signal → many independent reactions.  
+- **Great for**: auth signals, toasts, analytics, cross-feature coordination.
+
+> Use a bus **sparingly**. For large apps, prefer a structured state manager (Redux, Zustand, Vuex) for core state.
+
+---
+
+## 2) Minimal, Fast JavaScript Implementation
+
+```js
+// eventBus.js
+export class EventBus {
+  constructor() { this.map = Object.create(null) }
+
+  on(event, cb) {
+    (this.map[event] ||= new Set()).add(cb)
+    return () => this.off(event, cb)       // unsubscribe helper
+  }
+
+  once(event, cb) {
+    const off = this.on(event, (p) => { off(); cb(p) })
+    return off
+  }
+
+  off(event, cb) {
+    const set = this.map[event]; if (!set) return
+    set.delete(cb); if (set.size === 0) delete this.map[event]
+  }
+
+  emit(event, payload) {
+    const call = (set) => set && set.forEach(fn => fn(payload))
+    // direct
+    call(this.map[event])
+    // simple wildcard: "user:*" matches "user:login"
+    const star = event.split(':')[0] + ':*'
+    call(this.map[star])
+  }
+}
+
+// Usage
+export const bus = new EventBus()
+
+const off = bus.on('user:login', (u) => console.log('hello', u.name))
+bus.once('user:login', () => console.log('toast shown once'))
+
+bus.emit('user:login', { name: 'Alice' })
+// later
+off()
+```
+
+**Why this version?**  
+- `Set` avoids duplicates, `once` auto-cleans, wildcard channel `"domain:*"` is lightweight.
+
+---
+
+## 3) Strongly-Typed TypeScript Bus (safe contracts)
+
+```ts
+// typedBus.ts
+type Events = {
+  'user:login': { name: string }
+  'user:logout': void
+  'chat:message': { text: string; from: string }
+  'user:*': unknown               // wildcard channel (optional)
+}
+
+export class TypedBus<E extends Record<string, any>> {
+  private map: { [K in keyof E]?: Set<(p: E[K]) => void> } = {};
+
+  on<K extends keyof E>(event: K, cb: (payload: E[K]) => void) {
+    (this.map[event] ||= new Set()).add(cb)
+    return () => this.off(event, cb)
+  }
+
+  once<K extends keyof E>(event: K, cb: (payload: E[K]) => void) {
+    const off = this.on(event, (p) => { off(); cb(p) })
+    return off
+  }
+
+  off<K extends keyof E>(event: K, cb: (payload: E[K]) => void) {
+    const set = this.map[event]; if (!set) return
+    set.delete(cb); if (set.size === 0) delete this.map[event]
+  }
+
+  emit<K extends keyof E>(event: K, payload: E[K]) {
+    const call = (set?: Set<(p: any) => void>) => set?.forEach(fn => fn(payload))
+    call(this.map[event])
+    // naive wildcard match: prefix + ':*'
+    const star = (String(event).split(':')[0] + ':*') as keyof E
+    call(this.map[star])
+  }
+}
+
+export const bus = new TypedBus<Events>()
+```
+
+**Contract benefits**: Autocomplete for event names & payload shapes; compile-time safety.
+
+---
+
+## 4) React Usage Patterns
+
+**A. Global bus instance** (simple apps)
+
+```tsx
+// bus.ts
+export const bus = new EventBus()
+
+// Navbar.tsx
+useEffect(() => bus.on('user:login', () => setOpen(true)), [])
+
+// LoginForm.tsx
+const submit = () => bus.emit('user:login', { name: 'Alice' })
+```
+
+**B. Context + scoped bus** (feature isolation / testability)
+
+```tsx
+const BusContext = createContext<{
+  bus: EventBus
+} | null>(null)
+
+export function BusProvider({ children }) {
+  const [bus] = useState(() => new EventBus())
+  return <BusContext.Provider value={{ bus }}>{children}</BusContext.Provider>
+}
+
+export function useBus() {
+  const ctx = useContext(BusContext); if (!ctx) throw new Error('No BusProvider')
+  return ctx.bus
+}
+```
+
+**C. Clean up subscriptions**
+
+```tsx
+useEffect(() => {
+  const off = bus.on('toast:show', setToast)
+  return off                     // auto-unsubscribe on unmount
+}, [])
+```
+
+---
+
+## 5) Node.js: you already have one
+
+```js
+import { EventEmitter } from 'node:events'
+const bus = new EventEmitter()
+
+bus.on('ping', () => console.log('pong'))
+bus.emit('ping')
+```
+
+Use Node's `EventEmitter` for server code; for browsers and shared libs, a tiny custom bus is fine.
+
+---
+
+## 6) Tips & Pitfalls
+
+- **Name events with namespaces**: `user:login`, `cart:itemAdded`.  
+- Provide a **registry doc** (events & payloads) to avoid mismatches.  
+- **Avoid global everything**: consider **scoped buses** per feature.  
+- **Memory leaks**: always unsubscribe on unmount; `once` helps.  
+- Prefer **state managers** for shared state; use the bus for **signals**.
+
+---
+
+## 7) Quick Cheatsheet
+
+| Need | Suggestion |
+|---|---|
+| One-off global signal (toast/auth) | Event bus |
+| Complex shared state | Redux/Zustand/Context |
+| Typed payloads & autocomplete | TypeScript `TypedBus` |
+| Only one reaction allowed | `once` |
+| Fan-out to many listeners | plain `emit` or wildcard |
