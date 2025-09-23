@@ -34,7 +34,7 @@ The `makeCounter` frame is gone, but the inner function keeps `count` alive thro
 ---
 
 ## Why Closures Are Useful
-1. **Data privacy / encapsulation**
+1.**Data privacy / encapsulation**
    ```js
    function createBankAccount() {
      let balance = 0;
@@ -49,20 +49,20 @@ The `makeCounter` frame is gone, but the inner function keeps `count` alive thro
    console.log(acc.getBalance()); // 100 (no direct write access)
    ```
 
-2. **Callbacks & async**
+2.**Callbacks & async**
    ```js
    function greetLater(name) {
      setTimeout(() => console.log("Hello", name), 500); // `name` is closed over
    }
    ```
 
-3. **Function factories / partial application**
+3.**Function factories / partial application**
    ```js
    const by = key => (a, b) => (a[key] > b[key] ? 1 : -1);
    users.sort(by("age"));
    ```
 
-4. **Memoization**
+4.**Memoization**
    ```js
    function memoize(fn) {
      const cache = new Map();
@@ -164,10 +164,10 @@ button.addEventListener("click", makeHandler("Clicked:"));
 
 ## Interview-Style Questions
 
-1. **Define a closure.**  
+1.**Define a closure.**  
    A function together with its **lexical environment**, allowing it to remember variables from its defining scope.
 
-2. **Why does `var` + setTimeout in a loop log the same value? How to fix?**  
+2.**Why does `var` + setTimeout in a loop log the same value? How to fix?**  
    Because a single `var` binding is shared. Fix with `let` or an IIFE:
    ```js
    for (var i = 1; i <= 3; i++) {
@@ -175,17 +175,17 @@ button.addEventListener("click", makeHandler("Clicked:"));
    }
    ```
 
-3. **How do closures enable privacy?**  
+3.**How do closures enable privacy?**  
    By keeping variables in a scope that’s not directly exposed, only through returned functions.
 
-4. **Can closures cause memory leaks?**  
+4.**Can closures cause memory leaks?**  
    They can **extend lifetimes**. If you unintentionally retain references (e.g., listeners), memory can grow. Clean up listeners and avoid capturing heavy objects unnecessarily.
 
 ---
 
 ## Quick Exercises
 
-1. **Create a counter with reset**
+1.**Create a counter with reset**
    ```js
    function counter(start = 0) {
      let n = start;
@@ -196,7 +196,7 @@ button.addEventListener("click", makeHandler("Clicked:"));
    }
    ```
 
-2. **Build a simple rate limiter**
+2.**Build a simple rate limiter**
    ```js
    function rateLimit(fn, ms) {
      let ready = true;
@@ -209,7 +209,7 @@ button.addEventListener("click", makeHandler("Clicked:"));
    }
    ```
 
-3. **Once with error handling**
+3.**Once with error handling**
    ```js
    function onceSafe(fn) {
      let called = false;
