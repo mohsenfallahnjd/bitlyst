@@ -51,6 +51,11 @@ const components: MDXComponents = {
     />
   ),
   td: (props) => <td {...props} className="border border-gray-200 dark:border-gray-700 px-3 py-2" />,
+  img: (props) => (
+    <span className="my-4 flex bg-background-light dark:bg-background-light rounded-lg p-4">
+      <img {...props} />
+    </span>
+  ),
 };
 
 export function useMDXComponents(): MDXComponents {

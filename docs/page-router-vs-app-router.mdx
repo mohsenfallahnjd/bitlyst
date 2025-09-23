@@ -1,0 +1,72 @@
+---
+title: "Next.js Page Router vs App Router"
+summary: "Understand the key differences between the old Page Router and the new App Router in Next.js."
+publishedTime: "2025-09-23"
+tags: ["nextjs", "react", "routing", "frontend"]
+---
+
+Next.js gives us **two ways of building apps**: the older **Page Router** (`/pages`) and the newer **App Router** (`/app`).  
+Here’s the difference explained simply:
+
+---
+
+## The Simple Idea
+- **Page Router (old way):**  
+  You put files inside `/pages`. Each file = one route. It’s simple, but limited when your app grows.
+- **App Router (new way):**  
+  You put files inside `/app`. It uses **React Server Components**, layouts, and modern features. It’s more powerful, but needs a bit more learning.
+
+---
+
+## Analogy 🪟
+
+Think of it like building a house:
+
+- **Page Router = separate rooms**. Each room (page) has its own door. If you want a shared wall (like a layout), you must rebuild it in every room.  
+- **App Router = house with shared walls**. Rooms (pages) can share layouts, data fetching, and logic without repeating work.
+
+---
+
+## Key Differences 🔑
+
+- **File location:** `/pages` vs `/app`
+- **Rendering:** Page Router = fully client-side components; App Router = supports **Server Components**
+- **Layouts:** Page Router = no built-in layouts; App Router = nested layouts by default
+- **Data fetching:** Page Router = `getServerSideProps` / `getStaticProps`; App Router = async functions inside components (simpler & more flexible)
+- **Best for:**  
+  - Page Router → quick prototypes, small apps  
+  - App Router → modern apps, scalable projects, production-ready
+
+---
+
+## Code Example
+
+**Page Router**
+
+```tsx
+// pages/about.tsx
+export default function About() {
+  return <h1>About Page</h1>;
+}
+```
+
+**App Router**
+
+```tsx
+// app/about/page.tsx
+export default function About() {
+  return <h1>About Page</h1>;
+}
+```
+
+---
+
+## When to Use?
+
+- ✅ New project → **App Router** (future of Next.js)  
+- ✅ Old project already using `/pages` → **stay with Page Router** unless you want to migrate  
+- ❌ Don’t mix them in the same route (but you can run both in one project during migration)
+
+---
+
+That’s it! 🎉
