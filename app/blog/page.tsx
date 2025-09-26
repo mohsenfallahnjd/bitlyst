@@ -1,9 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import PostCard from "@/components/PostCard";
 import TagsFilter from "@/components/TagsFilter";
 import { useBlogIndex } from "@/lib/useBlogIndex";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Blog",
   alternates: { canonical: "https://bitlyst.vercel.app/blog" },
   openGraph: {

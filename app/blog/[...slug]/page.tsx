@@ -10,6 +10,7 @@ import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import PostMeta from "@/components/PostMeta";
 import PostNav from "@/components/PostNav";
 import PostReactions from "@/components/PostReactions";
+import ShareButton from "@/components/ShareButton";
 import TOC from "@/components/TOC";
 import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
@@ -59,6 +60,11 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
           ))}
         </div>
       )}
+
+      <div className="mt-2">
+        <ShareButton title={post.title} url={`https://bitlyst.vercel.app/blog/${post.slug}`} />
+      </div>
+
       {/* Content layout - single column; TOC handled in route layout for wide screens */}
       <div className="mt-8">
         {/* Mobile TOC (inline, non-sticky) */}
@@ -102,20 +108,23 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
   return {
     title: page.title,
     description: page.summary,
-    keywords: page.tags?.join(", "),
+    keywords: ["bitlyst", ...(page.tags || [])].join(", "),
     authors: page.authors,
     openGraph: {
       title: page.title,
       description: page.summary,
       publishedTime: page.publishedTime as string,
-      tags: page.tags,
+      tags: ["bitlyst", ...(page.tags || [])],
+      images: "/logo.svg",
       url: `https://bitlyst.vercel.app/blog/${slugPath}`,
       type: "article",
+      authors: page.authors.map((author) => author.name),
     },
     twitter: {
       card: "summary",
       title: page.title,
       description: page.summary,
+      images: "/logo.svg",
     },
     alternates: { canonical: `https://bitlyst.vercel.app/blog/${slugPath}` },
   };

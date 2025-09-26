@@ -2,5 +2,6 @@
 
 [ ] tricks
 [ ] snipped codes
-[ ] Simple Post reaction
 [ ] multi lang
+[X] Simple Post reaction
+[X] Hacker news

@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   title: { default: "Bitlyst Blog", template: "%s · Bitlyst" },
   description: "Bite-sized tech tips—simple, minimal, useful.",
   authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }],
+  keywords: ["bitlyst", "blog", "tech", "tips", "tutorials", "programming", "development"],
   alternates: {
     types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] },
     canonical: "https://bitlyst.vercel.app/",
@@ -42,6 +43,19 @@ export const metadata: Metadata = {
     images: "/logo.svg",
     site: "https://bitlyst.vercel.app/",
     creator: "@mohsenfallahnjd",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
