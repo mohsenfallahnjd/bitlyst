@@ -1,0 +1,98 @@
+---
+title: "Deep Copy vs Shallow Copy in JavaScript"
+summary: "Understand the difference between shallow and deep copies, with examples and pitfalls."
+publishedTime: "2025-09-23"
+tags: ["javascript", "copy", "objects", "cloning"]
+---
+
+## 📝 Definitions
+
+- **Shallow copy**  
+  A new object is created, but its nested objects/arrays are still **referenced** (not copied).  
+
+- **Deep copy**  
+  A new object is created, and all nested objects/arrays are **recursively copied**, so they are fully independent.
+
+---
+
+## 📦 Shallow Copy Examples
+
+```js
+const obj = { user: "Ali", settings: { theme: "dark" } };
+
+// Shallow copies
+const copy1 = { ...obj };
+const copy2 = Object.assign({}, obj);
+
+copy1.user = "Sara";
+console.log(obj.user); // "Ali" (independent primitive)
+
+copy1.settings.theme = "light";
+console.log(obj.settings.theme); // "light" (nested object was shared!)
+```
+
+👉 Only the top-level properties are copied. Nested references still point to the same objects.
+
+---
+
+## 📦 Deep Copy Examples
+
+### Using `structuredClone` (modern JS)
+```js
+const obj = { user: "Ali", settings: { theme: "dark" } };
+const deepCopy = structuredClone(obj);
+
+deepCopy.settings.theme = "light";
+console.log(obj.settings.theme); // "dark" ✅ independent
+```
+
+### Using JSON trick (not recommended for all cases)
+```js
+const deepCopy = JSON.parse(JSON.stringify(obj));
+```
+⚠️ This fails with `Date`, `Map`, `Set`, `undefined`, functions, circular references.
+
+### Using libraries
+- **Lodash:** `_.cloneDeep(obj)`
+- **Immer:** handles immutable updates with deep cloning.
+
+---
+
+## 🛑 Pitfalls of Shallow Copy
+- Mutating nested structures leaks changes:
+  ```js
+  const state = { user: { name: "Ali" } };
+  const next = { ...state };
+  next.user.name = "Sara";
+
+  console.log(state.user.name); // "Sara" ❌ unexpected mutation
+  ```
+- In React/Redux, this can cause **stale renders** because React thinks the state is unchanged (reference is same).
+
+---
+
+## ✅ When to Use
+- **Shallow copy** is fine when:
+  - Object has only primitives.
+  - You don’t need to mutate nested structures.
+  - Performance is critical and you control object shape.
+
+- **Deep copy** is needed when:
+  - You must ensure no shared references.
+  - Working with nested state in frameworks (e.g., Redux).
+  - Serializing complex objects (careful with special types).
+
+---
+
+## 🔍 Performance Considerations
+- Deep copy is **slower and heavier** because it traverses entire object trees.
+- Shallow copy is **cheap**, just reassigns top-level references.
+
+---
+
+## ✅ Summary
+- **Shallow copy**: Copies top-level properties only; nested objects are shared.  
+- **Deep copy**: Recursively copies everything; no shared references.  
+- Use **shallow copy** for flat/simple objects, and **deep copy** when you need complete independence.
+
+✨ Rule of thumb: *If you change a nested value and don’t want it to affect the original → you need a deep copy.*
