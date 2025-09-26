@@ -4,7 +4,7 @@ export const OrgJsonLd = () => {
     "@type": "Organization",
     name: "Bitlyst",
     url: "https://bitlyst.vercel.app",
-    logo: "https://bitlyst.vercel.app/favicon.svg",
+    logo: "https://bitlyst.vercel.app/logo.svg",
     sameAs: [
       "https://x.com/mohsenfallahnjd",
       "https://github.com/mohsenfallahnjd",

@@ -169,7 +169,7 @@ bun typegen      # Generate Next.js types
 ├── lib/                   # Utility functions
 │   └── mdSource.ts        # MDX processing utilities
 └── public/                # Static assets
-    └── favicon.svg
+    └── logo.svg
 ```
 
 ## 🎨 Customization

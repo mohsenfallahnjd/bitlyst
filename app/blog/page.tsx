@@ -12,7 +12,7 @@ export const metadata = {
     url: "https://bitlyst.vercel.app/blog",
     siteName: "Bitlyst Blog",
     type: "website",
-    images: "/favicon.svg",
+    images: "/logo.svg",
     locale: "en_US",
     countryName: "United States",
   },
