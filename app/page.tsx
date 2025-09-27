@@ -1,12 +1,11 @@
 import Link from "next/link";
-import PostCard from "@/components/PostCard";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
   const all = loadMarkdownDocs();
   const awaitSearchParams = await searchParams;
   const tag = awaitSearchParams?.tag?.toString()?.toLowerCase() || "";
-  const posts = tag ? all.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag)) : all;
+  const _posts = tag ? all.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag)) : all;
 
   return (
     <section className="space-y-8">
@@ -15,12 +14,6 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         <p className="text-gray-600 dark:text-gray-300">
           Clear, minimal explanations with code and diagrams you can read in minutes.
         </p>
-      </div>
-
-      <div className="grid gap-6">
-        {posts.slice(0, 6).map((p) => (
-          <PostCard key={p.slug} post={p} />
-        ))}
       </div>
 
       <div className="pt-2 flex items-center gap-3 text-sm">
