@@ -1,4 +1,12 @@
-export default function HomePage() {
+import Link from "next/link";
+import HomePosts from "@/components/HomePosts";
+import { loadMarkdownDocs } from "@/lib/mdSource";
+
+export const dynamic = "force-static";
+
+export default async function HomePage(_props: PageProps<"/">) {
+  const all = loadMarkdownDocs();
+
   return (
     <section className="space-y-8">
       <div className="space-y-2">
@@ -8,7 +16,13 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* <List /> */}
+      <HomePosts posts={all} />
+
+      <div className="pt-2 flex items-center gap-3 text-sm">
+        <Link href="/blog" className="underline">
+          Browse all posts →
+        </Link>
+      </div>
     </section>
   );
 }
