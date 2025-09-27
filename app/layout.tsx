@@ -1,8 +1,5 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -41,9 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="font-sans antialiased bg-background-light text-foreground-light dark:bg-background-dark dark:text-foreground-dark transition-colors duration-300">
-        <Header />
-        <main className="container py-10 min-h-[calc(100dvh-233px)]">{children}</main>
-        <Footer />
+        test
       </body>
     </html>
   );
