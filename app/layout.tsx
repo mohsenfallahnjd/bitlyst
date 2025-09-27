@@ -35,7 +35,6 @@ export const metadata: Metadata = {
     "tutorials",
   ],
   alternates: {
-    types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] },
     canonical: "https://bitlyst.vercel.app/",
   },
   openGraph: {
