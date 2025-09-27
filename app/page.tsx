@@ -1,12 +1,6 @@
 import Link from "next/link";
-import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export default async function HomePage({ searchParams }: PageProps<"/">) {
-  const all = loadMarkdownDocs();
-  const awaitSearchParams = await searchParams;
-  const tag = awaitSearchParams?.tag?.toString()?.toLowerCase() || "";
-  const _posts = tag ? all.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag)) : all;
-
   return (
     <section className="space-y-8">
       <div className="space-y-2">
@@ -20,14 +14,6 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         <Link href="/blog" className="underline">
           Browse all posts →
         </Link>
-        {tag && (
-          <Link
-            href="/"
-            className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900"
-          >
-            Clear “{tag}”
-          </Link>
-        )}
       </div>
     </section>
   );
