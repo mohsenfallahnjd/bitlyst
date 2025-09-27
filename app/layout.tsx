@@ -16,54 +16,29 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://bitlyst.vercel.app/"),
-  icons: { icon: [{ url: "/icon.svg" }, { url: "/logo.svg" }] },
-  title: { default: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips", template: "%s · Bitlyst" },
-  description:
-    "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
-  authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }],
-  keywords: [
-    "bitlyst",
-    "blog",
-    "tech",
-    "javascript",
-    "react",
-    "next.js",
-    "frontend",
-    "web development",
-    "tips",
-    "tutorials",
-  ],
-  alternates: {
-    canonical: "https://bitlyst.vercel.app/",
-  },
+  metadataBase: new URL("https://themohsen.me/"),
+  title: "Mohsen Fallahnejad | Front‑End Developer",
+  authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me/" }],
+  description: "Hi, I'm Mohsen, a front-end developer and usually code on #JS for creating beautiful things 🤠",
+  alternates: { canonical: "https://themohsen.me/" },
   openGraph: {
-    title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
-    description:
-      "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
-    url: "https://bitlyst.vercel.app/",
-    siteName: "Bitlyst",
+    locale: "en",
+    siteName: "themohsen.me",
+    title: "Mohsen Fallahnejad | Front‑End Developer",
+    description: "Hi, I'm Mohsen, a front-end developer and usually code on #JS for creating beautiful things 🤠",
+    images: "/logo.svg",
+    url: "https://themohsen.me/",
     type: "website",
-    images: [
-      {
-        url: "https://bitlyst.vercel.app/logo.svg",
-        width: 1200,
-        height: 630,
-        alt: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
-      },
-    ],
-    locale: "en_US",
-    countryName: "United States",
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
-    description:
-      "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
-    images: ["https://bitlyst.vercel.app/logo.svg"],
-    site: "@mohsenfallahnjd",
+    title: "Mohsen Fallahnejad | Front‑End Developer",
+    description: "Hi, I'm Mohsen, a front-end developer and usually code on #JS for creating beautiful things 🤠",
     creator: "@mohsenfallahnjd",
+    images: "/logo.svg",
+    card: "summary_large_image",
+    site: "https://themohsen.me/",
   },
+  icons: { icon: "/logo.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
