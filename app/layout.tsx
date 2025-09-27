@@ -65,19 +65,6 @@ export const metadata: Metadata = {
     site: "@mohsenfallahnjd",
     creator: "@mohsenfallahnjd",
   },
-  robots: {
-    index: true,
-    follow: true,
-    nocache: false,
-    googleBot: {
-      index: true,
-      follow: true,
-      noimageindex: false,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -85,6 +72,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/icon.svg" />
+        <title>Bitlyst — Bite-sized JavaScript, React, and Next.js tips</title>
+        <meta
+          name="description"
+          content="Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills."
+        />
+        <meta
+          name="keywords"
+          content="bitlyst, blog, tech, javascript, react, next.js, frontend, web development, tips, tutorials"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{
