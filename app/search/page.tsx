@@ -23,6 +23,13 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
 
   return (
     <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">Search</h1>
+        <p className="text-gray-600 dark:text-gray-300">
+          Find posts by title, tags, or content. Try queries like "react hydration" or "async vs sync".
+        </p>
+      </div>
+
       {/* Hydrated client search with SSR initial state below */}
       <SearchClient docs={clientDocs} initialQuery={initialQuery} />
 

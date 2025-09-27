@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import PostCard from "@/components/PostCard";
+import BlogList from "@/app/_components/BlogList";
 import TagsFilter from "@/components/TagsFilter";
 import { useBlogIndex } from "@/lib/useBlogIndex";
+
+export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "Blog — JavaScript, React, and Next.js tips",
@@ -19,8 +21,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
-  const { posts, tags, tag, author } = await useBlogIndex(searchParams);
+export default async function BlogIndex() {
+  const { posts, tags, tag, author } = await useBlogIndex({});
 
   return (
     <div className="space-y-8">
@@ -59,21 +61,7 @@ export default async function BlogIndex({ searchParams }: PageProps<"/blog">) {
       <TagsFilter tags={tags} selectedTag={tag} />
 
       {/* List */}
-      {posts.length === 0 ? (
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          No posts for “{tag}”.{" "}
-          <Link className="underline" href="/blog">
-            See all posts
-          </Link>
-          .
-        </p>
-      ) : (
-        <div className="grid gap-8">
-          {posts.map((post) => (
-            <PostCard key={post.slug} post={post} />
-          ))}
-        </div>
-      )}
+      <BlogList posts={posts} />
     </div>
   );
 }

@@ -135,6 +135,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
   const deferredQuery = useDeferredValue(query);
   const debouncedQuery = useDebounced(deferredQuery, 200);
   const firstRenderRef = useRef(true);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (firstRenderRef.current) {
@@ -145,6 +146,26 @@ export default function SearchClient({ docs, initialQuery }: Props) {
     const qs = q ? `?q=${encodeURIComponent(q)}` : "";
     router.replace(`/search${qs}`);
   }, [debouncedQuery, router]);
+
+  // Keyboard: focus search with '/'
+  useEffect(() => {
+    function handleKeydown(e: KeyboardEvent) {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = (e.target as HTMLElement | null)?.tagName?.toLowerCase();
+        const isTyping =
+          tag === "input" ||
+          tag === "textarea" ||
+          tag === "select" ||
+          (e.target as HTMLElement | null)?.isContentEditable;
+        if (!isTyping) {
+          e.preventDefault();
+          inputRef.current?.focus();
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, []);
 
   const terms = useMemo(() => tokenize(debouncedQuery), [debouncedQuery]);
 
@@ -175,7 +196,8 @@ export default function SearchClient({ docs, initialQuery }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search posts…"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 bg-white text-gray-900 placeholder-gray-400 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-transparent dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500"
+          ref={inputRef}
           autoFocus
         />
         <button
@@ -192,6 +214,34 @@ export default function SearchClient({ docs, initialQuery }: Props) {
         <p className="text-sm text-gray-500">
           {results.length} result{results.length === 1 ? "" : "s"} for “{debouncedQuery.trim()}”
         </p>
+      )}
+
+      {!debouncedQuery && (
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          <p>Quick suggestions:</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {Array.from(
+              new Set(
+                docs
+                  .flatMap((d) => d.tags || [])
+                  .map((t) => t.trim())
+                  .filter(Boolean)
+              )
+            )
+              .slice(0, 12)
+              .map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => setQuery(tag)}
+                  className="rounded-full border px-2 py-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-800"
+                  type="button"
+                  aria-label={`Search for ${tag}`}
+                >
+                  #{tag}
+                </button>
+              ))}
+          </div>
+        </div>
       )}
 
       <ul className="grid gap-4">
@@ -213,6 +263,10 @@ export default function SearchClient({ docs, initialQuery }: Props) {
           </li>
         ))}
       </ul>
+
+      {debouncedQuery && results.length === 0 && (
+        <p className="text-sm text-gray-500">No results. Try a different keyword or a broader term.</p>
+      )}
     </div>
   );
 }

@@ -35,12 +35,18 @@ export default function ThemeToggle() {
       <button
         type="button"
         onClick={() => apply(mode === "dark" ? "light" : "dark")}
-        className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900"
+        className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-2.5 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900"
         aria-label="Toggle dark mode"
         title="Toggle dark mode"
       >
         <span className="hidden sm:inline">{mode === "dark" ? "Dark" : mode === "light" ? "Light" : "System"}</span>
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="opacity-80">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className="opacity-80 sm:w-[18px] sm:h-[18px]"
+        >
           <path
             className="dark:hidden"
             fill="none"

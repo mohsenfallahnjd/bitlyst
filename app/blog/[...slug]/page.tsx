@@ -17,6 +17,7 @@ import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
 import "highlight.js/styles/atom-one-dark.css";
 import Script from "next/script";
+import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const params = await props.params;
@@ -165,4 +166,9 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
     },
     alternates: { canonical: `https://bitlyst.vercel.app/blog/${slugPath}` },
   };
+}
+
+export async function generateStaticParams() {
+  const all = loadMarkdownDocs();
+  return all.map((p) => ({ slug: p.slug.split("/") }));
 }
