@@ -1,18 +1,17 @@
-"use client";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import type { FunctionComponent } from "react";
 import PostCard from "@/components/PostCard";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
-interface ListProps {}
+interface ListProps {
+  searchParams: Promise<Record<string, unknown>>;
+}
 
-const List: FunctionComponent<ListProps> = () => {
-  const searchParams = useSearchParams();
+const List: FunctionComponent<ListProps> = async ({ searchParams }) => {
   const all = loadMarkdownDocs();
-  const tag = searchParams?.get("tag")?.toString()?.toLowerCase() || "";
+  const awaitSearchParams = await searchParams;
+  const tag = awaitSearchParams?.tag?.toString()?.toLowerCase() || "";
   const posts = tag ? all.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag)) : all;
-
   return (
     <>
       <div className="grid gap-6">

@@ -1,6 +1,6 @@
 import List from "./_sections";
 
-export default async function HomePage({}: PageProps<"/">) {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
   return (
     <section className="space-y-8">
       <div className="space-y-2">
@@ -10,7 +10,7 @@ export default async function HomePage({}: PageProps<"/">) {
         </p>
       </div>
 
-      <List />
+      <List searchParams={searchParams} />
     </section>
   );
 }
