@@ -1,5 +1,3 @@
-"use client";
-
 import clsx from "clsx";
 import Link from "next/link";
 import type { DocMeta } from "@/lib/mdSource";

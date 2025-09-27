@@ -1,6 +1,4 @@
-import List from "./_sections";
-
-export default function HomePage({ searchParams }: PageProps<"/">) {
+export default function HomePage() {
   return (
     <section className="space-y-8">
       <div className="space-y-2">
@@ -10,7 +8,7 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
         </p>
       </div>
 
-      <List searchParams={searchParams} />
+      {/* <List /> */}
     </section>
   );
 }
