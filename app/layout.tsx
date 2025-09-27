@@ -10,8 +10,8 @@ import { JsonLd, OrgJsonLd } from "@/components/JsonLD";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
 };
 
@@ -45,16 +45,23 @@ export const metadata: Metadata = {
     url: "https://bitlyst.vercel.app/",
     siteName: "Bitlyst",
     type: "website",
-    images: "/logo.svg",
+    images: [
+      {
+        url: "https://bitlyst.vercel.app/logo.svg",
+        width: 1200,
+        height: 630,
+        alt: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
+      },
+    ],
     locale: "en_US",
     countryName: "United States",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
     description:
       "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
-    images: "/logo.svg",
+    images: ["https://bitlyst.vercel.app/logo.svg"],
     site: "@mohsenfallahnjd",
     creator: "@mohsenfallahnjd",
   },

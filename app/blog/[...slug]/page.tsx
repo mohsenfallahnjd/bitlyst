@@ -7,6 +7,7 @@ import rehypeSlug from "rehype-slug";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
+import DonatePrompt from "@/components/DonatePrompt";
 import PostMeta from "@/components/PostMeta";
 import PostNav from "@/components/PostNav";
 import PostReactions from "@/components/PostReactions";
@@ -15,6 +16,7 @@ import TOC from "@/components/TOC";
 import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
 import "highlight.js/styles/atom-one-dark.css";
+import Script from "next/script";
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const params = await props.params;
@@ -28,6 +30,34 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
 
   return (
     <div>
+      <Script
+        type="application/ld+json"
+        id="post-ld-json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: post.title,
+            datePublished: post.publishedTime,
+            dateModified: post.publishedTime,
+            author: (post.authors || []).map((a) => ({ "@type": "Person", name: a.name, url: a.url })),
+            mainEntityOfPage: {
+              "@type": "WebPage",
+              "@id": `https://bitlyst.vercel.app/blog/${post.slug}`,
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Bitlyst",
+              logo: {
+                "@type": "ImageObject",
+                url: "https://bitlyst.vercel.app/logo.svg",
+              },
+            },
+            image: ["https://bitlyst.vercel.app/logo.svg"],
+            description: post.summary,
+          }),
+        }}
+      />
       <h1 className="text-2xl font-bold">{post.title}</h1>
       <PostMeta publishedTime={post.publishedTime} tags={post.tags} />
 
@@ -89,9 +119,9 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
         <PostReactions postSlug={post.slug} />
       </div>
 
-      <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
-        <PostNav current={post.slug} />
-      </div>
+      <DonatePrompt className="mt-10" />
+
+      <PostNav current={post.slug} />
     </div>
   );
 }
@@ -115,16 +145,23 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       description: page.summary,
       publishedTime: page.publishedTime as string,
       tags: ["bitlyst", ...(page.tags || [])],
-      images: "/logo.svg",
+      images: [
+        {
+          url: "https://bitlyst.vercel.app/logo.svg",
+          width: 1200,
+          height: 630,
+          alt: page.title,
+        },
+      ],
       url: `https://bitlyst.vercel.app/blog/${slugPath}`,
       type: "article",
       authors: page.authors.map((author) => author.name),
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: page.title,
       description: page.summary,
-      images: "/logo.svg",
+      images: ["https://bitlyst.vercel.app/logo.svg"],
     },
     alternates: { canonical: `https://bitlyst.vercel.app/blog/${slugPath}` },
   };

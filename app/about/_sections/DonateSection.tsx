@@ -2,27 +2,7 @@
 
 import type { FC } from "react";
 
-const BTC_ADDRESS = "bc1q8st6p7h6rrdg3qzsvxnwjl4mggwd4rcr4cq0qn";
-const ETH_ADDRESS = "0x041241A967A7f35f575451fB15652357Fa15171c";
-const USDC_ADDRESS = "0x041241A967A7f35f575451fB15652357Fa15171c";
-const LTC_ADDRESS = "ltc1qhld85x6w0n3dkjl6e5333uzxs43memfhych77j";
-const SOL_ADDRESS = "Bv8Wcon6xjkfrtg4LhCKpuNPyjKqukb29tnQxRVj4RAn";
-const DOGE_ADDRESS = "DMUy7Hu7u5c1F8tUVCJMdQYWHGhCgXyW8m";
-const XRP_ADDRESS = "rLFJv2NTiKXsz7quyR55PJpNd32Qhr6cB3";
-const BNB_ADDRESS = "0x041241A967A7f35f575451fB15652357Fa15171c";
-const TRON_ADDRESS = "TMENErUuaajAmJoenppG4qohhqzXuu7fgp";
-
-const cryptoAddresses = [
-  { name: "Bitcoin", symbol: "BTC", address: BTC_ADDRESS, recommended: true },
-  { name: "Ethereum", symbol: "ETH", address: ETH_ADDRESS, recommended: true },
-  { name: "USD Coin", symbol: "USDC", address: USDC_ADDRESS, recommended: true },
-  { name: "Litecoin", symbol: "LTC", address: LTC_ADDRESS, recommended: false },
-  { name: "Solana", symbol: "SOL", address: SOL_ADDRESS, recommended: false },
-  { name: "Dogecoin", symbol: "DOGE", address: DOGE_ADDRESS, recommended: false },
-  { name: "Tron", symbol: "TRON", address: TRON_ADDRESS, recommended: false },
-  { name: "BNB", symbol: "BNB", address: BNB_ADDRESS, recommended: false },
-  { name: "XRP", symbol: "XRP", address: XRP_ADDRESS, recommended: false },
-];
+import { cryptoAddresses } from "@/lib/donations";
 
 export const DonateSection: FC = () => {
   return (
