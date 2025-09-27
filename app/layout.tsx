@@ -81,6 +81,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           name="keywords"
           content="bitlyst, blog, tech, javascript, react, next.js, frontend, web development, tips, tutorials"
         />
+        <link rel="canonical" href="https://bitlyst.vercel.app/" />
+        <meta property="og:title" content="Bitlyst — Bite-sized JavaScript, React, and Next.js tips" />
+        <meta
+          property="og:description"
+          content="Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills."
+        />
+        <meta property="og:image" content="https://bitlyst.vercel.app/logo.svg" />
+        <meta property="og:url" content="https://bitlyst.vercel.app/" />
+        <meta property="og:site_name" content="Bitlyst" />
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:country_name" content="United States" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:title" content="Bitlyst — Bite-sized JavaScript, React, and Next.js tips" />
+        <meta
+          property="twitter:description"
+          content="Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills."
+        />
+        <meta property="twitter:image" content="https://bitlyst.vercel.app/logo.svg" />
+        <meta property="twitter:site" content="@mohsenfallahnjd" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{
