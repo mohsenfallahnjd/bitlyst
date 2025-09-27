@@ -17,18 +17,31 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://bitlyst.vercel.app/"),
-  icons: { icon: "/logo.svg" },
-  title: { default: "Bitlyst Blog", template: "%s · Bitlyst" },
-  description: "Bite-sized tech tips—simple, minimal, useful.",
+  icons: { icon: [{ url: "/icon.svg" }, { url: "/logo.svg" }] },
+  title: { default: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips", template: "%s · Bitlyst" },
+  description:
+    "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
   authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }],
-  keywords: ["bitlyst", "blog", "tech", "tips", "tutorials", "programming", "development"],
+  keywords: [
+    "bitlyst",
+    "blog",
+    "tech",
+    "javascript",
+    "react",
+    "next.js",
+    "frontend",
+    "web development",
+    "tips",
+    "tutorials",
+  ],
   alternates: {
     types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] },
     canonical: "https://bitlyst.vercel.app/",
   },
   openGraph: {
-    title: "Bitlyst",
-    description: "Bite-sized tech tips—simple, minimal, useful.",
+    title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
+    description:
+      "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
     url: "https://bitlyst.vercel.app/",
     siteName: "Bitlyst",
     type: "website",
@@ -38,10 +51,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Bitlyst",
-    description: "Bite-sized tech tips—simple, minimal, useful.",
+    title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
+    description:
+      "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
     images: "/logo.svg",
-    site: "https://bitlyst.vercel.app/",
+    site: "@mohsenfallahnjd",
     creator: "@mohsenfallahnjd",
   },
   robots: {
@@ -63,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/icon.svg" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{

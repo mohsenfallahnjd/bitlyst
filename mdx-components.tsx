@@ -18,14 +18,19 @@ const components: MDXComponents = {
   ol: (props) => (
     <ol {...props} className="list-decimal list-inside my-4 pl-2 space-y-2 text-gray-700 dark:text-gray-300" />
   ),
-  a: (props) => (
-    <a
-      {...props}
-      className="text-cyan-600 hover:underline hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
-      target="_blank"
-      rel="noopener noreferrer"
-    />
-  ),
+  a: (props) => {
+    const { target, rel, ...rest } = props as any;
+    const isExternal = target === "_blank";
+    const safeRel = isExternal ? (rel ? `${rel} noopener noreferrer` : "noopener noreferrer") : rel;
+    return (
+      <a
+        {...rest}
+        target={target}
+        rel={safeRel}
+        className="text-cyan-600 hover:underline hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
+      />
+    );
+  },
   blockquote: (props) => (
     <blockquote {...props} className="border-l-4 border-cyan-500 pl-4 italic my-4 text-gray-600 dark:text-gray-400" />
   ),

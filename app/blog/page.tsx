@@ -5,11 +5,11 @@ import TagsFilter from "@/components/TagsFilter";
 import { useBlogIndex } from "@/lib/useBlogIndex";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Blog — JavaScript, React, and Next.js tips",
   alternates: { canonical: "https://bitlyst.vercel.app/blog" },
   openGraph: {
-    title: "Bitlyst Blog",
-    description: "Bite-sized tech tips—simple, minimal, useful.",
+    title: "Bitlyst Blog — JavaScript, React, and Next.js tips",
+    description: "Browse bite-sized tutorials and practical tips on JavaScript, React, and Next.js.",
     url: "https://bitlyst.vercel.app/blog",
     siteName: "Bitlyst Blog",
     type: "website",

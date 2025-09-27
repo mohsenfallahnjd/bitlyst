@@ -10,11 +10,21 @@ export default function Footer() {
         </p>
 
         <div className="flex items-center gap-2">
-          <Link href="https://github.com/mohsenfallahnjd/bitlyst" target="_blank" className="hover:underline">
+          <Link
+            href="https://github.com/mohsenfallahnjd/bitlyst"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
             GitHub
           </Link>
           <span>•</span>
-          <Link href="https://www.linkedin.com/in/mohsenfallahnjd/" target="_blank" className="hover:underline">
+          <Link
+            href="https://www.linkedin.com/in/mohsenfallahnjd/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
             LinkedIn
           </Link>
           <span>•</span>
@@ -26,7 +36,12 @@ export default function Footer() {
             Instagram
           </Link>
           <span>•</span> */}
-          <Link href="mailto:mohsenfallahnjd@gmail.com" target="_blank" className="hover:underline">
+          <Link
+            href="mailto:mohsenfallahnjd@gmail.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
             Contact
           </Link>
           <span>•</span>
