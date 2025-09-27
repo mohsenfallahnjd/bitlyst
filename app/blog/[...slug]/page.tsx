@@ -157,6 +157,7 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       url: `https://bitlyst.vercel.app/blog/${slugPath}`,
       type: "article",
       authors: page.authors.map((author) => author.name),
+      siteName: "Bitlyst Blog",
     },
     twitter: {
       card: "summary_large_image",
