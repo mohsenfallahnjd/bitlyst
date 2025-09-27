@@ -1,10 +1,6 @@
-export default async function HomePage({ searchParams }: PageProps<"/">) {
-  // const all = loadMarkdownDocs();
-  // // const awaitSearchParams = await searchParams;
-  // // const tag = awaitSearchParams?.tag?.toString()?.toLowerCase() || "";
-  // const tag = "";
-  // const posts = tag ? all.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag)) : all;
+import List from "./_sections";
 
+export default async function HomePage({}: PageProps<"/">) {
   return (
     <section className="space-y-8">
       <div className="space-y-2">
@@ -14,25 +10,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
         </p>
       </div>
 
-      {/* <div className="grid gap-6">
-        {posts.slice(0, 6).map((p) => (
-          <PostCard key={p.slug} post={p} />
-        ))}
-      </div>
-
-      <div className="pt-2 flex items-center gap-3 text-sm">
-        <Link href="/blog" className="underline">
-          Browse all posts →
-        </Link>
-        {tag && (
-          <Link
-            href="/"
-            className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900"
-          >
-            Clear “{tag}”
-          </Link>
-        )}
-      </div> */}
+      <List />
     </section>
   );
 }
