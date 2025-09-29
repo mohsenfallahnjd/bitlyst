@@ -13,12 +13,15 @@ Here’s why MUI works smoothly and what happens behind the scenes.
 ---
 
 ## 🔑 The Key Ideas
+
 1. **Pre-hydration color scheme init**  
    MUI provides a tiny inline script (`getInitColorSchemeScript`) that runs in `<head>` **before** React hydrates.  
    It reads the saved mode (from `localStorage`) or system preference and sets `data-mui-color-scheme="dark|light"` on the `<html>` tag **before first paint**.
+
 2. **CSS variables for both schemes**  
    With `CssVarsProvider`, MUI generates CSS variables for both light and dark schemes.  
    The browser picks the correct set immediately based on the `data-mui-color-scheme` attribute.
+
 3. **SSR compatibility**  
    On the server, both schemes’ CSS variables are sent in the HTML. The client’s init script selects the right scheme instantly, so the **first paint already matches your preference**.
 
