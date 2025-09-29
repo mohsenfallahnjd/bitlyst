@@ -1,0 +1,127 @@
+---
+title: "Why MUI Avoids Theme Flash on First Load (Dark/Light Mode)"
+summary: "How MUI applies the correct color scheme on the very first paint, and why other UI kits often flash light before switching to dark."
+publishedTime: "2025-09-29"
+tags: ["mui", "nextjs", "dark mode", "hydration", "css variables"]
+---
+
+You may have noticed: with MUI, when you refresh the page in dark mode, it starts **already dark**.  
+But with other UI frameworks (like Ant Design), you often see a **flash of light mode** before switching to dark.
+
+Here’s why MUI works smoothly and what happens behind the scenes.
+
+---
+
+## 🔑 The Key Ideas
+1. **Pre-hydration color scheme init**  
+   MUI provides a tiny inline script (`getInitColorSchemeScript`) that runs in `<head>` **before** React hydrates.  
+   It reads the saved mode (from `localStorage`) or system preference and sets `data-mui-color-scheme="dark|light"` on the `<html>` tag **before first paint**.
+2. **CSS variables for both schemes**  
+   With `CssVarsProvider`, MUI generates CSS variables for both light and dark schemes.  
+   The browser picks the correct set immediately based on the `data-mui-color-scheme` attribute.
+3. **SSR compatibility**  
+   On the server, both schemes’ CSS variables are sent in the HTML. The client’s init script selects the right scheme instantly, so the **first paint already matches your preference**.
+
+---
+
+## ⚙️ What Happens in the Background
+
+### 1. CSS variables instead of static CSS
+```css
+:root {
+  --mui-palette-background-default: #fff;   /* light */
+  --mui-palette-text-primary: #000;
+}
+[data-mui-color-scheme='dark'] {
+  --mui-palette-background-default: #000;   /* dark */
+  --mui-palette-text-primary: #fff;
+}
+```
+Both light and dark definitions are present. The `data-mui-color-scheme` attribute decides which set is active.
+
+---
+
+### 2. The Init Script (runs before hydration)
+```html
+<script>
+  (function() {
+    try {
+      var mode = localStorage.getItem('mui-mode') || 'system';
+      var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var finalMode = mode === 'system' ? (systemDark ? 'dark' : 'light') : mode;
+      document.documentElement.setAttribute('data-mui-color-scheme', finalMode);
+    } catch (e) {}
+  })();
+</script>
+```
+This ensures the correct scheme is applied **before the browser paints anything**.
+
+---
+
+### 3. SSR + hydration safety
+- The DOM structure (HTML tags and content) is identical on server and client.  
+- Only **CSS variables change**, so React hydration doesn’t complain.  
+- No mismatch, no flicker.
+
+---
+
+### 4. Why Ant Design flashes
+Ant Design usually toggles a `dark` class **after hydration** using JS:
+
+```js
+useEffect(() => {
+  document.body.classList.add('dark');
+}, []);
+```
+
+- Server HTML is always “light”.  
+- First paint = light.  
+- After hydration, `dark` class is applied → second paint.  
+- Visible **flash of light → dark**.
+
+---
+
+## 🧠 Mental Model
+
+- **MUI**: Both outfits (light & dark) are in your closet. Before you leave the house, a helper puts the correct one on you. Nobody sees the wrong outfit.  
+- **Ant Design (typical)**: You leave the house in light clothes, then halfway down the street someone swaps you into dark. People see the flicker.
+
+---
+
+## ✅ How to Set Up in Next.js (App Router)
+
+```tsx
+// app/layout.tsx
+import { CssVarsProvider, getInitColorSchemeScript } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        {/* Runs before React; sets data-mui-color-scheme to avoid flicker */}
+        {getInitColorSchemeScript()} 
+      </head>
+      <body>
+        <CssVarsProvider defaultMode="system" modeStorageKey="mui-mode">
+          <CssBaseline />
+          {children}
+        </CssVarsProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+- `getInitColorSchemeScript()` → ensures correct theme before first paint.  
+- `CssVarsProvider` → enables light/dark CSS variable system.  
+
+---
+
+## ✅ Summary
+
+- MUI avoids theme flashing by using **CSS variables + an early init script**.  
+- The correct theme is applied **before the first paint**, so users never see the wrong one.  
+- Other UI frameworks often switch after hydration, which causes the flash.
+
+✨ Result: Dark mode feels **native and instant** with MUI.
