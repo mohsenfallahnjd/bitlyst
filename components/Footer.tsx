@@ -48,6 +48,10 @@ export default function Footer() {
           <Link href="/about" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
             About
           </Link>
+          <span>•</span>
+          <Link href="/rss.xml" className="hover:underline hover:text-gray-600 dark:hover:text-gray-600 text-sm">
+            RSS
+          </Link>
         </div>
       </div>
     </footer>
