@@ -1,0 +1,83 @@
+---
+title: "Prefetching in Next.js Links Explained"
+summary: "How Next.js prefetch works in <Link>, why it makes navigation fast, and when to disable it."
+publishedTime: "2025-09-30"
+tags: ["nextjs", "link", "prefetch", "app router", "performance"]
+---
+
+## 🚦 What is `prefetch`?
+
+In Next.js, `<Link>` can **prefetch** the code + data for the target page *before you click*.  
+That means when the user actually clicks, navigation feels **instant**.
+
+---
+
+## ⚙️ How it works under the hood
+
+1. When a `<Link>` appears in the **viewport**, Next.js triggers a **prefetch request**:
+   - The **JavaScript bundle** for that route.
+   - In App Router (`/app`), also the **React Server Component (RSC) payload**.
+
+2. Prefetching uses an **IntersectionObserver** so links outside the screen aren’t prefetched unnecessarily.
+
+3. If you hover/focus a link, Next.js may also prefetch aggressively.
+
+4. When you click, Next.js already has the assets in the **router cache**, so navigation happens with **zero extra network latency**.
+
+---
+
+## 🛠 Usage
+
+```tsx
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <nav>
+      {/* Prefetch ON (default in production) */}
+      <Link href="/about">About</Link>
+
+      {/* Explicitly disable prefetch */}
+      <Link href="/contact" prefetch={false}>
+        Contact
+      </Link>
+    </nav>
+  );
+}
+```
+
+- ✅ **Default in production**: `<Link>` prefetches.  
+- ⚠️ **Development mode**: Prefetching is disabled (to avoid interfering with HMR).
+
+---
+
+## 📦 App Router specifics (Next.js 13+)
+
+- Prefetch loads both the **code bundle** and the **RSC payload** (`.rsc` file).  
+- These are stored in the **Router cache**, so clicking doesn’t trigger a new fetch unless stale.  
+- With `fetch` inside Server Components, cache control (`force-cache`, `no-store`) determines whether the prefetched data is reused or refetched.
+
+---
+
+## 🎯 When to disable `prefetch`
+
+- If you render **too many links** (e.g., a large list/table), prefetching all would waste bandwidth.  
+- In those cases, use `prefetch={false}` or dynamically load links only when visible.
+
+---
+
+## 🧠 Mental model
+
+- `<Link prefetch>` = “warm up the router with everything this page needs, before the user clicks.”  
+- This is why Next.js apps often feel faster than plain SPAs: navigation happens instantly, without waiting for the network.
+
+---
+
+## ✅ Summary
+
+- Next.js prefetch loads **JS bundles + data** when a link is visible.  
+- Prefetch is **enabled by default in production**.  
+- Use `prefetch={false}` when you have many links and want to avoid wasted requests.  
+- In App Router, prefetch also warms up the **RSC payload** in the router cache.
+
+✨ Result: smoother, almost instant page transitions.
