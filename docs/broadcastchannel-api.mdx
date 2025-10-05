@@ -1,0 +1,184 @@
+---
+title: "BroadcastChannel API in JavaScript"
+summary: "How to communicate between browser tabs, windows, or iframes easily using the BroadcastChannel API."
+publishedTime: "2025-10-05"
+tags: ["javascript", "web api", "broadcastchannel", "multi-tab", "communication"]
+---
+
+The **BroadcastChannel API** allows **multiple browser tabs, windows, or iframes** from the same origin to communicate with each other directly — no server, no storage polling, and no WebSocket needed.
+
+---
+
+## 💡 What it does
+
+Imagine you have your app open in two tabs:
+- When you log out in one tab, the other should also log out.
+- When you update a theme, all tabs should update together.
+
+`BroadcastChannel` gives you a simple way to **broadcast messages between all open contexts** on the same origin.
+
+---
+
+## ⚙️ Basic usage
+
+```js
+// Create a new channel (same name must be used everywhere)
+const channel = new BroadcastChannel("app-channel");
+
+// Send a message
+channel.postMessage({ type: "LOGOUT" });
+
+// Receive messages
+channel.onmessage = (event) => {
+  console.log("Message from another tab:", event.data);
+};
+
+// Close the channel when done
+channel.close();
+```
+
+✅ Works between:
+- Browser **tabs**
+- **Windows** (opened with `window.open`)
+- **Iframes** on the same origin
+- **Web Workers**
+
+---
+
+## 🧠 Mental Model
+
+Think of it like a **walkie-talkie** channel:
+- Everyone listening to `"app-channel"` hears all messages.
+- Anyone can speak (broadcast).
+- Messages don’t persist — if a tab is closed, it stops listening.
+
+---
+
+## 🧩 Real-world examples
+
+### 1. Multi-tab logout sync
+
+```js
+// auth.js
+const authChannel = new BroadcastChannel("auth");
+
+export function logout() {
+  localStorage.removeItem("token");
+  authChannel.postMessage({ type: "LOGOUT" });
+  window.location.reload();
+}
+
+// elsewhere
+authChannel.onmessage = (event) => {
+  if (event.data.type === "LOGOUT") {
+    window.location.reload();
+  }
+};
+```
+
+→ Log out in one tab → all other tabs instantly reload.
+
+---
+
+### 2. Sync dark/light theme across tabs
+
+```js
+const themeChannel = new BroadcastChannel("theme");
+
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("theme", theme);
+  themeChannel.postMessage({ theme });
+}
+
+themeChannel.onmessage = (event) => {
+  document.documentElement.dataset.theme = event.data.theme;
+};
+```
+
+→ Change theme in one tab → others switch immediately.
+
+---
+
+## ⚡ Performance and limits
+
+- Messages are **asynchronous**, delivered via the **event loop**.  
+- Messages are **cloned (structured clone algorithm)** — you can send objects, arrays, etc.  
+- Works **only on same-origin** contexts.  
+- Not persisted: if you reload, old messages are gone.  
+- Doesn’t cross browser profiles or incognito sessions.
+
+---
+
+## 🧰 Compared to alternatives
+
+| Use Case | Recommended |
+|-----------|-------------|
+| Simple tab-to-tab communication | ✅ **BroadcastChannel** |
+| Storage sync (with state persistence) | `localStorage` event |
+| Cross-origin communication | `postMessage` |
+| Real-time server ↔ client | WebSocket / SSE |
+| Multi-tab shared worker | `SharedWorker` or `Service Worker` |
+
+---
+
+## 🧱 Using in React (example)
+
+```tsx
+import { useEffect } from "react";
+
+export default function ThemeSync() {
+  useEffect(() => {
+    const channel = new BroadcastChannel("theme");
+
+    channel.onmessage = (event) => {
+      document.documentElement.dataset.theme = event.data.theme;
+    };
+
+    return () => channel.close();
+  }, []);
+
+  const setTheme = (theme: "light" | "dark") => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("theme", theme);
+    new BroadcastChannel("theme").postMessage({ theme });
+  };
+
+  return (
+    <div>
+      <button onClick={() => setTheme("light")}>Light</button>
+      <button onClick={() => setTheme("dark")}>Dark</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 🧪 Browser support
+
+✅ Chrome, Firefox, Edge, Safari (modern versions).  
+❌ Not supported in IE.  
+Fallback: use `localStorage`’s `storage` event or a Service Worker.
+
+---
+
+## 🧩 Clean-up tips
+
+- Always call `channel.close()` when your component unmounts.  
+- Avoid creating new channels repeatedly (reuse one per module when possible).  
+- In SSR frameworks like Next.js, guard it with `if (typeof window !== "undefined")`.
+
+---
+
+## ✅ Summary
+
+| Feature | Description |
+|----------|-------------|
+| What | Send messages between tabs/windows of the same origin |
+| Persistent? | ❌ No |
+| Direction | Broadcast (one-to-many) |
+| Speed | Instant (same event loop tick) |
+| Use cases | Multi-tab sync (logout, theme, notifications) |
+
+✨ **BroadcastChannel** = simple, fast, native multi-tab messaging — no servers, no hacks.
