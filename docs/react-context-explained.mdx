@@ -1,0 +1,186 @@
+---
+title: "React Context Explained: How It Works Under the Hood"
+summary: "Understand what React Context is, how it works internally, and best practices for using it effectively."
+publishedTime: "2025-10-05"
+tags: ["react", "context", "hooks", "state management"]
+---
+
+React’s **Context API** lets you share data between components **without passing props manually** through every level.  
+It’s designed for global values like theme, language, or authentication — where many components need access to the same data.
+
+---
+
+## 🧩 What is React Context?
+
+Context provides a way to share values like `theme`, `user`, or `locale` deeply in the component tree **without prop drilling**.
+
+It helps solve this problem:
+
+```tsx
+// Before: prop drilling
+<Layout theme="dark">
+  <Header theme="dark">
+    <Logo theme="dark" />
+  </Header>
+</Layout>
+```
+
+With Context:
+```tsx
+<ThemeProvider value="dark">
+  <Layout />
+</ThemeProvider>
+```
+
+---
+
+## ⚙️ How Context Works (Under the Hood)
+
+### Step 1 — Create
+```tsx
+const ThemeContext = React.createContext("light");
+```
+- Creates a Context object with two parts:
+  - A **Provider** component.
+  - A reference for the **current value** inside React’s internal Fiber tree.
+
+### Step 2 — Provide
+```tsx
+<ThemeContext.Provider value="dark">
+  <App />
+</ThemeContext.Provider>
+```
+- React stores the `value` on the Provider’s Fiber node.  
+- Keeps track of all **child consumers** that read from this context.
+
+### Step 3 — Consume
+```tsx
+const theme = useContext(ThemeContext);
+```
+- React looks upward in the component tree to find the **nearest Provider**.  
+- Returns its value.  
+- If the Provider’s value changes, React **re-renders all consumers** that depend on it.
+
+---
+
+## 🧠 What Happens Internally
+
+- Every Context keeps a `_currentValue` reference on its Provider.  
+- `useContext` subscribes the component to that Provider.  
+- When the Provider’s `value` changes, React marks all consumers for re-render.  
+- React compares by **reference**, not by deep value.
+
+So:
+```tsx
+// ❌ Causes re-renders each time
+<ThemeContext.Provider value={{ mode: "dark" }}>...</ThemeContext.Provider>
+
+// ✅ Stable reference
+const theme = useMemo(() => ({ mode }), [mode]);
+<ThemeContext.Provider value={theme}>...</ThemeContext.Provider>
+```
+
+---
+
+## 🧱 How to Use Context
+
+### Create a Context + Provider
+```tsx
+import { createContext, useContext, useState, useMemo } from "react";
+
+const ThemeContext = createContext();
+
+export function ThemeProvider({ children }) {
+  const [mode, setMode] = useState("light");
+  const value = useMemo(
+    () => ({
+      mode,
+      toggle: () => setMode(m => (m === "light" ? "dark" : "light"))
+    }),
+    [mode]
+  );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+export const useTheme = () => useContext(ThemeContext);
+```
+
+### Use it in Components
+```tsx
+function Header() {
+  const { mode, toggle } = useTheme();
+  return (
+    <header className={mode}>
+      <button onClick={toggle}>Switch to {mode === "light" ? "dark" : "light"}</button>
+    </header>
+  );
+}
+```
+
+### Multiple Contexts
+```tsx
+<AuthProvider>
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>
+</AuthProvider>
+```
+
+---
+
+## 🔍 When (and When Not) to Use Context
+
+### ✅ Use Context for:
+- Theme, locale, user, config
+- Shared but stable global data
+- App-wide settings
+
+### ⚠️ Avoid for:
+- Rapidly changing values (inputs, lists, timers)
+- High-frequency updates — causes re-renders in all consumers
+
+Use **state libraries** (Zustand, Redux, Jotai, etc.) or **split contexts**.
+
+---
+
+## 🧠 How React Handles Context Internally (Fiber)
+
+- Each Provider is a node in the **Fiber tree**.  
+- Context changes propagate **downward** through fibers.  
+- Each consumer using `useContext` subscribes to that Provider.  
+- On update, React traverses the subtree to re-render affected components.  
+- React guarantees consistency: all consumers see the same value in one render pass.
+
+---
+
+## 🚀 Optimization Tips
+
+1. **Memoize values**
+   ```tsx
+   const value = useMemo(() => ({ user, logout }), [user]);
+   ```
+2. **Split context**
+   ```tsx
+   const UserContext = createContext();
+   const ThemeContext = createContext();
+   ```
+   → Changing theme won’t re-render user consumers.
+3. **Selector pattern**
+   Use libraries like `use-context-selector` for fine-grained subscriptions.
+4. **Avoid passing new objects/functions** each render.
+
+---
+
+## ✅ Summary
+
+| Concept | Description |
+|----------|--------------|
+| **Context** | Share data deeply without prop drilling |
+| **Provider** | Sets value for all descendants |
+| **useContext** | Reads nearest Provider’s value |
+| **Triggers re-render** | When `value` prop changes by reference |
+| **Avoid** | Rapid updates or non-memoized objects |
+
+✨ **React Context = global data flow with React’s rendering guarantees**.  
+Used right, it’s powerful and efficient — used wrong, it becomes a hidden re-render trap.
