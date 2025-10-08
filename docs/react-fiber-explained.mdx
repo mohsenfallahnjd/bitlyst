@@ -1,0 +1,189 @@
+---
+title: "React Fiber Explained: How React’s Engine Actually Works"
+summary: "A deep but clear explanation of React Fiber — the engine that powers modern React rendering and concurrency."
+publishedTime: "2025-10-08"
+tags: ["react", "fiber", "reconciliation", "concurrent", "react internals"]
+---
+React **Fiber** is the internal engine that powers React’s rendering and reconciliation.  
+It’s what makes React’s updates smooth, interruptible, and concurrent.
+
+---
+
+## 🧩 What is React Fiber?
+
+**React Fiber** is React’s **reconciliation engine** — the system that decides *what* needs to be rendered and *when*.
+
+Before React 16, React updates were **synchronous** and **blocking**. Once rendering started, React couldn’t pause or reprioritize work — large trees could freeze the UI.
+
+Fiber was a complete rewrite that made React’s rendering:
+- ⏸ **Interruptible**
+- ⏱ **Prioritized**
+- 🔁 **Incremental (chunked)**
+- 💾 **Recoverable (resumable)**
+
+In short: **Fiber = React’s virtual call stack for async rendering.**
+
+---
+
+## 🕰️ The Old Model (Before Fiber)
+
+Before Fiber, React used a **recursive** rendering approach — like this:
+
+```js
+function renderTree(node) {
+  node.render();
+  node.children.forEach(renderTree);
+}
+```
+
+- Large trees blocked the main thread.  
+- The browser couldn’t respond to user input until React finished.  
+- No way to pause, abort, or prioritize rendering.
+
+---
+
+## ⚡ Fiber: The New Architecture
+
+React Fiber breaks the rendering work into **small units of work**, called **fiber nodes**.
+
+This lets React:
+- Pause between chunks of work.
+- Resume later if the browser is busy.
+- Assign different priorities to updates.
+- Reuse previous work if nothing changed.
+
+So React no longer blocks the main thread — it cooperatively yields to the browser.
+
+---
+
+## 🧱 The Fiber Node Structure
+
+Each React component is represented by a **Fiber node** — a JavaScript object with pointers and metadata.
+
+| Field | Description |
+|--------|--------------|
+| `type` | The component or DOM type |
+| `key` | Used for list diffing |
+| `child`, `sibling`, `return` | Pointers to other fiber nodes (linked list tree) |
+| `pendingProps`, `memoizedProps`, `memoizedState` | Stores component state & props |
+| `flags` | Marks what changed (update, placement, deletion) |
+| `alternate` | Link to the previous fiber (for diffing old vs new trees) |
+
+📘 Think of it as two trees:
+- **Current tree** → what’s on screen.  
+- **Work-in-progress tree** → what React is preparing.
+
+When ready, React **commits** the new tree and swaps references.
+
+---
+
+## 🔁 The Two Phases of Rendering
+
+### 1️⃣ Render Phase (Reconciliation)
+- React builds a new Fiber tree (work-in-progress).
+- Diffs elements vs previous render.
+- Calculates what to change.
+- Can be **paused, aborted, or restarted**.
+
+### 2️⃣ Commit Phase
+- React applies all DOM mutations.
+- Runs effects (`useEffect`, `componentDidMount`, etc.).
+- This phase is **synchronous** — React cannot pause it.
+
+🧠 Render phase = “thinking”  
+⚡ Commit phase = “doing”
+
+---
+
+## 🧠 Scheduling and Priority
+
+Fiber works with React’s **scheduler**, which assigns priority to updates:
+
+| Priority | Example |
+|-----------|----------|
+| Immediate | User input (typing, clicking) |
+| High | Animations |
+| Normal | State updates |
+| Low | Background tasks |
+| Idle | Prefetch, pre-render |
+
+React checks between chunks:
+> “Browser, do you have time? If not, I’ll yield and resume later.”
+
+This is what enables **Concurrent Rendering**.
+
+---
+
+## ⚙️ Concurrent React (Fiber + Scheduler)
+
+With **Concurrent Mode (React 18+)**, Fiber can prepare multiple UI versions in parallel.
+
+React can:
+- Prepare new UI while showing the old one.  
+- Cancel or pause updates mid-render.  
+- Prioritize urgent updates (like typing).
+
+Example:
+
+```tsx
+const [isPending, startTransition] = useTransition();
+
+function handleInput(e) {
+  const value = e.target.value;
+  startTransition(() => setFilter(value)); // low priority render
+}
+```
+
+React keeps input responsive because it renders background updates at a lower priority.
+
+---
+
+## 🧬 Visualization
+
+```
+      [Root Fiber]
+          │
+    ┌─────┴─────┐
+ [App]        [Modal]
+   │              │
+ [Header]       [Button]
+```
+
+Each node is a **Fiber** linked by `child`, `sibling`, and `return`.  
+React walks this structure instead of the JS call stack — so it can pause or resume at any point.
+
+---
+
+## 💡 Key Benefits of Fiber
+
+✅ Interruptible, non-blocking rendering  
+✅ Priority scheduling for updates  
+✅ Recoverable rendering (pause/resume)  
+✅ Enables Suspense, useTransition, and concurrent features  
+✅ Better error isolation and performance profiling
+
+---
+
+## 🧠 Why It Matters (Even if You Don’t Use It Directly)
+
+You don’t write Fiber code yourself, but understanding it helps you reason about:
+- Why React sometimes delays updates.
+- Why “render” can happen multiple times before commit.
+- How `useTransition` and `Suspense` work.
+- Why strict mode double-invokes renders (simulates concurrency).
+
+---
+
+## ✅ Summary
+
+| Concept | Description |
+|----------|--------------|
+| **Fiber** | React’s internal unit of work for rendering |
+| **Fiber Node** | Represents one component or element |
+| **Render Phase** | Diff & prepare work (async, interruptible) |
+| **Commit Phase** | Apply updates (sync) |
+| **Scheduler** | Manages priorities of updates |
+| **Concurrent Rendering** | Lets React multitask smoothly |
+
+✨ **React Fiber turned React from a recursive renderer into an asynchronous virtual machine for UI.**  
+It’s the reason React 18 feels fast, smooth, and intelligent.
