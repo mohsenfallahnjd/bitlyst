@@ -12,6 +12,12 @@ export type UsefulLink = {
 
 export const usefulLinks: UsefulLink[] = [
   {
+    title: "Liquid Glass in the Browser",
+    url: "https://kube.io/blog/liquid-glass-css-svg/",
+    description: "Liquid Glass in the Browser: Refraction with CSS and SVG",
+    tags: ["css", "svg", "refraction", "liquid-glass", "apple"],
+  },
+  {
     title: "Vape Server Project",
     url: "https://bogdanthegeek.github.io/blog/projects/vapeserver/",
     description: "Lightweight reverse proxy / tunneling server suited for demos and edge/IoT scenarios.",
