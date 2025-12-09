@@ -73,7 +73,7 @@ function buildExcerpt(content: string, terms: string[], maxLen = 180): string {
   return `${prefix}${content.slice(start, end).trim()}${suffix}`;
 }
 
-function highlight(text: string, terms: string[]): JSX.Element {
+function highlight(text: string, terms: string[]) {
   if (!terms.length || !text) {
     return <>{text}</>;
   }

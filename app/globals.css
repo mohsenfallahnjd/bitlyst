@@ -4,7 +4,9 @@
 
 /* Optional: smooth transitions for theme change */
 * {
-  @apply transition-colors duration-100;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-duration: 100ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root {
@@ -35,5 +37,9 @@ body {
 }
 
 .container {
-  @apply max-w-2xl mx-auto px-4;
+  max-width: 42rem; /* Tailwind's max-w-2xl */
+  margin-left: auto;
+  margin-right: auto; /* Tailwind's mx-auto */
+  padding-left: 1rem;
+  padding-right: 1rem; /* Tailwind's px-4 */
 }
