@@ -1,0 +1,83 @@
+---
+title: "useDeferredValue Explained: Keeping React UIs Responsive"
+summary: "How useDeferredValue works under the hood, when to use it, and how it differs from useTransition."
+publishedTime: "2025-12-12"
+tags: ["react", "hooks", "concurrent", "performance"]
+---
+
+# useDeferredValue Explained
+
+`useDeferredValue` is a **React concurrent hook** that lets you **delay rendering of non-urgent values** so your UI stays responsive.
+
+---
+
+## 🧩 What Problem Does `useDeferredValue` Solve?
+
+It helps prevent UI lag when rendering is expensive but user input must remain fast.
+
+---
+
+## ⚙️ Basic Usage
+
+```tsx
+import { useDeferredValue, useState } from "react";
+
+function Search() {
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
+
+  return (
+    <>
+      <input value={query} onChange={(e) => setQuery(e.target.value)} />
+      <Results query={deferredQuery} />
+    </>
+  );
+}
+```
+
+---
+
+## 🧠 Mental Model
+
+- `query` updates immediately
+- `deferredQuery` updates when React has time
+
+---
+
+## 🔍 How It Works Under the Hood
+
+- Deferred updates are marked **low priority**
+- Urgent updates interrupt them
+- Intermediate renders may be skipped
+
+---
+
+## ⚡ useDeferredValue vs useTransition
+
+| Feature | useDeferredValue | useTransition |
+|--------|------------------|---------------|
+| Controls | Value | State update |
+| API | Passive | Active |
+| Pending flag | ❌ | ✅ |
+
+---
+
+## 🧱 Example: Filtering a Large List
+
+```tsx
+const deferredFilter = useDeferredValue(filter);
+```
+
+---
+
+## ⚠️ Notes
+
+- Not a debounce
+- Requires React 18+
+- Delays rendering, not state
+
+---
+
+## ✅ Summary
+
+`useDeferredValue` improves UX by prioritizing urgent updates and deferring expensive rendering.
