@@ -1,0 +1,180 @@
+---
+title: "useTransition Explained: Make React Feel Instant"
+summary: "How useTransition works under the hood, when to use it, and how it differs from useDeferredValue."
+publishedTime: "2025-12-12"
+tags: ["react", "hooks", "concurrent", "performance", "ux"]
+---
+
+# useTransition Explained
+
+`useTransition` is a React 18+ **concurrent hook** that lets you mark some state updates as **non-urgent**.
+
+This helps your app stay responsive by making React prioritize:
+- ✅ urgent updates (typing, clicking, input responsiveness)
+over
+- ⏳ slow UI updates (big list rendering, expensive filtering, heavy page transitions)
+
+---
+
+## 🧩 The Problem It Solves
+
+Imagine a search input where filtering is heavy:
+
+- User types: input updates
+- At the same time, you render a huge list based on the text
+
+Without `useTransition`, React treats both as equally urgent → typing can feel laggy.
+
+---
+
+## ⚙️ Basic API
+
+```tsx
+import { useTransition, useState } from "react";
+
+export default function SearchPage({ items }: { items: string[] }) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+
+    // ✅ urgent: update input right away
+    setQuery(value);
+
+    // ⏳ non-urgent: update expensive list/filter
+    startTransition(() => {
+      setFilter(value);
+    });
+  }
+
+  const filtered = items.filter((x) => x.includes(filter));
+
+  return (
+    <div>
+      <input value={query} onChange={onChange} />
+      {isPending && <p>Updating results…</p>}
+      <ul>
+        {filtered.map((x) => (
+          <li key={x}>{x}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### What you get
+- `startTransition(fn)` marks updates inside as **transition** (low priority).
+- `isPending` becomes `true` while React is working on those updates.
+
+---
+
+## 🧠 Mental Model
+
+Think of React updates like a queue with priorities:
+
+- **Urgent lane**: typing, clicks, pointer movement
+- **Transition lane**: slow rendering that can wait
+
+`startTransition` moves updates into the **transition lane**.
+
+So the user experience becomes:
+- input stays snappy ✅
+- expensive rendering happens a bit later ⏳
+
+---
+
+## 🔍 How It Works Under the Hood
+
+React Fiber + Scheduler does this:
+
+1. `setQuery(value)` schedules an **urgent update**.
+2. `startTransition(() => setFilter(value))` schedules a **low priority update**.
+3. If the user keeps typing, React may:
+   - pause the low priority render
+   - restart it with the latest value
+   - skip intermediate renders
+
+That’s why transitions feel smooth: React avoids wasting work.
+
+---
+
+## ⚡ useTransition vs useDeferredValue
+
+| Feature | useTransition | useDeferredValue |
+|--------|---------------|------------------|
+| You control | a state update | a derived value |
+| API style | Active (`startTransition`) | Passive (`useDeferredValue(value)`) |
+| Pending indicator | ✅ `isPending` | ❌ no built-in pending |
+| Best for | triggering work | delaying derived rendering |
+| Typical use | page transitions, filtering | search input results, previews |
+
+**Rule of thumb**
+- Use **useTransition** when you want to say: “this update can wait.”
+- Use **useDeferredValue** when you want: “render using an older value until you have time.”
+
+---
+
+## ✅ Great Use Cases
+
+- Filtering large lists
+- Switching tabs with heavy content
+- Updating charts
+- Navigating to a route that triggers lots of work
+- Anything where “loading/pending” UX helps
+
+---
+
+## ⚠️ What useTransition is NOT
+
+- ❌ It is **not** debounce/throttle
+- ❌ It does **not** run work in a separate thread
+- ❌ It doesn’t magically make slow code fast — it just makes the UI stay responsive
+
+If your render is extremely slow, consider:
+- memoization (`useMemo`, `React.memo`)
+- virtualization (react-window)
+- splitting components / code-splitting
+- improving algorithms
+
+---
+
+## 🧱 Common Mistakes
+
+### 1) Putting urgent updates inside transition
+```tsx
+startTransition(() => {
+  setQuery(value); // ❌ makes typing laggy
+});
+```
+Keep input updates urgent.
+
+### 2) Creating new heavy objects on every render
+If your filtered list is recomputed every render, also consider memoizing or pre-indexing.
+
+---
+
+## 🔁 `isPending` UX pattern
+
+```tsx
+{isPending ? <Spinner /> : <Results />}
+```
+
+or keep results visible and show subtle hint:
+
+```tsx
+{isPending && <small>Updating…</small>}
+```
+
+---
+
+## ✅ Summary
+
+- `useTransition` marks updates as **low priority**.
+- It protects user input from being blocked by heavy renders.
+- Powered by **Fiber + Scheduler**, React can pause/restart work.
+- Pair it with good performance practices for best results.
+
+✨ **useTransition makes React apps feel instant by keeping “urgent UI” always responsive.**
