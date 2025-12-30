@@ -1,0 +1,175 @@
+---
+title: "Are TypeScript Enums a Good Idea? (Bundle Size & Runtime)"
+summary: "A practical guide to TypeScript enums, their runtime cost, and better alternatives for modern frontend apps."
+publishedTime: "2025-12-30"
+tags: ["typescript", "enums", "bundle-size", "performance", "frontend"]
+---
+
+# Are TypeScript Enums a Good Idea?
+
+Short answer: **usually no**, especially in frontend apps where **bundle size and runtime behavior matter**.
+
+TypeScript `enum`s look convenient, but they come with **hidden runtime costs**. In most cases, there are **better zero-cost alternatives**.
+
+---
+
+## 🧠 What Actually Happens with `enum`
+
+### Numeric enum
+```ts
+enum Status {
+  Idle,
+  Loading,
+  Success,
+}
+```
+
+Generated JavaScript:
+```js
+var Status;
+(function (Status) {
+  Status[Status["Idle"] = 0] = "Idle";
+  Status[Status["Loading"] = 1] = "Loading";
+  Status[Status["Success"] = 2] = "Success";
+})(Status || (Status = {}));
+```
+
+👉 This means:
+- A **real object exists at runtime**
+- Extra bytes in your JS bundle
+- Worse tree-shaking than you expect
+
+---
+
+### String enum
+```ts
+enum Mode {
+  Light = "light",
+  Dark = "dark",
+}
+```
+
+Still generates a runtime object:
+```js
+var Mode = {
+  Light: "light",
+  Dark: "dark",
+};
+```
+
+Better than numeric enums, but still **not free**.
+
+---
+
+## ⚠️ Why Enums Can Be a Problem
+
+- ❌ Increase bundle size
+- ❌ Add runtime objects
+- ❌ Harder to tree-shake
+- ❌ Easy to misuse for simple unions
+
+Enums are **not erased** by TypeScript.
+
+---
+
+## ⚡ What About `const enum`?
+
+```ts
+const enum Status {
+  Idle,
+  Loading,
+}
+```
+
+- ✅ Inlined at compile time
+- ✅ Zero runtime cost
+- ❌ Often incompatible with Babel / SWC / isolatedModules
+- ❌ Risky in monorepos or mixed build setups
+
+⚠️ Use only if you fully control your toolchain.
+
+---
+
+## ✅ Better Alternatives (Recommended)
+
+### 1️⃣ String Literal Unions (Best Default)
+
+```ts
+type Mode = "light" | "dark";
+```
+
+- ✅ Zero runtime cost
+- ✅ Perfect for props, state, API types
+- ❌ No runtime list (by default)
+
+Pair with a list if needed:
+
+```ts
+export const MODES = ["light", "dark"] as const;
+export type Mode = (typeof MODES)[number];
+```
+
+---
+
+### 2️⃣ `as const` Object Pattern (Enum-like DX)
+
+```ts
+export const Mode = {
+  Light: "light",
+  Dark: "dark",
+} as const;
+
+export type Mode = typeof Mode[keyof typeof Mode];
+```
+
+- ✅ Small runtime footprint
+- ✅ Tree-shakable
+- ✅ Nice DX: `Mode.Dark`
+- ✅ Works well with runtime validation
+
+---
+
+### 3️⃣ Schema-first (APIs, forms)
+
+```ts
+const ROLES = ["admin", "user"] as const;
+type Role = (typeof ROLES)[number];
+```
+
+Great when used with Zod / Valibot for runtime validation.
+
+---
+
+## 🧠 When Enums Are Actually OK
+
+Use real `enum` if:
+- You **need runtime iteration**
+- You rely on **reverse mapping**
+- You integrate with legacy code
+- Bundle size is not critical
+
+Enums are not evil — just **often overused**.
+
+---
+
+## 📊 Comparison Table
+
+| Pattern | Runtime cost | Tree-shaking | DX | Recommended |
+|------|--------------|--------------|----|------------|
+| enum | ❌ | ❌ | ✅ | ⚠️ |
+| const enum | ✅ | ✅ | ⚠️ | ⚠️ |
+| union type | ✅ | ✅ | ✅ | ⭐ |
+| as const object | ✅ | ✅ | ✅ | ⭐⭐ |
+
+---
+
+## ✅ Final Recommendation
+
+> **Prefer unions and `as const` objects in frontend TypeScript.**  
+> Reach for `enum` only when you truly need runtime behavior.
+
+This approach gives you:
+- Smaller bundles
+- Faster startup
+- Clearer intent
+- Fewer build surprises
