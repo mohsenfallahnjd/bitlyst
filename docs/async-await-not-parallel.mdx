@@ -1,0 +1,191 @@
+---
+title: "Why async/await Doesn’t Make JavaScript Code Parallel"
+summary: "Async/await feels like parallel code, but it isn’t. Here’s why JavaScript is still single-threaded and how async really works."
+publishedTime: "2025-12-30"
+tags: ["javascript", "async", "await", "promises", "event loop"]
+---
+
+# Why async/await Doesn’t Make JavaScript Code Parallel
+
+`async/await` often *looks* like parallel code, but it **does not make JavaScript run in parallel**.
+
+Understanding this distinction is crucial for:
+- performance tuning
+- avoiding UI freezes
+- writing correct async logic
+
+---
+
+## 🧠 The Core Truth
+
+> **`async/await` is just syntax sugar over Promises.**  
+> It makes async code *look synchronous*, but execution is still **single-threaded**.
+
+---
+
+## ❌ Common Misconception
+
+```js
+await fetch("/a");
+await fetch("/b");
+await fetch("/c");
+```
+
+Many people think:
+> “These run in parallel because they are async.”
+
+❌ **Wrong** — they run **sequentially**.
+
+Each `await` waits for the previous one to finish **before starting the next**.
+
+---
+
+## ✅ What Actually Runs in Parallel
+
+Only **I/O handled by the runtime** (browser or Node.js) can run concurrently:
+- Network requests
+- Timers
+- File system operations (Node)
+- Database calls
+
+JavaScript code itself **never runs in parallel** on a single thread.
+
+---
+
+## 🔍 What `await` Really Does
+
+When JavaScript sees:
+
+```js
+await promise;
+```
+
+It does **three things**:
+
+1. Pauses the current function
+2. Returns control to the event loop
+3. Resumes later when the Promise resolves
+
+➡️ No new thread is created.  
+➡️ No parallel JS execution happens.
+
+---
+
+## 🧪 Sequential vs Concurrent Example
+
+### ❌ Sequential (slow)
+
+```js
+await fetch("/a");
+await fetch("/b");
+await fetch("/c");
+```
+
+Timeline:
+```
+A ───► B ───► C
+```
+
+---
+
+### ✅ Concurrent (correct)
+
+```js
+const a = fetch("/a");
+const b = fetch("/b");
+const c = fetch("/c");
+
+await Promise.all([a, b, c]);
+```
+
+Timeline:
+```
+A ──────┐
+B ──────┼──► await
+C ──────┘
+```
+
+Here:
+- Requests run concurrently (outside JS)
+- JS still resumes once, not in parallel
+
+---
+
+## ⚠️ async/await vs CPU Work
+
+This **still blocks** the UI:
+
+```js
+async function bad() {
+  await heavyCpuTask(); // ❌ still blocks
+}
+```
+
+Because:
+- CPU-heavy work runs on the JS thread
+- `await` does not offload computation
+
+If you need real parallel CPU work:
+- Web Workers (browser)
+- Worker Threads (Node.js)
+
+---
+
+## 🧠 Mental Model
+
+- **async/await** = *pause & resume*
+- **Promise** = *future value*
+- **Event loop** = *scheduler*
+- **Parallelism** = *multiple threads* (JS does not have this)
+
+Think of `await` as:
+> “Pause here, let other JS run, come back later.”
+
+---
+
+## 🔁 Why async/await Still Feels Faster
+
+Even though it’s not parallel:
+- JS thread stays free while waiting
+- UI stays responsive
+- Multiple I/O tasks overlap
+
+So apps *feel* faster — but computation is still single-threaded.
+
+---
+
+## 🧱 When You Actually Get Parallelism
+
+| Scenario | Parallel? |
+|--------|----------|
+| `await fetch()` | ❌ JS / ✅ I/O |
+| `Promise.all(fetches)` | ❌ JS / ✅ I/O |
+| CPU loop | ❌ |
+| Web Worker | ✅ |
+| Node worker_threads | ✅ |
+
+---
+
+## ✅ Summary
+
+| Concept | Reality |
+|------|--------|
+| async/await | Syntax sugar |
+| JS execution | Single-threaded |
+| I/O | Concurrent |
+| CPU work | Blocking |
+| Promise.all | Concurrency, not parallelism |
+
+---
+
+## ✨ Final Takeaway
+
+> **async/await makes asynchronous code readable — not parallel.**  
+> For parallel execution, you need multiple threads (workers), not syntax.
+
+---
+
+### Suggested follow-ups
+- Event Loop: microtasks vs macrotasks  
+- Promise.all vs Promise.allSettled vs Promise.race  
+- Web Workers vs async/await

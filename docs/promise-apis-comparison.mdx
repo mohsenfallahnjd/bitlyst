@@ -1,0 +1,227 @@
+---
+title: "Promise APIs Compared: all vs race vs any vs allSettled"
+summary: "A practical and conceptual comparison of Promise.all, Promise.race, Promise.any, and Promise.allSettled."
+publishedTime: "2025-12-30"
+tags: ["javascript", "promises", "async", "event loop"]
+---
+
+# Promise APIs Comparison: `all` vs `race` vs `any` vs `allSettled`
+
+JavaScript provides multiple Promise combinators.  
+They all **start promises concurrently**, but they differ in **when they resolve/reject** and **what they return**.
+
+Understanding the differences prevents subtle bugs and improves performance.
+
+---
+
+## 🧠 Quick Overview
+
+| API | Resolves when | Rejects when | Typical use |
+|----|--------------|--------------|-------------|
+| `Promise.all` | All promises resolve | Any promise rejects | All-or-nothing |
+| `Promise.race` | First promise settles | First promise settles | Timeout / fastest |
+| `Promise.any` | First promise resolves | All promises reject | First success |
+| `Promise.allSettled` | All promises settle | ❌ Never rejects | Collect results |
+
+---
+
+## 🔹 Promise.all
+
+### Behavior
+- Waits for **all promises to resolve**
+- Rejects immediately if **any promise rejects**
+
+```js
+await Promise.all([
+  fetch("/a"),
+  fetch("/b"),
+  fetch("/c"),
+]);
+```
+
+### Timeline
+```
+A ─────┐
+B ─────┼──► resolve
+C ─────┘
+```
+
+### When to use
+✅ You need **all results**  
+❌ One failure should stop everything
+
+### Common mistake
+```js
+await Promise.all(tasks); // crashes if one fails
+```
+If partial success is acceptable → use `allSettled`.
+
+---
+
+## 🔹 Promise.race
+
+### Behavior
+- Settles as soon as **the first promise settles**
+- That settlement can be **resolve or reject**
+
+```js
+await Promise.race([
+  fetch("/data"),
+  timeout(3000),
+]);
+```
+
+### Timeline
+```
+timeout ──► reject (wins)
+fetch    ───────────► ignored
+```
+
+### When to use
+✅ Timeouts  
+✅ First response wins  
+❌ Not for “first success only”
+
+---
+
+## 🔹 Promise.any
+
+### Behavior
+- Resolves on the **first fulfilled promise**
+- Rejects only if **all promises reject**
+- Rejection reason is an `AggregateError`
+
+```js
+const result = await Promise.any([
+  fetch("/cdn-1"),
+  fetch("/cdn-2"),
+  fetch("/cdn-3"),
+]);
+```
+
+### Timeline
+```
+cdn-1 ✖
+cdn-2 ✖
+cdn-3 ✔ ──► resolve
+```
+
+### When to use
+✅ Redundant endpoints  
+✅ Fallback strategies  
+❌ When failures matter
+
+---
+
+## 🔹 Promise.allSettled
+
+### Behavior
+- Waits for **all promises to settle**
+- Never rejects
+- Returns status for each promise
+
+```js
+const results = await Promise.allSettled([
+  fetch("/a"),
+  fetch("/b"),
+  fetch("/c"),
+]);
+```
+
+### Result shape
+```js
+[
+  { status: "fulfilled", value: ... },
+  { status: "rejected", reason: ... },
+]
+```
+
+### Timeline
+```
+A ✔
+B ✖
+C ✔ ──► resolve with report
+```
+
+### When to use
+✅ Logging  
+✅ Batch operations  
+✅ Partial success allowed
+
+---
+
+## 🧠 Mental Model
+
+Think of them as **rules for waiting**:
+
+- `all` → everyone must succeed
+- `race` → whoever finishes first decides
+- `any` → first success wins
+- `allSettled` → everyone reports back
+
+---
+
+## ⚠️ Important Notes
+
+- All promises **start immediately**
+- None of these APIs make JS parallel
+- They only coordinate async results
+
+This is still sequential:
+```js
+await a();
+await b();
+```
+
+This is concurrent:
+```js
+await Promise.all([a(), b()]);
+```
+
+---
+
+## 🧪 Real-World Use Cases
+
+| Scenario | Best API |
+|--------|----------|
+| Load page data | `Promise.all` |
+| Add request timeout | `Promise.race` |
+| Fallback API | `Promise.any` |
+| Batch processing | `Promise.allSettled` |
+
+---
+
+## ❌ Common Pitfalls
+
+### 1. Using `all` when failures are acceptable
+→ causes unnecessary crashes
+
+### 2. Using `race` for “first success”
+→ rejects too early
+
+### 3. Forgetting `AggregateError` in `any`
+```js
+try {
+  await Promise.any(promises);
+} catch (e) {
+  console.log(e.errors); // list of failures
+}
+```
+
+---
+
+## ✅ Summary Table
+
+| API | Stops early | Rejects | Use for |
+|----|------------|--------|--------|
+| all | ❌ | ✅ | Must-have-all |
+| race | ✅ | ✅ | Fastest / timeout |
+| any | ✅ | ✅ (all fail) | First success |
+| allSettled | ❌ | ❌ | Full report |
+
+---
+
+## ✨ Final Takeaway
+
+> **Choose the Promise API based on failure behavior, not speed.**  
+> They all run concurrently — the difference is *when you stop waiting*.

@@ -1,0 +1,234 @@
+---
+title: "Web Workers Explained for Frontend Developers"
+summary: "How Web Workers work, why they matter, and when to use them to achieve real parallelism in frontend apps."
+publishedTime: "2025-12-30"
+tags: ["javascript", "web workers", "performance", "parallelism", "browser"]
+---
+
+# Web Workers Explained for Frontend Developers
+
+JavaScript in the browser is **single-threaded** — but modern web apps often need to do heavy work without freezing the UI.
+
+That’s where **Web Workers** come in.
+
+> **Web Workers allow real parallel execution of JavaScript code in the browser.**
+
+---
+
+## 🧠 The Problem Web Workers Solve
+
+Without workers, heavy computations block the main thread:
+
+```js
+button.onclick = () => {
+  heavyCalculation(); // ❌ UI freezes
+};
+```
+
+Symptoms:
+- Scrolling jank
+- Input lag
+- “Page is unresponsive” warnings
+
+Why?
+👉 The **main thread** is responsible for:
+- Rendering
+- User input
+- Running JS
+
+Block it, and everything stops.
+
+---
+
+## 🚀 What Is a Web Worker?
+
+A **Web Worker** is:
+- A **separate JavaScript thread**
+- Running in parallel to the main thread
+- With its **own event loop**
+- No access to the DOM
+
+This is **true parallelism**, not just async I/O.
+
+---
+
+## 🧱 Main Thread vs Worker
+
+| Capability | Main Thread | Web Worker |
+|-----------|------------|------------|
+| Run JS | ✅ | ✅ |
+| DOM access | ✅ | ❌ |
+| Parallel execution | ❌ | ✅ |
+| Network requests | ✅ | ✅ |
+| Timers | ✅ | ✅ |
+| Blocking UI | ❌ | ❌ (isolated) |
+
+---
+
+## ⚙️ Basic Example
+
+### worker.js
+```js
+self.onmessage = (event) => {
+  const result = event.data * 2;
+  self.postMessage(result);
+};
+```
+
+### main.js
+```js
+const worker = new Worker("worker.js");
+
+worker.postMessage(10);
+
+worker.onmessage = (event) => {
+  console.log("Result from worker:", event.data);
+};
+```
+
+Flow:
+```
+Main Thread → postMessage → Worker
+Worker → postMessage → Main Thread
+```
+
+---
+
+## 🔁 Communication Model
+
+Workers communicate via **message passing**, not shared memory (by default).
+
+- Data is copied using the **structured clone algorithm**
+- No race conditions
+- No shared mutable state
+
+```js
+worker.postMessage({ numbers: [1, 2, 3] });
+```
+
+---
+
+## ⚡ Transferable Objects (Advanced)
+
+To avoid copying large data:
+
+```js
+worker.postMessage(buffer, [buffer]);
+```
+
+- Ownership transfers to the worker
+- Zero-copy
+- Original buffer becomes unusable on main thread
+
+Great for:
+- Image processing
+- Audio buffers
+- Large datasets
+
+---
+
+## 🧩 Real-World Use Cases
+
+✅ CPU-heavy work:
+- Data processing
+- Encryption / hashing
+- Image resizing
+- PDF parsing
+- Chart calculations
+
+❌ Not for:
+- DOM updates
+- Simple async calls
+- Lightweight logic
+
+---
+
+## ⚛️ Using Web Workers with React
+
+```tsx
+useEffect(() => {
+  const worker = new Worker(new URL("./worker.js", import.meta.url));
+
+  worker.postMessage(data);
+
+  worker.onmessage = (e) => {
+    setResult(e.data);
+  };
+
+  return () => worker.terminate();
+}, []);
+```
+
+Best practice:
+- Create workers lazily
+- Terminate when not needed
+- Keep worker logic pure
+
+---
+
+## 🧠 Web Workers vs async/await
+
+| Feature | async/await | Web Worker |
+|-------|-------------|------------|
+| Parallel JS | ❌ | ✅ |
+| I/O concurrency | ✅ | ✅ |
+| CPU offloading | ❌ | ✅ |
+| DOM access | ✅ | ❌ |
+
+---
+
+## 🧪 Types of Workers
+
+| Type | Description |
+|-----|-------------|
+| Dedicated Worker | One page ↔ one worker |
+| Shared Worker | Multiple tabs share |
+| Service Worker | Network proxy / offline |
+
+This article focuses on **Dedicated Workers**.
+
+---
+
+## ⚠️ Common Mistakes
+
+❌ Doing DOM work in workers  
+❌ Spawning too many workers  
+❌ Sending huge objects without transferables  
+❌ Forgetting to terminate workers
+
+---
+
+## 🧠 Mental Model
+
+- Main thread = UI brain
+- Worker = background CPU
+- Messages = mailbox
+
+Workers do the heavy lifting.
+Main thread stays smooth.
+
+---
+
+## ✅ Summary
+
+| Concept | Meaning |
+|-------|--------|
+| Web Worker | Background JS thread |
+| Parallelism | Real CPU parallel execution |
+| Communication | postMessage |
+| DOM access | Not allowed |
+| Best use | Heavy computation |
+
+---
+
+## ✨ Final Takeaway
+
+> **If async/await gives you concurrency, Web Workers give you parallelism.**  
+> Use them when performance truly matters.
+
+---
+
+### Suggested follow-ups
+- SharedArrayBuffer & Atomics
+- Worker Pools
+- OffscreenCanvas

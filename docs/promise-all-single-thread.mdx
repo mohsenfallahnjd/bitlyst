@@ -1,0 +1,133 @@
+---
+title: "How Promise.all Works in a Single-Threaded JavaScript World"
+summary: "If JavaScript is single-threaded, how can Promise.all handle multiple requests at the same time? A deep dive into the event loop and async I/O."
+publishedTime: "2025-12-30"
+tags: ["javascript", "promises", "event loop", "async", "concurrency"]
+---
+
+# How Promise.all Works in a Single-Threaded JavaScript World
+
+> **If JavaScript is single-threaded, how can `Promise.all()` handle multiple requests at the same time?**
+
+The short answer:
+> JavaScript is single-threaded for **executing code**, but **I/O is handled outside the JS thread**.
+
+---
+
+## 🧠 What “single-threaded” really means
+
+- Only one piece of JavaScript runs at a time.
+- JS does NOT block while waiting for network, timers, or disk.
+
+---
+
+## ⚙️ Step-by-step: What happens with Promise.all
+
+```js
+await Promise.all([
+  fetch("/a"),
+  fetch("/b"),
+  fetch("/c"),
+]);
+```
+
+### 1️⃣ Requests start immediately
+
+```js
+const p1 = fetch("/a");
+const p2 = fetch("/b");
+const p3 = fetch("/c");
+```
+
+- Promises are created instantly.
+- Network work starts in the background.
+- JS thread is free.
+
+---
+
+### 2️⃣ Network runs outside JS
+
+- Browser or Node runtime handles requests.
+- Requests run concurrently.
+- JS thread does nothing during this time.
+
+---
+
+### 3️⃣ Promise resolution uses microtasks
+
+- When a request finishes, its Promise resolves.
+- `.then()` callbacks go to the **microtask queue**.
+- JS executes them one by one.
+
+---
+
+### 4️⃣ Promise.all resolves last
+
+- Waits for all Promises to resolve.
+- Rejects early if one fails.
+
+---
+
+## 🔄 Timeline
+
+```
+JS Thread:
+| start A | start B | start C | free | handlers |
+
+Network:
+|---- A ----|
+|------ B ------|
+|-- C --|
+```
+
+---
+
+## 🧠 Mental Model
+
+- JS thread = single chef
+- Network = multiple delivery drivers
+- Promise.all = wait for all deliveries
+
+---
+
+## ⚠️ Important note
+
+`Promise.all()` does NOT make CPU work parallel.
+
+```js
+Promise.all([
+  heavyTask(),
+  heavyTask(),
+]);
+```
+
+This still blocks the UI.
+
+---
+
+## 🧱 Browser vs Node
+
+| Layer | Responsibility |
+|------|----------------|
+| JS Thread | Executes callbacks |
+| Browser APIs / libuv | Async I/O |
+| Promises | Coordination |
+
+---
+
+## ✅ Summary
+
+| Concept | Meaning |
+|------|--------|
+| Single-threaded | One JS execution at a time |
+| Concurrent | Multiple async ops in flight |
+| Promise.all | Waits for all async results |
+| Parallel JS | ❌ |
+| Parallel I/O | ✅ |
+
+---
+
+## ✨ Final takeaway
+
+> **JS coordinates work — it doesn’t do it all itself.**  
+> Promise.all works because the heavy work happens outside the JS thread.
