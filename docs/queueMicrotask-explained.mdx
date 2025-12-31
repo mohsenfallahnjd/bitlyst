@@ -1,0 +1,128 @@
+---
+title: "queueMicrotask Explained: The Smallest Async Queue in JavaScript"
+summary: "What queueMicrotask does, how it differs from Promise.then, and how microtasks really work under the hood."
+publishedTime: "2025-10-31"
+tags: ["javascript", "event loop", "microtask", "async"]
+---
+
+# queueMicrotask Explained
+
+`queueMicrotask` is a low-level JavaScript API that lets you schedule a function to run in the **microtask queue**.
+
+It runs:
+- **After the current synchronous code**
+- **Before any macrotasks** (`setTimeout`, `setInterval`, `requestAnimationFrame`)
+- **Before rendering**
+
+---
+
+## 🧠 What Is a Microtask?
+
+JavaScript has two main async queues:
+
+| Queue | Examples |
+|-----|---------|
+| Microtask | `queueMicrotask`, `Promise.then`, `await` |
+| Macrotask | `setTimeout`, events |
+
+JavaScript always drains the microtask queue **fully** before moving on.
+
+---
+
+## ⚙️ Basic Usage
+
+```js
+queueMicrotask(() => {
+  console.log("microtask");
+});
+
+console.log("sync");
+```
+
+Output:
+```
+sync
+microtask
+```
+
+---
+
+## 🔍 queueMicrotask vs Promise.then
+
+| Feature | queueMicrotask | Promise.then |
+|-------|----------------|--------------|
+| Creates Promise | ❌ | ✅ |
+| Intent clarity | ✅ | ⚠️ |
+| Error handling | Global | Promise-based |
+
+---
+
+## ⚠️ Error Behavior
+
+```js
+queueMicrotask(() => {
+  throw new Error("boom");
+});
+```
+
+This becomes a global error, not a rejected Promise.
+
+---
+
+## 🔁 Execution Order Example
+
+```js
+console.log("start");
+
+setTimeout(() => console.log("timeout"), 0);
+queueMicrotask(() => console.log("microtask"));
+Promise.resolve().then(() => console.log("promise"));
+
+console.log("end");
+```
+
+Output:
+```
+start
+end
+microtask
+promise
+timeout
+```
+
+---
+
+## 🚨 Microtask Starvation
+
+```js
+function loop() {
+  queueMicrotask(loop);
+}
+loop();
+```
+
+This freezes the page because microtasks never finish.
+
+---
+
+## 🧩 When to Use
+
+✅ Precise scheduling  
+✅ Libraries / frameworks  
+❌ Delays or animations  
+
+---
+
+## ✅ Summary
+
+| Concept | Meaning |
+|------|--------|
+| queueMicrotask | Schedules microtask |
+| Priority | Higher than timers |
+| Use carefully | Yes |
+
+---
+
+## ✨ Final Takeaway
+
+> `queueMicrotask` is powerful but sharp — use it only when you need microtask precision.
