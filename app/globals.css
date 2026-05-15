@@ -1,6 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* Manual theme toggle puts `.dark` on <html>; v4 defaults dark: to prefers-color-scheme otherwise. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Optional: smooth transitions for theme change */
 * {
@@ -22,8 +24,7 @@ body {
 }
 
 body {
-  color: var(--fg);
-  background: var(--bg);
+  /* Color/background come from layout utilities (supports .dark via Tailwind); avoid overriding theme. */
   font-feature-settings:
     "rlig" 1,
     "calt" 1;

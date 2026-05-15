@@ -14,7 +14,7 @@ export type DocMeta = {
   draft?: boolean;
 };
 
-const BLOG_DIR = path.resolve("docs");
+const BLOG_DIR = path.join(process.cwd(), "docs");
 const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }];
 
 /** Read all Markdown posts (already provided) */
