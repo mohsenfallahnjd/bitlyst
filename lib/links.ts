@@ -43,4 +43,10 @@ export const usefulLinks: UsefulLink[] = [
     description: "Clear explanation of SSR/SSG/ISR, hydration, and streaming for modern React apps.",
     tags: ["react", "ssr", "hydration"],
   },
+  {
+    title: "Claude Code from Source",
+    url: "https://claude-code-from-source.com/",
+    description: "How Anthropic built the most widely used AI coding agent",
+    tags: ["claude", "code", "source", "tool"],
+  },
 ];
