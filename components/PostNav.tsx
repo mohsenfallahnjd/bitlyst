@@ -14,7 +14,7 @@ export default async function PostNav({ current }: { current: string }) {
   }
 
   return (
-    <nav className="mt-12 grid grid-cols-2 items-center gap-4 border-t pt-6 text-sm">
+    <nav className="mt-12 grid grid-cols-2 items-center gap-4 border-t border-gray-200 dark:border-gray-800 pt-6 text-sm">
       <div className="min-w-0">
         {prev && (
           <Link

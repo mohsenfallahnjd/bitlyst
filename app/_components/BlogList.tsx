@@ -30,8 +30,10 @@ export default function BlogList({ posts }: { posts: DocMeta[] }) {
 
   return (
     <div className="grid gap-8">
-      {filtered.map((post) => (
-        <PostCard key={post.slug} post={post} />
+      {filtered.map((post, i) => (
+        <div key={post.slug} style={{ animation: "fadeUp 0.5s ease-out both", animationDelay: `${i * 55}ms` }}>
+          <PostCard post={post} />
+        </div>
       ))}
     </div>
   );

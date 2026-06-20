@@ -55,7 +55,11 @@ export default function FlowDiagram({ nodes, branch1, branch2, branch3, branch4 
       {nodeList.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           {nodeList.map((node, i) => (
-            <span key={i} className="flex items-center gap-2">
+            <span
+              key={i}
+              className="flex items-center gap-2"
+              style={{ animation: "fadeUp 0.4s ease-out both", animationDelay: `${i * 70}ms` }}
+            >
               <Node label={node} cls={defaultNodeCls} />
               {i < nodeList.length - 1 && <Arrow />}
             </span>
@@ -69,7 +73,11 @@ export default function FlowDiagram({ nodes, branch1, branch2, branch3, branch4 
           {branches.map((branch, i) => {
             const s = colorMap[branch.color] ?? colorMap.cyan;
             return (
-              <div key={i} className="flex items-center gap-2 flex-wrap">
+              <div
+                key={i}
+                className="flex items-center gap-2 flex-wrap"
+                style={{ animation: "fadeUp 0.4s ease-out both", animationDelay: `${(nodeList.length + i) * 70}ms` }}
+              >
                 <span className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-bold whitespace-nowrap ${s.badge}`}>
                   {branch.label}
                 </span>

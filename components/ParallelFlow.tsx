@@ -34,7 +34,11 @@ export default function ParallelFlow({ tracks, merge, color = "cyan", label }: P
           {/* Left: stacked tracks */}
           <div className="flex flex-col gap-2">
             {items.map((item, i) => (
-              <span key={i} className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-semibold whitespace-nowrap ${c.track}`}>
+              <span
+                key={i}
+                className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-semibold whitespace-nowrap ${c.track}`}
+                style={{ animation: "fadeUp 0.4s ease-out both", animationDelay: `${i * 60}ms` }}
+              >
                 {item}
               </span>
             ))}
@@ -50,7 +54,10 @@ export default function ParallelFlow({ tracks, merge, color = "cyan", label }: P
           <span className="text-gray-400 dark:text-gray-600 text-sm select-none">→</span>
 
           {/* Merge node */}
-          <span className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-semibold whitespace-nowrap ${c.merge}`}>
+          <span
+            className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-semibold whitespace-nowrap ${c.merge}`}
+            style={{ animation: "fadeUp 0.4s ease-out both", animationDelay: `${items.length * 60}ms` }}
+          >
             {merge}
           </span>
         </div>
@@ -58,7 +65,11 @@ export default function ParallelFlow({ tracks, merge, color = "cyan", label }: P
         /* Sequential layout: A → B → C */
         <div className="flex items-center gap-2 flex-wrap">
           {items.map((item, i) => (
-            <span key={i} className="flex items-center gap-2">
+            <span
+              key={i}
+              className="flex items-center gap-2"
+              style={{ animation: "fadeUp 0.4s ease-out both", animationDelay: `${i * 70}ms` }}
+            >
               <span className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-semibold whitespace-nowrap ${c.track}`}>
                 {item}
               </span>

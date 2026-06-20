@@ -14,8 +14,10 @@ export default function HomePosts({ posts }: { posts: DocMeta[] }) {
   return (
     <>
       <div className="grid gap-6">
-        {filtered.slice(0, 6).map((p) => (
-          <PostCard key={p.slug} post={p} />
+        {filtered.slice(0, 6).map((p, i) => (
+          <div key={p.slug} style={{ animation: "fadeUp 0.5s ease-out both", animationDelay: `${i * 65}ms` }}>
+            <PostCard post={p} />
+          </div>
         ))}
       </div>
 
