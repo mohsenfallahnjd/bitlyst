@@ -1,0 +1,155 @@
+---
+title: "CDN Explained: What It Is, How It Works, and How to Use It in Next.js"
+summary: "A CDN speeds up your app by serving assets from servers close to your users. Here's how it works and how Next.js takes advantage of it."
+publishedTime: "2026-06-20"
+tags: ["cdn", "nextjs", "performance", "frontend", "caching"]
+---
+
+A **CDN (Content Delivery Network)** is a global network of servers that cache and serve your static assets — JS, CSS, images, fonts — from a location close to the user.
+
+Without a CDN, every user hits your origin server (wherever it's hosted).  
+With a CDN, they hit the **nearest edge node** instead.
+
+---
+
+## 🌍 How It Works
+
+```
+User (Tokyo) → CDN Edge (Tokyo) → [cache hit] → instant response
+                                 → [cache miss] → fetch from Origin → cache → respond
+```
+
+1. User requests `/logo.png`
+2. CDN checks its edge cache
+3. **Cache hit** → served immediately from edge
+4. **Cache miss** → CDN fetches from your origin, caches it, serves it
+
+Next request from any user near that edge? Instant.
+
+---
+
+## 📦 What Gets Cached?
+
+| Asset type         | Cached by CDN? |
+|--------------------|----------------|
+| JS / CSS bundles   | ✅              |
+| Images / fonts     | ✅              |
+| HTML (static)      | ✅              |
+| API responses      | ⚠️ optional    |
+| Dynamic SSR pages  | ⚠️ optional    |
+
+---
+
+## ⚡ Why It Matters for Frontend
+
+- **Lower latency** — assets served from 50ms away, not 300ms
+- **Less load on your server** — CDN absorbs most traffic
+- **Better Core Web Vitals** — faster LCP, less layout shift
+- **Global scale** — same performance in Tokyo as in London
+
+---
+
+## 🔧 CDN in Next.js
+
+Next.js is CDN-ready out of the box. Here's what gets cached automatically:
+
+### Static assets in `/public`
+Served with long-lived cache headers automatically.
+
+### `next/image`
+Images are optimized and served via CDN edge with proper `Cache-Control`.
+
+### Static pages (SSG)
+Pages generated at build time are cached at the CDN edge.
+
+---
+
+## ⚙️ Configuration
+
+### 1. Custom CDN with `assetPrefix`
+
+If you're using your own CDN (Cloudflare, CloudFront, etc.):
+
+```js
+// next.config.js
+module.exports = {
+  assetPrefix: 'https://cdn.yourdomain.com',
+}
+```
+
+Next.js will now load all `/_next/static/` assets from your CDN URL.
+
+---
+
+### 2. Cache-Control headers
+
+```js
+// next.config.js
+module.exports = {
+  async headers() {
+    return [
+      {
+        source: '/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ]
+  },
+}
+```
+
+- `max-age=31536000` → cache for 1 year
+- `immutable` → browser won't revalidate even on hard refresh
+
+---
+
+### 3. Per-fetch CDN caching (App Router)
+
+```js
+// cached for 1 hour at the CDN edge
+const data = await fetch('https://api.example.com/posts', {
+  next: { revalidate: 3600 },
+})
+```
+
+---
+
+### 4. Page-level revalidation (ISR)
+
+```js
+// app/blog/page.tsx
+export const revalidate = 60 // revalidate every 60 seconds
+```
+
+CDN serves the cached page, Next.js regenerates it in the background when stale.
+
+---
+
+### 5. Force static caching
+
+```js
+export const dynamic = 'force-static'
+```
+
+Tells Next.js (and the CDN) to never recompute — serve the static version always.
+
+---
+
+## 🧠 Cache-Control Cheat Sheet
+
+| Header value                          | Meaning                          |
+|---------------------------------------|----------------------------------|
+| `public, max-age=31536000, immutable` | Cache forever (versioned assets) |
+| `public, s-maxage=3600`               | CDN cache for 1 hour             |
+| `no-store`                            | Never cache                      |
+| `stale-while-revalidate=60`           | Serve stale, refresh in bg       |
+
+---
+
+## ✨ Final Takeaway
+
+> A CDN puts your assets next to your users. Next.js handles most of it automatically — configure `assetPrefix` for custom CDNs, and use `revalidate` to control how long pages stay cached at the edge.
