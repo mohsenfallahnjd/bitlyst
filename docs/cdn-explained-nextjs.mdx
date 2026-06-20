@@ -14,10 +14,11 @@ With a CDN, they hit the **nearest edge node** instead.
 
 ## 🌍 How It Works
 
-```
-User (Tokyo) → CDN Edge (Tokyo) → [cache hit] → instant response
-                                 → [cache miss] → fetch from Origin → cache → respond
-```
+<FlowDiagram
+  nodes="User (Tokyo) → CDN Edge (Tokyo)"
+  branch1="[green] Cache HIT ✓ → Instant Response"
+  branch2="[orange] Cache MISS → Origin Server → Cache → Respond"
+/>
 
 1. User requests `/logo.png`
 2. CDN checks its edge cache

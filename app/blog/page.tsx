@@ -28,39 +28,36 @@ export default async function BlogIndex() {
     <div className="space-y-8">
       <div className="flex items-center justify-between gap-4">
         <h1 className="md:text-2xl text-xl font-semibold tracking-tight flex-1">
-          {tag ? `Posts tagged “${tag}”` : "All posts"}
+          {tag ? (
+            <>Posts tagged <span className="text-cyan-600 dark:text-cyan-400">"{tag}"</span></>
+          ) : (
+            <>All posts <span className="text-gray-400 dark:text-gray-500 font-normal text-base">({posts.length})</span></>
+          )}
         </h1>
 
-        {/* Active filter pill */}
         {tag && (
           <Link
-            style={{ width: 98 }}
             href="/blog"
-            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1
-                       hover:bg-gray-50 dark:hover:bg-gray-900"
+            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1.5
+                       hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             aria-label="Clear tag filter"
-            title="Clear tag filter"
           >
-            Clear filter ✕
+            Clear ✕
           </Link>
         )}
         {author && (
           <Link
-            style={{ width: 98 }}
             href="/blog"
-            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 hover:bg-gray-50 dark:hover:bg-gray-900"
+            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             aria-label="Clear author filter"
-            title="Clear author filter"
           >
-            Clear filter ✕
+            Clear ✕
           </Link>
         )}
       </div>
 
-      {/* Tags filter */}
       <TagsFilter tags={tags} selectedTag={tag} />
 
-      {/* List */}
       <BlogList posts={posts} />
     </div>
   );

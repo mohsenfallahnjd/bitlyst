@@ -1,10 +1,8 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
-/* Manual theme toggle puts `.dark` on <html>; v4 defaults dark: to prefers-color-scheme otherwise. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Optional: smooth transitions for theme change */
 * {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-duration: 100ms;
@@ -15,32 +13,62 @@
   --bg: #ffffff;
   --fg: #0a0a0a;
   --muted: #6b7280;
-  --accent: #0ea5e9; /* cyan-500 */
+  --accent: #0ea5e9;
 }
 
-html,
-body {
+html, body {
   height: 100%;
 }
 
 body {
-  /* Color/background come from layout utilities (supports .dark via Tailwind); avoid overriding theme. */
-  font-feature-settings:
-    "rlig" 1,
-    "calt" 1;
+  font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-.prose h1,
-.prose h2,
-.prose h3 {
+.prose h1, .prose h2, .prose h3 {
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
+/* Narrow container — home, blog index, search */
 .container {
-  max-width: 42rem; /* Tailwind's max-w-2xl */
+  max-width: 42rem;
   margin-left: auto;
-  margin-right: auto; /* Tailwind's mx-auto */
+  margin-right: auto;
   padding-left: 1rem;
-  padding-right: 1rem; /* Tailwind's px-4 */
+  padding-right: 1rem;
+}
+
+/* Inline code — only targets code NOT inside a pre block */
+:not(pre) > code {
+  background-color: rgb(243 244 246); /* gray-100 */
+  color: #0e7490; /* cyan-700 */
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.875em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.dark :not(pre) > code {
+  background-color: rgb(31 41 55); /* gray-800 */
+  color: #67e8f9; /* cyan-300 */
+}
+
+/* FlowDiagram component CSS variables */
+:root {
+  --diagram-bg: #f8fafc;
+  --diagram-border: #e2e8f0;
+  --diagram-node-bg: #f0f9ff;
+  --diagram-node-border: #0ea5e9;
+  --diagram-node-text: #0c4a6e;
+  --diagram-arrow: #94a3b8;
+  --diagram-label-text: #374151;
+}
+.dark {
+  --diagram-bg: #0f172a;
+  --diagram-border: #1e293b;
+  --diagram-node-bg: #0c1a2e;
+  --diagram-node-border: #0891b2;
+  --diagram-node-text: #7dd3fc;
+  --diagram-arrow: #4b5563;
+  --diagram-label-text: #9ca3af;
 }

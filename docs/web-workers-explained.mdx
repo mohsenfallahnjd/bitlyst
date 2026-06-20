@@ -87,10 +87,11 @@ worker.onmessage = (event) => {
 ```
 
 Flow:
-```
-Main Thread → postMessage → Worker
-Worker → postMessage → Main Thread
-```
+
+<FlowDiagram
+  nodes="Main Thread → postMessage → Worker"
+  branch1="[green] Worker responds → postMessage → Main Thread"
+/>
 
 ---
 

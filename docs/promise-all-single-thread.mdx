@@ -70,15 +70,12 @@ const p3 = fetch("/c");
 
 ## 🔄 Timeline
 
-```
-JS Thread:
-| start A | start B | start C | free | handlers |
-
-Network:
-|---- A ----|
-|------ B ------|
-|-- C --|
-```
+<FlowDiagram
+  nodes="JS Thread: start A → start B → start C → (free) → run handlers"
+  branch1="[cyan] Network: A request → A done"
+  branch2="[cyan] Network: B request → B done"
+  branch3="[cyan] Network: C request → C done"
+/>
 
 ---
 

@@ -82,9 +82,8 @@ await fetch("/c");
 ```
 
 Timeline:
-```
-A ───► B ───► C
-```
+
+<ParallelFlow tracks="fetch /a|fetch /b|fetch /c" label="Sequential — each waits for the previous" color="orange" />
 
 ---
 
@@ -99,11 +98,8 @@ await Promise.all([a, b, c]);
 ```
 
 Timeline:
-```
-A ──────┐
-B ──────┼──► await
-C ──────┘
-```
+
+<ParallelFlow tracks="fetch /a|fetch /b|fetch /c" merge="await Promise.all" label="Concurrent — all start at once" color="green" />
 
 Here:
 - Requests run concurrently (outside JS)

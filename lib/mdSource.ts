@@ -12,10 +12,16 @@ export type DocMeta = {
   authors: { name: string; url: string }[];
   pinned?: boolean;
   draft?: boolean;
+  readingTime?: number;
 };
 
 const BLOG_DIR = path.join(process.cwd(), "docs");
 const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }];
+
+function calcReadingTime(content: string): number {
+  const words = content.replace(/[#*`\[\]<>]/g, " ").split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
 
 /** Read all Markdown posts (already provided) */
 export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
@@ -36,6 +42,7 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
         pinned: data.pinned ?? false,
         draft: data.draft ?? false,
         content,
+        readingTime: calcReadingTime(content),
       };
     })
     .filter((p) => !p.draft)
@@ -67,5 +74,6 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
     pinned: data.pinned ?? false,
     draft: data.draft ?? false,
     content,
+    readingTime: calcReadingTime(content),
   };
 }

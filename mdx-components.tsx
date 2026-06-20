@@ -1,9 +1,8 @@
 import type { MDXComponents } from "mdx/types";
+import CodeBlock from "@/components/CodeBlock";
+import FlowDiagram from "@/components/FlowDiagram";
+import ParallelFlow from "@/components/ParallelFlow";
 
-/**
- * Reusable Tailwind classes for consistent MDX styling.
- * Adjust colors/sizes here to match your brand.
- */
 const baseHeading = "font-semibold tracking-tight text-gray-900 dark:text-gray-100 scroll-m-20";
 const proseText = "text-gray-700 dark:text-gray-300 leading-relaxed";
 
@@ -23,44 +22,41 @@ const components: MDXComponents = {
     const isExternal = target === "_blank";
     const safeRel = isExternal ? (rel ? `${rel} noopener noreferrer` : "noopener noreferrer") : rel;
     return (
-      <a
-        {...rest}
-        target={target}
-        rel={safeRel}
+      <a {...rest} target={target} rel={safeRel}
         className="text-cyan-600 hover:underline hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
       />
     );
   },
   blockquote: (props) => (
-    <blockquote {...props} className="border-l-4 border-cyan-500 pl-4 italic my-4 text-gray-600 dark:text-gray-400" />
-  ),
-  code: (props) => <code {...props} />,
-  pre: (props) => (
-    <pre
+    <blockquote
       {...props}
-      style={{ backgroundColor: "#282c34" }}
-      className={"my-4 overflow-x-auto rounded-lg p-4 text-gray-100 text-sm leading-snug ".concat(
-        props.className || ""
-      )}
+      className="border-l-4 border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/20 pl-4 pr-3 py-2 rounded-r-lg italic my-4 text-gray-600 dark:text-gray-400"
     />
   ),
+  code: (props) => <code {...props} />,
+  pre: (props) => <CodeBlock {...props} />,
   table: (props) => (
-    <div className="my-6 w-full text-sm overflow-x-auto">
-      <table {...props} className="w-full" />
+    <div className="my-6 w-full text-sm overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+      <table {...props} className="w-full border-collapse" />
     </div>
   ),
   th: (props) => (
-    <th
-      {...props}
-      className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-left font-semibold"
-    />
+    <th {...props} className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-4 py-2.5 text-left font-semibold text-gray-900 dark:text-gray-100" />
   ),
-  td: (props) => <td {...props} className="border border-gray-200 dark:border-gray-700 px-3 py-2" />,
+  tr: (props) => (
+    <tr {...props} className="border-b border-gray-100 dark:border-gray-800/60 last:border-b-0" />
+  ),
+  td: (props) => (
+    <td {...props} className="px-4 py-2.5" />
+  ),
+  hr: () => <hr className="my-8 border-gray-200 dark:border-gray-800" />,
   img: (props) => (
-    <span className="my-4 flex bg-background-light dark:bg-background-light rounded-lg p-4">
-      <img {...props} />
+    <span className="my-6 flex bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+      <img {...props} className="rounded-lg" />
     </span>
   ),
+  FlowDiagram,
+  ParallelFlow,
 };
 
 export function useMDXComponents(): MDXComponents {

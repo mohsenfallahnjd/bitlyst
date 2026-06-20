@@ -6,72 +6,52 @@ import type { DocMeta } from "@/lib/mdSource";
 import PublishTime from "./PublishTime";
 
 export default function PostCard({ post, className }: { post: DocMeta; className?: string }) {
-  return (
-    <article className="space-y-2 relative h-full">
-      <Link href={`/blog/${post.slug}`} className={clsx("block group", className)} onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold tracking-tight group-hover:underline">
-          {post.title}
+  const isNew = post.publishedTime && new Date(post.publishedTime) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 3);
 
-          {post.publishedTime && new Date(post.publishedTime) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 3) && (
-            <span className="text-green-500 text-xs uppercase font-bold ml-2">New</span>
+  return (
+    <article className="group/card relative -mx-3 rounded-xl px-3 py-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/60">
+      <Link href={`/blog/${post.slug}`} className={clsx("block", className)} onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-base font-semibold tracking-tight group-hover/card:text-cyan-600 dark:group-hover/card:text-cyan-400 transition-colors flex items-center gap-2 flex-wrap">
+          {post.title}
+          {isNew && (
+            <span className="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+              New
+            </span>
           )}
         </h2>
 
-        {post.summary && <p className="text-sm text-gray-700 dark:text-gray-300">{post.summary}</p>}
+        {post.summary && (
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{post.summary}</p>
+        )}
       </Link>
 
-      <div className="text-xs flex md:items-center gap-3 text-gray-500 dark:text-gray-400 md:flex-row flex-col flex-wrap-reverse">
+      <div className="mt-2 text-xs flex md:items-center gap-x-3 gap-y-1 text-gray-400 dark:text-gray-500 md:flex-row flex-col flex-wrap">
         {post.publishedTime && <PublishTime publishedTime={post.publishedTime} />}
 
-        {post.tags && post.tags.length > 0 && (
-          <span className="flex flex-wrap gap-2">
-            {post.tags.map((t: string) => (
-              <Link
-                key={t}
-                href={`/blog?tag=${encodeURIComponent(t)}`}
-                className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900"
-              >
-                #{t}
-              </Link>
-            ))}
-          </span>
+        {post.readingTime && (
+          <>
+            <span className="hidden md:inline">·</span>
+            <span>{post.readingTime} min read</span>
+          </>
         )}
 
-        {/* {post.authors && post.authors.length > 0 && (
-          <span className="flex flex-wrap gap-2">
-            {" • "}
-            {post.authors.map((a: { name: string; url: string }) => (
-              <Link
-                key={a.name}
-                href={`/blog?author=${encodeURIComponent(a.name.toLowerCase().replaceAll(" ", "-"))}`}
-                className="text-brand-dark dark:text-brand-dark hover:text-white
-                dark:hover:text-brand-dark flex items-center gap-1
-                rounded-full hover:bg-brand-dark dark:hover:bg-brand-dark px-2 py-0.5"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="size-4"
+        {post.tags && post.tags.length > 0 && (
+          <>
+            <span className="hidden md:inline">·</span>
+            <span className="flex flex-wrap gap-1.5">
+              {post.tags.map((t: string) => (
+                <Link
+                  key={t}
+                  href={`/blog?tag=${encodeURIComponent(t)}`}
+                  className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                  />
-                </svg>
-                {a.name}
-              </Link>
-            ))}
-          </span>
-        )} */}
+                  #{t}
+                </Link>
+              ))}
+            </span>
+          </>
+        )}
       </div>
-
-      {/* <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-        <PostReactions postSlug={post.slug} showLabels={false} className="scale-90 origin-left" />
-      </div> */}
     </article>
   );
 }

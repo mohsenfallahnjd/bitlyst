@@ -17,6 +17,7 @@ import { loadMarkdownBySlug } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
 import "highlight.js/styles/atom-one-dark.css";
 import Script from "next/script";
+import ReadingProgress from "@/components/ReadingProgress";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
@@ -31,6 +32,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
 
   return (
     <div>
+      <ReadingProgress />
       <Script
         type="application/ld+json"
         id="post-ld-json"
@@ -60,7 +62,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
         }}
       />
       <h1 className="text-2xl font-bold">{post.title}</h1>
-      <PostMeta publishedTime={post.publishedTime} tags={post.tags} />
+      <PostMeta publishedTime={post.publishedTime} tags={post.tags} readingTime={post.readingTime} />
 
       {!!post.authors?.length && (
         <div className="mb-5 text-sm text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 pb-5 flex items-center gap-2">

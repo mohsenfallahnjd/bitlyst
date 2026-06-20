@@ -82,13 +82,13 @@ console.log("end");
 ```
 
 Output:
-```
-start
-end
-microtask
-promise
-timeout
-```
+
+<FlowDiagram
+  nodes="start → end → microtask → promise → timeout"
+  branch1="[cyan] Sync code runs first"
+  branch2="[green] Microtasks drain next"
+  branch3="[orange] Macrotasks (setTimeout) run last"
+/>
 
 ---
 
