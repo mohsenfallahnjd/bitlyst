@@ -8,16 +8,21 @@ export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "Blog — JavaScript, React, and Next.js tips",
+  description: "Browse bite-sized tutorials and practical tips on JavaScript, React, and Next.js.",
   alternates: { canonical: "https://bitlyst.vercel.app/blog" },
   openGraph: {
     title: "Bitlyst Blog — JavaScript, React, and Next.js tips",
     description: "Browse bite-sized tutorials and practical tips on JavaScript, React, and Next.js.",
     url: "https://bitlyst.vercel.app/blog",
-    siteName: "Bitlyst Blog",
+    siteName: "Bitlyst",
     type: "website",
-    images: "/logo.svg",
     locale: "en_US",
     countryName: "United States",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Bitlyst Blog — JavaScript, React, and Next.js tips",
+    description: "Browse bite-sized tutorials and practical tips on JavaScript, React, and Next.js.",
   },
 };
 

@@ -7,6 +7,7 @@ export type DocMeta = {
   title: string;
   summary?: string;
   publishedTime?: string;
+  modifiedTime?: string;
   tags?: string[];
   content: string;
   authors: { name: string; url: string }[];
@@ -19,7 +20,10 @@ const BLOG_DIR = path.join(process.cwd(), "docs");
 const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }];
 
 function calcReadingTime(content: string): number {
-  const words = content.replace(/[#*`\[\]<>]/g, " ").split(/\s+/).filter(Boolean).length;
+  const words = content
+    .replace(/[#*`\[\]<>]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
   return Math.max(1, Math.round(words / 200));
 }
 
@@ -37,6 +41,7 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
         title: data.title ?? slug,
         summary: data.summary ?? "",
         publishedTime: data.publishedTime ?? "",
+        modifiedTime: data.modifiedTime ?? data.publishedTime ?? "",
         tags: (data.tags as string[] | undefined) ?? [],
         authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
         pinned: data.pinned ?? false,
@@ -69,6 +74,7 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
     title: data.title ?? slug,
     summary: data.summary ?? "",
     publishedTime: data.publishedTime ?? "",
+    modifiedTime: data.modifiedTime ?? data.publishedTime ?? "",
     tags: (data.tags as string[] | undefined) ?? [],
     authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
     pinned: data.pinned ?? false,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
@@ -11,14 +12,11 @@ import DonatePrompt from "@/components/DonatePrompt";
 import PostMeta from "@/components/PostMeta";
 import PostNav from "@/components/PostNav";
 import PostReactions from "@/components/PostReactions";
+import ReadingProgress from "@/components/ReadingProgress";
 import ShareButton from "@/components/ShareButton";
 import TOC from "@/components/TOC";
-import { loadMarkdownBySlug } from "@/lib/mdSource";
+import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
 import { useMDXComponents } from "@/mdx-components";
-import "highlight.js/styles/atom-one-dark.css";
-import Script from "next/script";
-import ReadingProgress from "@/components/ReadingProgress";
-import { loadMarkdownDocs } from "@/lib/mdSource";
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const params = await props.params;
@@ -35,6 +33,21 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
       <ReadingProgress />
       <Script
         type="application/ld+json"
+        id="post-breadcrumb-ld-json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://bitlyst.vercel.app" },
+              { "@type": "ListItem", position: 2, name: "Blog", item: "https://bitlyst.vercel.app/blog" },
+              { "@type": "ListItem", position: 3, name: post.title, item: `https://bitlyst.vercel.app/blog/${post.slug}` },
+            ],
+          }),
+        }}
+      />
+      <Script
+        type="application/ld+json"
         id="post-ld-json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
@@ -42,7 +55,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
             "@type": "Article",
             headline: post.title,
             datePublished: post.publishedTime,
-            dateModified: post.publishedTime,
+            dateModified: post.modifiedTime ?? post.publishedTime,
             author: (post.authors || []).map((a) => ({ "@type": "Person", name: a.name, url: a.url })),
             mainEntityOfPage: {
               "@type": "WebPage",
@@ -53,10 +66,10 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
               name: "Bitlyst",
               logo: {
                 "@type": "ImageObject",
-                url: "https://bitlyst.vercel.app/logo.svg",
+                url: "https://bitlyst.vercel.app/opengraph-image",
               },
             },
-            image: ["https://bitlyst.vercel.app/logo.svg"],
+            image: [`https://bitlyst.vercel.app/blog/${post.slug}/opengraph-image`],
             description: post.summary,
           }),
         }}
@@ -141,31 +154,37 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
   return {
     title: page.title,
     description: page.summary,
-    keywords: ["bitlyst", ...(page.tags || [])].join(", "),
+    keywords: ["bitlyst", ...(page.tags || [])],
     authors: page.authors,
     openGraph: {
       title: page.title,
       description: page.summary,
       publishedTime: page.publishedTime as string,
+      modifiedTime: (page.modifiedTime || page.publishedTime) as string,
       tags: ["bitlyst", ...(page.tags || [])],
+      url: `https://bitlyst.vercel.app/blog/${slugPath}`,
+      type: "article",
+      authors: page.authors.map((author) => author.name),
+      siteName: "Bitlyst",
       images: [
         {
-          url: "https://bitlyst.vercel.app/logo.svg",
+          url: `https://bitlyst.vercel.app/blog/${slugPath}/opengraph-image`,
           width: 1200,
           height: 630,
           alt: page.title,
         },
       ],
-      url: `https://bitlyst.vercel.app/blog/${slugPath}`,
-      type: "article",
-      authors: page.authors.map((author) => author.name),
-      siteName: "Bitlyst Blog",
     },
     twitter: {
       card: "summary_large_image",
       title: page.title,
       description: page.summary,
-      images: ["https://bitlyst.vercel.app/logo.svg"],
+      images: [
+        {
+          url: `https://bitlyst.vercel.app/blog/${slugPath}/opengraph-image`,
+          alt: page.title,
+        },
+      ],
     },
     alternates: { canonical: `https://bitlyst.vercel.app/blog/${slugPath}` },
   };

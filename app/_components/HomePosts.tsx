@@ -1,15 +1,11 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import PostCard from "@/components/PostCard";
 import type { DocMeta } from "@/lib/mdSource";
 
-export default function HomePosts({ posts }: { posts: DocMeta[] }) {
-  const searchParams = useSearchParams();
-  const tag = (searchParams.get("tag") || "").toLowerCase();
-
-  const filtered = tag ? posts.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag)) : posts;
+export default function HomePosts({ posts, tag }: { posts: DocMeta[]; tag?: string }) {
+  const filtered = tag
+    ? posts.filter((p) => (p.tags || []).some((t) => t.toLowerCase() === tag.toLowerCase()))
+    : posts;
 
   return (
     <>
@@ -27,7 +23,7 @@ export default function HomePosts({ posts }: { posts: DocMeta[] }) {
             href="/"
             className="rounded-full border border-gray-200 dark:border-gray-800 px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900"
           >
-            Clear “{tag}”
+            Clear "{tag}"
           </Link>
         )}
       </div>

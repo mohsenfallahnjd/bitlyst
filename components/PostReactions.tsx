@@ -62,15 +62,15 @@ export default function PostReactions({ postSlug, className = "", showLabels = t
           return;
         }
 
-        // Load reaction counts
-        const reactionsResponse = await fetch(`/api/reactions/${postSlug}`);
+        const [reactionsResponse, userReactionsResponse] = await Promise.all([
+          fetch(`/api/reactions/${postSlug}`),
+          fetch(`/api/reactions/${postSlug}/user/${userId}`),
+        ]);
+
         if (reactionsResponse.ok) {
-          const reactionsData = await reactionsResponse.json();
-          setReactions(reactionsData);
+          setReactions(await reactionsResponse.json());
         }
 
-        // Load user reactions
-        const userReactionsResponse = await fetch(`/api/reactions/${postSlug}/user/${userId}`);
         if (userReactionsResponse.ok) {
           const userData = await userReactionsResponse.json();
           const userReactionMap: UserReactions = {};

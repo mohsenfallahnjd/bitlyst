@@ -2,9 +2,8 @@ import Link from "next/link";
 import HomePosts from "@/app/_components/HomePosts";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
-export const dynamic = "force-static";
-
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
+  const { tag } = await searchParams;
   const all = loadMarkdownDocs();
 
   return (
@@ -25,7 +24,7 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <HomePosts posts={all} />
+      <HomePosts posts={all} tag={(tag as string | undefined) ?? undefined} />
 
       <div
         className="pt-1 flex items-center gap-3 text-sm"

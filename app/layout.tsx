@@ -50,14 +50,6 @@ export const metadata: Metadata = {
     url: "https://bitlyst.vercel.app/",
     siteName: "Bitlyst",
     type: "website",
-    images: [
-      {
-        url: "https://bitlyst.vercel.app/logo.svg",
-        width: 1200,
-        height: 630,
-        alt: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
-      },
-    ],
     locale: "en_US",
     countryName: "United States",
   },
@@ -66,7 +58,6 @@ export const metadata: Metadata = {
     title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
     description:
       "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
-    images: ["https://bitlyst.vercel.app/logo.svg"],
     site: "@mohsenfallahnjd",
     creator: "@mohsenfallahnjd",
   },

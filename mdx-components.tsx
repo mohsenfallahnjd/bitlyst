@@ -50,9 +50,18 @@ const components: MDXComponents = {
     <td {...props} className="px-4 py-2.5" />
   ),
   hr: () => <hr className="my-8 border-gray-200 dark:border-gray-800" />,
-  img: (props) => (
+  img: ({ src, alt, width, height, ...props }) => (
     <span className="my-6 flex bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-      <img {...props} className="rounded-lg" />
+      <img
+        {...props}
+        src={src}
+        alt={alt ?? ""}
+        width={width}
+        height={height}
+        loading="lazy"
+        decoding="async"
+        className="rounded-lg w-full h-auto"
+      />
     </span>
   ),
   FlowDiagram,

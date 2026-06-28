@@ -63,6 +63,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/search">): 
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     alternates: { canonical: url },
     openGraph: {
       title,
