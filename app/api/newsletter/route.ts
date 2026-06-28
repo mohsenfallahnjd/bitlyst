@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID ?? "";
 
 export async function POST(req: Request) {
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       : {}),
   };
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const { error } = await resend.contacts.create(payload as Parameters<typeof resend.contacts.create>[0]);
 
   if (error) {

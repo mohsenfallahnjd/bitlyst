@@ -9,6 +9,7 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import AuthorBio from "@/components/AuthorBio";
+import Comments from "@/components/Comments";
 import DonatePrompt from "@/components/DonatePrompt";
 import NewsletterForm from "@/components/NewsletterForm";
 import PostEngagement from "@/components/PostEngagement";
@@ -138,6 +139,8 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
 
       {/* Feedback */}
       <QuickFeedback postSlug={post.slug} />
+
+      <Comments slug={post.slug} />
 
       <AuthorBio authors={post.authors} />
 
