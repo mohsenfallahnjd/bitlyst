@@ -1,17 +1,19 @@
 import Link from "next/link";
 import SearchShortcut from "@/components/SearchShortcut";
+import { SniplyRoundedMark } from "@/components/sniply-typography-icons/SniplyIcons";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200/40 dark:border-gray-800/40 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm">
       <SearchShortcut />
-      <div className="container flex items-center justify-between py-4">
+      <div className="container flex items-center justify-between py-3.5">
         <Link
           href="/"
-          className="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-100 hover:opacity-70 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-75 transition-opacity"
         >
-          Bitlyst
+          <SniplyRoundedMark size={28} />
+          <span className="text-sm font-semibold tracking-tight text-gray-900 dark:text-gray-100">Bitlyst</span>
         </Link>
 
         <nav className="flex items-center gap-5 sm:gap-6">

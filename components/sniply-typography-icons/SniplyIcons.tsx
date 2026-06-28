@@ -8,11 +8,12 @@ export function SniplyRoundedMark({ size = 24, className }: { size?: number; cla
       aria-hidden="true"
       className={className}
     >
-      <title>Bitlyst Rounded Mark</title>
-      <rect width="64" height="64" rx="14" fill="#0ea5e9" />
-      <rect x="16" y="18" width="32" height="6" rx="3" fill="#fff" />
-      <rect x="16" y="29" width="24" height="6" rx="3" fill="#e6f6fd" />
-      <rect x="16" y="40" width="16" height="6" rx="3" fill="#cfeefe" />
+      <title>Bitlyst</title>
+      <rect width="64" height="64" rx="13" fill="#0d9488" />
+      {/* "b" lettermark: stem right edge (x=24) tangent to bowl outer left edge */}
+      <circle cx="37" cy="40" r="13" fill="#fff" />
+      <circle cx="37" cy="40" r="7" fill="#0d9488" />
+      <rect x="15" y="11" width="9" height="42" rx="4.5" fill="#fff" />
     </svg>
   );
 }
