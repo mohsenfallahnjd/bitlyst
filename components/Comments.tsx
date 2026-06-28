@@ -16,7 +16,7 @@ export default async function Comments({ slug }: { slug: string }) {
 
       {comments.length > 0 && (
         <div className="space-y-6 mb-8">
-          {comments.map((c) => (
+          {comments.map((c: { id: string; name: string; body: string; createdAt: Date }) => (
             <div key={c.id}>
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{c.name}</span>
