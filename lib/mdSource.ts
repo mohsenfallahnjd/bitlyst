@@ -10,10 +10,11 @@ export type DocMeta = {
   modifiedTime?: string;
   tags?: string[];
   content: string;
-  authors: { name: string; url: string }[];
+  authors: { name: string; url: string; avatar?: string }[];
   pinned?: boolean;
   draft?: boolean;
   readingTime?: number;
+  level?: "beginner" | "intermediate" | "advanced";
 };
 
 const BLOG_DIR = path.join(process.cwd(), "docs");
@@ -43,11 +44,12 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
         publishedTime: data.publishedTime ?? "",
         modifiedTime: data.modifiedTime ?? data.publishedTime ?? "",
         tags: (data.tags as string[] | undefined) ?? [],
-        authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
+        authors: (data.authors as { name: string; url: string; avatar?: string }[] | undefined) ?? DEFAULT_AUTHORS,
         pinned: data.pinned ?? false,
         draft: data.draft ?? false,
         content,
         readingTime: calcReadingTime(content),
+        level: (data.level as DocMeta["level"]) ?? undefined,
       };
     })
     .filter((p) => !p.draft)
