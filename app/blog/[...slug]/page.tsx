@@ -9,10 +9,12 @@ import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import DonatePrompt from "@/components/DonatePrompt";
+import NewsletterForm from "@/components/NewsletterForm";
 import PostMeta from "@/components/PostMeta";
 import PostNav from "@/components/PostNav";
 import PostReactions from "@/components/PostReactions";
 import ReadingProgress from "@/components/ReadingProgress";
+import RelatedPosts from "@/components/RelatedPosts";
 import ShareButton from "@/components/ShareButton";
 import TOC from "@/components/TOC";
 import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
@@ -134,6 +136,10 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">How did you like this post?</h3>
         <PostReactions postSlug={post.slug} />
       </div>
+
+      <RelatedPosts current={post} />
+
+      <NewsletterForm className="mt-10" />
 
       <DonatePrompt className="mt-10" />
 
