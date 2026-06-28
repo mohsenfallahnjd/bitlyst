@@ -1,0 +1,152 @@
+---
+title: "React memo vs useMemo vs useCallback — When to Use Which"
+summary: "Three React APIs that all say 'memoize' — but they do different things. Clear explanations, examples, and a cheatsheet."
+publishedTime: "2026-06-28"
+tags: ["react", "performance", "hooks", "memoization", "frontend"]
+---
+
+# React memo vs useMemo vs useCallback
+
+All three are about **skipping unnecessary work**. But they work differently.
+
+---
+
+## 🧠 The Core Idea
+
+React re-renders a component whenever its parent re-renders — even if nothing changed. Memoization lets you say:
+
+> "Only redo this if the inputs actually changed."
+
+---
+
+## 1️⃣ `React.memo` — Skip re-rendering a component
+
+Wraps a **component**. Skips re-render if props didn't change.
+
+```tsx
+const Button = React.memo(({ onClick, label }: { onClick: () => void; label: string }) => {
+  console.log("Button rendered");
+  return <button onClick={onClick}>{label}</button>;
+});
+```
+
+Without `memo`: Button re-renders every time the parent does.  
+With `memo`: Button skips re-render if `onClick` and `label` are the same.
+
+---
+
+## 2️⃣ `useMemo` — Cache a computed value
+
+Memoizes the **result** of an expensive calculation.
+
+```tsx
+const total = useMemo(() => {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}, [items]);
+```
+
+- Runs only when `items` changes.
+- Returns the cached value on other renders.
+
+❌ Without `useMemo`: recalculates on every render.  
+✅ With `useMemo`: recalculates only when `items` changes.
+
+---
+
+## 3️⃣ `useCallback` — Cache a function
+
+Memoizes a **function reference** so it stays stable across renders.
+
+```tsx
+const handleClick = useCallback(() => {
+  console.log("clicked", id);
+}, [id]);
+```
+
+Without `useCallback`, a new function is created every render — which **breaks `React.memo`** on child components.
+
+---
+
+## 🔗 How They Work Together
+
+`React.memo` compares props with `===`. Functions and objects always fail `===` unless their reference is stable.
+
+```tsx
+// ❌ Button re-renders every time — new function each render
+<Button onClick={() => doSomething(id)} label="Click" />
+
+// ✅ Button skips re-render — stable reference
+const handleClick = useCallback(() => doSomething(id), [id]);
+<Button onClick={handleClick} label="Click" />
+```
+
+<FlowDiagram
+  nodes="Parent re-renders → Props compared (===)"
+  branch1="[green] Same reference → memo skips re-render"
+  branch2="[orange] New reference → memo re-renders child"
+/>
+
+---
+
+## ⚠️ When NOT to Use Them
+
+Memoization has a cost — it takes memory and adds complexity. Don't use it by default.
+
+| Situation | Use memoization? |
+|-----------|-----------------|
+| Cheap calculation | ❌ Not worth it |
+| Component renders rarely | ❌ Skip it |
+| Heavy computation (`sort`, `filter` on large arrays) | ✅ Yes |
+| Passing callbacks to memoized children | ✅ Yes |
+| Passing objects/arrays as props to memoized children | ✅ Yes |
+
+---
+
+## 🧪 Quick Example: All Three Together
+
+```tsx
+const ProductList = React.memo(({ items, onSelect }: Props) => {
+  // useMemo: only recalculate when items change
+  const total = useMemo(
+    () => items.reduce((s, i) => s + i.price, 0),
+    [items]
+  );
+
+  return (
+    <div>
+      <p>Total: ${total}</p>
+      {items.map((item) => (
+        <ProductCard key={item.id} item={item} onSelect={onSelect} />
+      ))}
+    </div>
+  );
+});
+
+function App() {
+  const [cart, setCart] = useState([]);
+
+  // useCallback: stable reference so ProductList doesn't re-render
+  const handleSelect = useCallback(
+    (item) => setCart((prev) => [...prev, item]),
+    []
+  );
+
+  return <ProductList items={products} onSelect={handleSelect} />;
+}
+```
+
+---
+
+## ✅ Summary
+
+| API | Wraps | Skips |
+|-----|-------|-------|
+| `React.memo` | Component | Re-render when props unchanged |
+| `useMemo` | Computed value | Recalculation when deps unchanged |
+| `useCallback` | Function | Recreation when deps unchanged |
+
+---
+
+## ✨ Final Takeaway
+
+> **`React.memo` stops a component from re-rendering. `useMemo` stops a value from recalculating. `useCallback` stops a function from being recreated. Use them together — `memo` needs `useCallback` to actually work.**
