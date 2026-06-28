@@ -10,7 +10,7 @@ export default function Image() {
         style={{
           width: 1200,
           height: 630,
-          background: "#0a0a0a",
+          background: "#faf8f5",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -19,11 +19,11 @@ export default function Image() {
           gap: "24px",
         }}
       >
-        <div style={{ fontSize: 72, fontWeight: 800, color: "#3291ff", letterSpacing: "-0.03em" }}>Bitlyst</div>
+        <div style={{ fontSize: 72, fontWeight: 800, color: "#0d9488", letterSpacing: "-0.03em" }}>Bitlyst</div>
         <div
           style={{
             fontSize: 28,
-            color: "#a1a1aa",
+            color: "#78716c",
             maxWidth: 700,
             textAlign: "center",
             lineHeight: 1.4,
@@ -36,9 +36,9 @@ export default function Image() {
             <span
               key={tag}
               style={{
-                background: "#1a1a2e",
-                border: "1px solid #27272a",
-                color: "#3291ff",
+                background: "#ffffff",
+                border: "1px solid #e8e2d9",
+                color: "#0d9488",
                 padding: "8px 20px",
                 borderRadius: "999px",
                 fontSize: 20,

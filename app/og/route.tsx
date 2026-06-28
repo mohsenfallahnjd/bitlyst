@@ -18,7 +18,7 @@ export function GET(request: NextRequest) {
       style={{
         width: 1200,
         height: 630,
-        background: "#0a0a0a",
+        background: "#faf8f5",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -27,7 +27,7 @@ export function GET(request: NextRequest) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
-        <span style={{ color: "#3291ff", fontSize: 28, fontWeight: 700 }}>Bitlyst</span>
+        <span style={{ color: "#0d9488", fontSize: 28, fontWeight: 700 }}>Bitlyst</span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -35,7 +35,7 @@ export function GET(request: NextRequest) {
           style={{
             fontSize: title.length > 60 ? 44 : 56,
             fontWeight: 800,
-            color: "#fafafa",
+            color: "#1c1917",
             lineHeight: 1.15,
             letterSpacing: "-0.02em",
             maxWidth: 950,
@@ -48,7 +48,7 @@ export function GET(request: NextRequest) {
           <div
             style={{
               fontSize: 22,
-              color: "#a1a1aa",
+              color: "#78716c",
               maxWidth: 850,
               lineHeight: 1.4,
             }}
@@ -64,9 +64,9 @@ export function GET(request: NextRequest) {
             <span
               key={tag}
               style={{
-                background: "#1a1a2e",
-                border: "1px solid #27272a",
-                color: "#3291ff",
+                background: "#ffffff",
+                border: "1px solid #e8e2d9",
+                color: "#0d9488",
                 padding: "6px 16px",
                 borderRadius: "999px",
                 fontSize: 18,
@@ -77,7 +77,7 @@ export function GET(request: NextRequest) {
             </span>
           ))}
         </div>
-        <span style={{ color: "#52525b", fontSize: 18 }}>bitlyst.vercel.app</span>
+        <span style={{ color: "#a8a29e", fontSize: 18 }}>bitlyst.vercel.app</span>
       </div>
     </div>,
     { width: 1200, height: 630 }
