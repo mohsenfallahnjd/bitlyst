@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import BlogList from "@/app/_components/BlogList";
+import LevelFilter from "@/components/LevelFilter";
 import TagsFilter from "@/components/TagsFilter";
 import { useBlogIndex } from "@/lib/useBlogIndex";
 
@@ -27,42 +27,25 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogIndex() {
-  const { posts, tags, tag, author } = await useBlogIndex({});
+  const { posts, tags, all } = await useBlogIndex({});
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="md:text-2xl text-xl font-semibold tracking-tight flex-1">
-          {tag ? (
-            <>Posts tagged <span className="text-cyan-600 dark:text-cyan-400">"{tag}"</span></>
-          ) : (
-            <>All posts <span className="text-gray-400 dark:text-gray-500 font-normal text-base">({posts.length})</span></>
-          )}
-        </h1>
-
-        {tag && (
-          <Link
-            href="/blog"
-            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1.5
-                       hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-            aria-label="Clear tag filter"
-          >
-            Clear ✕
-          </Link>
-        )}
-        {author && (
-          <Link
-            href="/blog"
-            className="text-xs rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-            aria-label="Clear author filter"
-          >
-            Clear ✕
-          </Link>
-        )}
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">All posts</h1>
+        <p className="text-sm text-gray-400 dark:text-gray-500">
+          {all.length} posts · {tags.length} topics
+        </p>
       </div>
 
-      <TagsFilter tags={tags} selectedTag={tag} />
+      {/* Level filter — client component reads ?level= itself */}
+      <LevelFilter />
 
+      {/* Tag filter — client component reads ?tag= itself */}
+      <TagsFilter tags={tags} />
+
+      {/* Post list — client component reads ?tag= / ?level= itself */}
       <BlogList posts={posts} />
     </div>
   );

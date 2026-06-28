@@ -15,6 +15,7 @@ export type BlogIndexResult = {
   tags: TagItem[];
   tag: string;
   author: string;
+  level: string;
 };
 
 /**
@@ -29,20 +30,27 @@ export async function useBlogIndex(
 
   const rawTag = (awaited?.["tag"] ?? "") as string | string[];
   const rawAuthor = (awaited?.["author"] ?? "") as string | string[];
+  const rawLevel = (awaited?.["level"] ?? "") as string | string[];
 
   const tag = Array.isArray(rawTag) ? rawTag[0] || "" : String(rawTag || "");
   const author = Array.isArray(rawAuthor) ? rawAuthor[0] || "" : String(rawAuthor || "");
+  const level = Array.isArray(rawLevel) ? rawLevel[0] || "" : String(rawLevel || "");
 
   const normalizedTag = tag.toLowerCase();
   const normalizedAuthor = author.toLowerCase().replaceAll(" ", "-");
+  const normalizedLevel = level.toLowerCase();
 
-  const posts = normalizedTag
+  let posts = normalizedTag
     ? all.filter((p) => (p.tags || []).some((t: string) => t.toLowerCase() === normalizedTag))
     : normalizedAuthor
       ? all.filter((p) =>
           p.authors?.some((a: { name: string }) => a.name.toLowerCase().replaceAll(" ", "-") === normalizedAuthor)
         )
       : all;
+
+  if (normalizedLevel) {
+    posts = posts.filter((p) => p.level === normalizedLevel);
+  }
 
   const tagDisplayByKey: Record<string, string> = {};
   const tagCounts = all
@@ -70,5 +78,6 @@ export async function useBlogIndex(
     tags,
     tag: normalizedTag,
     author: normalizedAuthor,
+    level: normalizedLevel,
   };
 }
