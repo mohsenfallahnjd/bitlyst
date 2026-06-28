@@ -18,7 +18,7 @@ export type DocMeta = {
 };
 
 const BLOG_DIR = path.join(process.cwd(), "docs");
-const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }];
+const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me", avatar: "/mohsen.JPEG" }];
 
 function calcReadingTime(content: string): number {
   const words = content
@@ -78,10 +78,11 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
     publishedTime: data.publishedTime ?? "",
     modifiedTime: data.modifiedTime ?? data.publishedTime ?? "",
     tags: (data.tags as string[] | undefined) ?? [],
-    authors: (data.authors as { name: string; url: string }[] | undefined) ?? DEFAULT_AUTHORS,
+    authors: (data.authors as { name: string; url: string; avatar?: string }[] | undefined) ?? DEFAULT_AUTHORS,
     pinned: data.pinned ?? false,
     draft: data.draft ?? false,
     content,
     readingTime: calcReadingTime(content),
+    level: (data.level as DocMeta["level"]) ?? undefined,
   };
 }

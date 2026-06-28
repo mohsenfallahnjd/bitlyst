@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import type { DocMeta } from "@/lib/mdSource";
+import DifficultyBadge from "./DifficultyBadge";
 import PublishTime from "./PublishTime";
 
 export default function PostCard({ post, className }: { post: DocMeta; className?: string }) {
@@ -18,6 +19,7 @@ export default function PostCard({ post, className }: { post: DocMeta; className
               ✨ New
             </span>
           )}
+          <DifficultyBadge level={post.level} />
         </h2>
 
         {post.summary && (
