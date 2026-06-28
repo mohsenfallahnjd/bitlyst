@@ -27,7 +27,8 @@
     "lint:fix": "biome lint --write .",
     "format": "biome format . --write",
     "check": "biome check --apply .",
-    "typegen": "next typegen && tsc --noEmit"
+    "typegen": "next typegen && tsc --noEmit",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@next/mdx": "^16.2.6",
