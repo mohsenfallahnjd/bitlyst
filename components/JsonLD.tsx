@@ -6,7 +6,7 @@ export const OrgJsonLd = () => {
     url: "https://bitlyst.vercel.app",
     logo: "https://bitlyst.vercel.app/logo.svg",
     sameAs: [
-      "https://x.com/mohsenfallahnjd",
+      "https://x.com/themohsenme",
       "https://github.com/mohsenfallahnjd",
       "https://www.linkedin.com/in/mohsenfallahnjd/",
     ],

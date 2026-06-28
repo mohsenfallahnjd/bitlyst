@@ -3,7 +3,9 @@ import Link from "next/link";
 import type { DocMeta } from "@/lib/mdSource";
 
 export default function AuthorBio({ authors }: { authors: DocMeta["authors"] }) {
-  if (!authors?.length) return null;
+  if (!authors?.length) {
+    return null;
+  }
 
   return (
     <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800">
@@ -15,9 +17,9 @@ export default function AuthorBio({ authors }: { authors: DocMeta["authors"] }) 
               <Image
                 src={author.avatar}
                 alt={author.name}
-                width={48}
-                height={48}
-                className="rounded-full shrink-0"
+                width={64}
+                height={64}
+                className="rounded-full shrink-0 object-cover size-16"
               />
             ) : (
               <div className="size-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-lg shrink-0">
@@ -38,7 +40,7 @@ export default function AuthorBio({ authors }: { authors: DocMeta["authors"] }) 
               </p>
               <div className="flex gap-3 mt-1.5">
                 <Link
-                  href="https://x.com/mohsenfallahnjd"
+                  href="https://x.com/themohsenme"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
