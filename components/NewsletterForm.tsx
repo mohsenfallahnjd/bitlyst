@@ -5,10 +5,29 @@ import clsx from "clsx";
 
 type State = "idle" | "loading" | "success" | "error";
 
-export default function NewsletterForm({ className }: { className?: string }) {
+export type TopicOption = { id: string; label: string };
+
+interface Props {
+  className?: string;
+  /** Pre-selected topic IDs (e.g. from post tags). Requires topics created in Resend. */
+  topics?: TopicOption[];
+}
+
+export default function NewsletterForm({ className, topics = [] }: Props) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [checkedTopics, setCheckedTopics] = useState<Set<string>>(
+    () => new Set(topics.map((t) => t.id)),
+  );
+
+  const toggleTopic = (id: string) => {
+    setCheckedTopics((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +37,14 @@ export default function NewsletterForm({ className }: { className?: string }) {
     const res = await fetch("/api/newsletter", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({
+        email,
+        topicIds: checkedTopics.size > 0 ? [...checkedTopics] : undefined,
+        interests:
+          checkedTopics.size > 0
+            ? topics.filter((t) => checkedTopics.has(t.id)).map((t) => t.label)
+            : undefined,
+      }),
     });
 
     if (res.ok) {
@@ -33,7 +59,12 @@ export default function NewsletterForm({ className }: { className?: string }) {
 
   if (state === "success") {
     return (
-      <div className={clsx("rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-6 py-5 text-center", className)}>
+      <div
+        className={clsx(
+          "rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-6 py-5 text-center",
+          className,
+        )}
+      >
         <p className="text-emerald-700 dark:text-emerald-400 font-medium">🎉 You're subscribed!</p>
         <p className="text-sm text-emerald-600 dark:text-emerald-500 mt-1">You'll get new posts in your inbox.</p>
       </div>
@@ -41,9 +72,35 @@ export default function NewsletterForm({ className }: { className?: string }) {
   }
 
   return (
-    <div className={clsx("rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 px-6 py-6", className)}>
+    <div
+      className={clsx(
+        "rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 px-6 py-6",
+        className,
+      )}
+    >
       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Get new posts in your inbox</p>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">No spam. Unsubscribe any time.</p>
+
+      {topics.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {topics.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => toggleTopic(t.id)}
+              className={clsx(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                checkedTopics.has(t.id)
+                  ? "border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                  : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600",
+              )}
+            >
+              {checkedTopics.has(t.id) ? "✓ " : ""}{t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <form onSubmit={submit} className="flex gap-2">
         <input
           type="email"
@@ -62,9 +119,7 @@ export default function NewsletterForm({ className }: { className?: string }) {
           {state === "loading" ? "…" : "Subscribe"}
         </button>
       </form>
-      {state === "error" && (
-        <p className="mt-2 text-xs text-red-500">{errorMsg}</p>
-      )}
+      {state === "error" && <p className="mt-2 text-xs text-red-500">{errorMsg}</p>}
     </div>
   );
 }
