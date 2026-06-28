@@ -1,13 +1,14 @@
 import { ImageResponse } from "next/og";
-import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
+import { type NextRequest } from "next/server";
+import { loadMarkdownBySlug } from "@/lib/mdSource";
 
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+export const runtime = "nodejs";
 
-export default function Image({ params }: { params: { slug: string[] } }) {
-  const slugPath = params.slug.join("/");
-  const post = loadMarkdownBySlug(slugPath);
+export function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const slug = searchParams.get("slug");
 
+  const post = slug ? loadMarkdownBySlug(slug) : null;
   const title = post?.title ?? "Bitlyst";
   const summary = post?.summary ?? "Bite-sized JavaScript, React, and Next.js tips";
   const tags = post?.tags?.slice(0, 3) ?? [];
@@ -26,13 +27,7 @@ export default function Image({ params }: { params: { slug: string[] } }) {
           fontFamily: "ui-sans-serif, system-ui, sans-serif",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center" }}>
           <span style={{ color: "#3291ff", fontSize: 28, fontWeight: 700 }}>Bitlyst</span>
         </div>
 
@@ -57,13 +52,9 @@ export default function Image({ params }: { params: { slug: string[] } }) {
                 color: "#a1a1aa",
                 maxWidth: 850,
                 lineHeight: 1.4,
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
               }}
             >
-              {summary}
+              {summary.length > 120 ? summary.slice(0, 120) + "…" : summary}
             </div>
           )}
         </div>
@@ -91,11 +82,6 @@ export default function Image({ params }: { params: { slug: string[] } }) {
         </div>
       </div>
     ),
-    { ...size },
+    { width: 1200, height: 630 },
   );
-}
-
-export async function generateStaticParams() {
-  const all = loadMarkdownDocs();
-  return all.map((p) => ({ slug: p.slug.split("/") }));
 }

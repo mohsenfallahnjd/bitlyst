@@ -69,7 +69,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
                 url: "https://bitlyst.vercel.app/opengraph-image",
               },
             },
-            image: [`https://bitlyst.vercel.app/blog/${post.slug}/opengraph-image`],
+            image: [`https://bitlyst.vercel.app/og?slug=${post.slug}`],
             description: post.summary,
           }),
         }}
@@ -168,7 +168,7 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       siteName: "Bitlyst",
       images: [
         {
-          url: `https://bitlyst.vercel.app/blog/${slugPath}/opengraph-image`,
+          url: `https://bitlyst.vercel.app/og?slug=${slugPath}`,
           width: 1200,
           height: 630,
           alt: page.title,
@@ -181,7 +181,7 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       description: page.summary,
       images: [
         {
-          url: `https://bitlyst.vercel.app/blog/${slugPath}/opengraph-image`,
+          url: `https://bitlyst.vercel.app/og?slug=${slugPath}`,
           alt: page.title,
         },
       ],
