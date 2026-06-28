@@ -134,7 +134,7 @@ export default function AboutPage() {
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           New posts weekly.{" "}
-          <Link href="/blog" className="text-cyan-600 dark:text-cyan-400 hover:underline">
+          <Link href="/blog" className="text-teal-600 dark:text-teal-400 hover:underline">
             Browse all {totalPosts} posts →
           </Link>
         </p>

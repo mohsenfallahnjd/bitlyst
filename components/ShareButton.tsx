@@ -73,7 +73,7 @@ export default function ShareButton({
     const extras = "backdrop-blur-sm";
     const palette = copied
       ? "bg-emerald-500 text-white hover:bg-emerald-600 focus-visible:ring-emerald-500/50"
-      : "bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:from-sky-600 hover:to-cyan-600 focus-visible:ring-sky-500/50";
+      : "bg-gradient-to-r from-sky-500 to-teal-500 text-white hover:from-sky-600 hover:to-teal-600 focus-visible:ring-sky-500/50";
 
     return `${base} ${size} ${extras} ${palette} ${className}`.trim();
   }, [variant, className, copied]);

@@ -4,204 +4,161 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Theme-switch transitions — scoped to body/html only to avoid repainting every DOM node */
+/* ── Design tokens ───────────────────────────────────────────── */
+:root {
+  --bg:       #faf8f5;
+  --surface:  #ffffff;
+  --fg:       #1c1917;
+  --muted:    #78716c;
+  --border:   #e8e2d9;
+  --accent:   #0d9488;
+
+  --radius-sm: 0.375rem;
+  --radius:    0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+.dark {
+  --bg:      #141210;
+  --surface: #1c1917;
+  --fg:      #faf8f5;
+  --muted:   #a8a29e;
+  --border:  #292524;
+  --accent:  #2dd4bf;
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
 html, body {
-  transition-property: color, background-color;
-  transition-duration: 100ms;
+  height: 100%;
+  transition-property: color, background-color, border-color;
+  transition-duration: 120ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-:root {
-  --bg: #ffffff;
-  --fg: #0a0a0a;
-  --muted: #6b7280;
-  --accent: #0ea5e9;
-}
-
-html, body {
-  height: 100%;
-}
-
 body {
-  font-feature-settings: "rlig" 1, "calt" 1;
   font-size: 16px;
+  line-height: 1.7;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Text selection */
+/* ── Selection ───────────────────────────────────────────────── */
 ::selection {
-  background-color: #0ea5e920;
+  background-color: #0d948820;
   color: inherit;
 }
 .dark ::selection {
-  background-color: #0ea5e940;
+  background-color: #2dd4bf20;
 }
 
-/* Consistent focus ring */
+/* ── Focus ───────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid #0ea5e9;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 99px; }
-.dark ::-webkit-scrollbar-thumb { background-color: #334155; }
+::-webkit-scrollbar-thumb { background-color: #d6d3d1; border-radius: 99px; }
+.dark ::-webkit-scrollbar-thumb { background-color: #44403c; }
 
-.prose h1, .prose h2, .prose h3 {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-/* Narrow container — home, blog index, search */
+/* ── Container ───────────────────────────────────────────────── */
 .container {
   max-width: 42rem;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
 
-/* Inline code — only targets code NOT inside a pre block */
+/* ── Inline code ─────────────────────────────────────────────── */
 :not(pre) > code {
-  background-color: rgb(243 244 246); /* gray-100 */
-  color: #0e7490; /* cyan-700 */
-  border-radius: 0.375rem;
-  padding: 0.125rem 0.375rem;
-  font-size: 0.875em;
+  background-color: #f5f3ef;
+  color: #0e7490;
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.35em;
+  font-size: 0.84em;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  border: 1px solid #e8e2d9;
 }
-
 .dark :not(pre) > code {
-  background-color: rgb(31 41 55); /* gray-800 */
-  color: #67e8f9; /* cyan-300 */
+  background-color: #292524;
+  color: #5eead4;
+  border-color: #3c3734;
 }
 
-/* ── Keyframe animations ─────────────────────────────────────── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0);    }
+/* ── Prose ───────────────────────────────────────────────────── */
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
 }
+.prose h2 { font-size: 1.35rem; margin-top: 2.5em; }
+.prose h3 { font-size: 1.1rem;  margin-top: 2em; }
 
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: opacity 150ms;
+}
+.prose a:hover { opacity: 0.7; }
+
+/* ── Keyframes ───────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
-@keyframes gradientPan {
-  0%, 100% { background-position: 0%   50%; }
-  50%       { background-position: 100% 50%; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-/* Hero text gentle float */
-@keyframes bob {
-  0%, 100% { transform: translateY(0);    }
-  50%       { transform: translateY(-5px); }
-}
-
-/* "New" badge glow ping */
-@keyframes badgePing {
-  0%        { box-shadow: 0 0 0 0   rgba(16, 185, 129, 0.5); }
-  70%       { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);   }
-  100%      { box-shadow: 0 0 0 0   rgba(16, 185, 129, 0);   }
-}
-
-/* Reading progress shimmer */
 @keyframes shimmer {
   from { background-position: -200% center; }
   to   { background-position:  200% center; }
 }
 
-/* Rubber-band pop */
-@keyframes rubberBand {
-  0%   { transform: scale(1);    }
-  30%  { transform: scale(1.12) rotate(-2deg); }
-  60%  { transform: scale(0.95) rotate(1deg);  }
-  80%  { transform: scale(1.04); }
-  100% { transform: scale(1);    }
-}
-
-/* Arrow slide for browse link */
-@keyframes arrowSlide {
-  0%   { transform: translateX(0);   }
-  40%  { transform: translateX(5px); }
-  70%  { transform: translateX(2px); }
-  100% { transform: translateX(4px); }
-}
-
-/* Animated gradient for hero text */
-.gradient-pan {
-  display: inline-block;
-  background-size: 250% auto;
-  animation: gradientPan 5s ease-in-out infinite, bob 4s ease-in-out infinite;
-}
-
-/* "New" badge */
-.badge-new {
-  animation: badgePing 2.5s ease-out infinite;
-}
-
-/* Tag pill spring-hover */
-.tag-pill {
-  display: inline-flex;
-  transition-property: color, background-color, border-color, transform;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.tag-pill:hover {
-  transform: scale(1.1) rotate(-2deg);
-}
-
-/* "Browse all" arrow */
-.browse-arrow {
-  display: inline-block;
-  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-a:hover .browse-arrow {
-  animation: arrowSlide 0.35s ease-out both;
-}
-
-/* Reading progress shimmer */
+/* ── Reading progress ────────────────────────────────────────── */
 .progress-shimmer {
   background: linear-gradient(
     90deg,
-    #06b6d4 0%,
-    #38bdf8 40%,
-    #ffffff60 50%,
-    #38bdf8 60%,
-    #0ea5e9 100%
+    #0d9488 0%,
+    #2dd4bf 45%,
+    #ffffff50 50%,
+    #2dd4bf 55%,
+    #0d9488 100%
   );
   background-size: 200% auto;
   animation: shimmer 2s linear infinite;
 }
 
-/* Post card hover — needs transform in transition property list */
+/* ── Post card ───────────────────────────────────────────────── */
 .post-card {
-  transition-property: color, background-color, border-color, transform, box-shadow;
-  transition-duration: 180ms;
+  transition-property: color, background-color, border-color;
+  transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
-.post-card:hover {
-  transform: translateY(-2px);
-}
 
-/* FlowDiagram component CSS variables */
+/* ── FlowDiagram ─────────────────────────────────────────────── */
 :root {
-  --diagram-bg: #f8fafc;
-  --diagram-border: #e2e8f0;
-  --diagram-node-bg: #f0f9ff;
-  --diagram-node-border: #0ea5e9;
-  --diagram-node-text: #0c4a6e;
-  --diagram-arrow: #94a3b8;
-  --diagram-label-text: #374151;
+  --diagram-bg:          #f8f6f2;
+  --diagram-border:      #e8e2d9;
+  --diagram-node-bg:     #f0fdfb;
+  --diagram-node-border: #0d9488;
+  --diagram-node-text:   #134e4a;
+  --diagram-arrow:       #a8a29e;
+  --diagram-label-text:  #57534e;
 }
 .dark {
-  --diagram-bg: #0f172a;
-  --diagram-border: #1e293b;
-  --diagram-node-bg: #0c1a2e;
-  --diagram-node-border: #0891b2;
-  --diagram-node-text: #7dd3fc;
-  --diagram-arrow: #4b5563;
-  --diagram-label-text: #9ca3af;
+  --diagram-bg:          #1a1715;
+  --diagram-border:      #292524;
+  --diagram-node-bg:     #132726;
+  --diagram-node-border: #0d9488;
+  --diagram-node-text:   #99f6e4;
+  --diagram-arrow:       #57534e;
+  --diagram-label-text:  #a8a29e;
 }

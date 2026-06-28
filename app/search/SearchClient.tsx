@@ -64,7 +64,7 @@ function highlight(text: string, terms: string[]) {
     <>
       {parts.map((part, idx) =>
         terms.some((t) => part.toLowerCase() === t.toLowerCase()) ? (
-          <mark key={idx} className="bg-cyan-100 dark:bg-cyan-900/50 text-cyan-900 dark:text-cyan-100 rounded px-0.5 not-italic">
+          <mark key={idx} className="bg-teal-100 dark:bg-teal-900/50 text-teal-900 dark:text-teal-100 rounded px-0.5 not-italic">
             {part}
           </mark>
         ) : (
@@ -166,7 +166,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
           onChange={(e) => { setQuery(e.target.value); }}
           placeholder="Search posts, tags, or topics…"
           autoFocus
-          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-400 dark:focus:border-cyan-600 transition"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 dark:focus:border-teal-600 transition"
         />
 
         {query ? (
@@ -234,7 +234,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
                     ))}
                   </div>
                 )}
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-cyan-700 dark:group-hover:text-cyan-300 transition-colors leading-snug">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors leading-snug">
                   {highlight(doc.title, terms)}
                 </p>
                 {excerpt && (

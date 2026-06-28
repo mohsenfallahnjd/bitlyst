@@ -43,7 +43,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
   }, [open]);
 
   const pillBase = "inline-flex items-center gap-1.5 text-xs rounded-full px-3 py-1 border transition-colors";
-  const pillActive = "border-cyan-600 dark:border-cyan-400 bg-cyan-50/60 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-300 font-medium";
+  const pillActive = "border-teal-600 dark:border-teal-400 bg-teal-50/60 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 font-medium";
   const pillIdle = "border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900";
 
   return (
@@ -55,7 +55,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
           className={`${pillBase} ${!selectedTag ? pillActive : pillIdle}`}
         >
           All
-          <span className={`rounded-full px-1.5 py-px text-[10px] leading-none ${!selectedTag ? "bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
+          <span className={`rounded-full px-1.5 py-px text-[10px] leading-none ${!selectedTag ? "bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
             {tags.reduce((s, t) => s + t.count, 0)}
           </span>
         </Link>
@@ -70,7 +70,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
               title={`${t.count} post${t.count !== 1 ? "s" : ""}`}
             >
               #{t.name}
-              <span className={`rounded-full px-1.5 py-px text-[10px] leading-none ${isSelected ? "bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
+              <span className={`rounded-full px-1.5 py-px text-[10px] leading-none ${isSelected ? "bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
                 {t.count}
               </span>
             </Link>
@@ -116,7 +116,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); }}
                 placeholder="Search topics…"
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-cyan-500/30 placeholder:text-gray-400"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/30 placeholder:text-gray-400"
               />
 
               <div className="max-h-[55vh] overflow-y-auto -mx-1 px-1">
@@ -130,7 +130,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
                           onClick={() => { setOpen(false); }}
                           className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors ${
                             isSelected
-                              ? "bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300"
+                              ? "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300"
                               : "hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300"
                           }`}
                         >

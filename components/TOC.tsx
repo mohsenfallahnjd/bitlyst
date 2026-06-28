@@ -13,18 +13,18 @@ function TOCList({
   scrollTo: (id: string) => (e: React.MouseEvent) => void;
 }) {
   return (
-    <ul className="space-y-1">
+    <ul className="space-y-0.5">
       {items.map((i) => {
         const isActive = i.id === activeId;
         return (
-          <li key={i.id} style={{ paddingLeft: (i.level - 1) * 12 }}>
+          <li key={i.id} style={{ paddingLeft: (i.level - 1) * 10 }}>
             <a
               href={`#${i.id}`}
               onClick={scrollTo(i.id)}
-              className={`block rounded px-2 py-1 text-sm transition-colors hover:underline ${
+              className={`block py-1 text-[13px] transition-colors leading-snug ${
                 isActive
-                  ? "text-cyan-700 dark:text-cyan-300 font-medium"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  ? "text-gray-900 dark:text-gray-100"
+                  : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
               aria-current={isActive ? "true" : undefined}
             >
@@ -44,11 +44,11 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    const headings = Array.from(document.querySelectorAll("h1, h2, h3")) as HTMLElement[];
+    const headings = Array.from(document.querySelectorAll("h2, h3")) as HTMLElement[];
     const parsed = headings.map((el) => ({
       id: el.id || "",
       text: el.innerText,
-      level: el.tagName === "H1" ? 1 : el.tagName === "H2" ? 2 : 3,
+      level: el.tagName === "H2" ? 1 : 2,
     }));
     setItems(parsed.filter((i) => i.id));
 
@@ -61,7 +61,7 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
           .sort((a, b) => (a.boundingClientRect.top > b.boundingClientRect.top ? 1 : -1));
         if (visible[0]) { setActiveId((visible[0].target as HTMLElement).id); }
       },
-      { rootMargin: "-20% 0px -70% 0px", threshold: [0, 1.0] },
+      { rootMargin: "-10% 0px -75% 0px", threshold: 0 },
     );
 
     headings.forEach((h) => observer.observe(h));
@@ -73,9 +73,8 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
     e.preventDefault();
     const el = document.getElementById(id);
     if (!el) { return; }
-    const y = el.getBoundingClientRect().top + window.scrollY - 80;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: "smooth" });
     window.history.replaceState(null, "", `#${id}`);
-    window.scrollTo({ top: y, behavior: "smooth" });
     if (collapsible) { setOpen(false); }
   };
 
@@ -83,35 +82,35 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
 
   if (collapsible) {
     return (
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-neutral-900/60 backdrop-blur overflow-hidden">
+      <div className="border-b border-gray-100 dark:border-gray-800/60 pb-4 mb-8">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900/40 transition-colors"
+          className="flex items-center justify-between w-full text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors py-1"
           aria-expanded={open}
         >
-          <span>On this page</span>
+          <span>Contents</span>
           <svg
             viewBox="0 0 16 16"
             fill="currentColor"
-            className={`size-4 text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            className={`size-3.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
           >
             <path d="M4.427 6.427a.75.75 0 0 1 1.06 0L8 8.94l2.513-2.513a.75.75 0 0 1 1.06 1.06l-3.043 3.043a.75.75 0 0 1-1.06 0L4.427 7.487a.75.75 0 0 1 0-1.06Z" />
           </svg>
         </button>
         {open && (
-          <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-800 pt-3">
+          <nav className="mt-3">
             <TOCList items={items} activeId={activeId} scrollTo={scrollTo} />
-          </div>
+          </nav>
         )}
       </div>
     );
   }
 
   return (
-    <aside className="md:sticky md:top-20 md:max-h-[70vh] overflow-auto rounded-lg border border-gray-200 dark:border-gray-800 p-4 text-sm bg-white/60 dark:bg-neutral-900/60 backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:supports-[backdrop-filter]:bg-neutral-900/40">
-      <p className="mb-2 font-semibold text-gray-900 dark:text-gray-100">On this page</p>
+    <nav className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-auto">
+      <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Contents</p>
       <TOCList items={items} activeId={activeId} scrollTo={scrollTo} />
-    </aside>
+    </nav>
   );
 }

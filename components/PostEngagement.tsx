@@ -104,7 +104,7 @@ export default function PostEngagement({ postSlug }: { postSlug: string }) {
               aria-pressed={active}
               className={`group flex flex-col items-center gap-1 rounded-2xl border px-4 py-3 min-w-[64px] transition-all duration-150 active:scale-90 ${
                 active
-                  ? "border-cyan-400 dark:border-cyan-600 bg-cyan-50 dark:bg-cyan-950/40 shadow-sm shadow-cyan-200 dark:shadow-cyan-900"
+                  ? "border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-950/40 shadow-sm shadow-teal-200 dark:shadow-teal-900"
                   : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm"
               } disabled:opacity-50 disabled:cursor-default`}
             >
@@ -115,7 +115,7 @@ export default function PostEngagement({ postSlug }: { postSlug: string }) {
               >
                 {emoji}
               </span>
-              <span className={`text-[11px] font-medium leading-none ${active ? "text-cyan-700 dark:text-cyan-300" : "text-gray-400 dark:text-gray-500"}`}>
+              <span className={`text-[11px] font-medium leading-none ${active ? "text-teal-700 dark:text-teal-300" : "text-gray-400 dark:text-gray-500"}`}>
                 {count > 0 ? count : label}
               </span>
             </button>
@@ -124,7 +124,7 @@ export default function PostEngagement({ postSlug }: { postSlug: string }) {
       </div>
 
       {/* Thank-you message */}
-      <div className={`mt-5 text-sm font-medium text-cyan-700 dark:text-cyan-300 transition-all duration-300 ${justReacted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}>
+      <div className={`mt-5 text-sm font-medium text-teal-700 dark:text-teal-300 transition-all duration-300 ${justReacted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}>
         {justReacted ? THANKS[justReacted] : " "}
       </div>
 

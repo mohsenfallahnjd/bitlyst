@@ -20,16 +20,16 @@ export default function HomePosts({
   const [featured, ...rest] = shown;
 
   return (
-    <div className="space-y-6">
-      {/* Tag chips */}
+    <div className="space-y-8">
+      {/* Tag filter */}
       {topTags && topTags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-x-5 gap-y-1">
           <Link
             href="/"
-            className={`text-xs rounded-full px-3 py-1 border transition-colors ${
+            className={`text-xs transition-colors ${
               !tag
-                ? "border-cyan-600 bg-cyan-50/60 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-300 dark:border-cyan-400"
-                : "border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900"
+                ? "text-gray-900 dark:text-gray-100 font-medium"
+                : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
             All
@@ -40,54 +40,35 @@ export default function HomePosts({
               <Link
                 key={t.key}
                 href={`/?tag=${encodeURIComponent(t.name)}`}
-                className={`text-xs rounded-full px-3 py-1 border transition-colors ${
+                className={`text-xs transition-colors ${
                   isActive
-                    ? "border-cyan-600 bg-cyan-50/60 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-300 dark:border-cyan-400"
-                    : "border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900"
+                    ? "text-gray-900 dark:text-gray-100 font-medium"
+                    : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}
               >
-                #{t.name}
+                {t.name}
               </Link>
             );
           })}
         </div>
       )}
 
-      {/* No results */}
       {shown.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-gray-400 dark:text-gray-500">
           No posts tagged &ldquo;{tag}&rdquo;.{" "}
-          <Link href="/" className="underline">
-            Clear filter
-          </Link>
+          <Link href="/" className="underline underline-offset-2">Clear</Link>
         </p>
       )}
 
-      {/* Featured post */}
-      {featured && !tag && (
-        <div style={{ animation: "fadeUp 0.5s ease-out both" }}>
-          <FeaturedPostCard post={featured} />
-        </div>
-      )}
+      {/* Featured */}
+      {featured && !tag && <FeaturedPostCard post={featured} />}
 
-      {/* Remaining posts */}
+      {/* List */}
       {(tag ? shown : rest).length > 0 && (
         <div>
-          {!tag && (
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
-              More posts
-            </p>
-          )}
-          <div className="grid gap-1">
-            {(tag ? shown : rest).map((p, i) => (
-              <div
-                key={p.slug}
-                style={{ animation: "fadeUp 0.5s ease-out both", animationDelay: `${(i + 1) * 55}ms` }}
-              >
-                <PostCard post={p} />
-              </div>
-            ))}
-          </div>
+          {(tag ? shown : rest).map((p) => (
+            <PostCard key={p.slug} post={p} />
+          ))}
         </div>
       )}
     </div>

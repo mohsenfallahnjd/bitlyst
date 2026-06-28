@@ -52,7 +52,7 @@ export default function StickyReactionBar({ postSlug }: { postSlug: string }) {
     >
       <div className="mx-3 mb-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-xl px-4 py-3 flex items-center justify-between gap-3">
         {reacted ? (
-          <p className="flex-1 text-center text-sm font-medium text-cyan-700 dark:text-cyan-300">
+          <p className="flex-1 text-center text-sm font-medium text-teal-700 dark:text-teal-300">
             Thanks for the reaction! 🙌
           </p>
         ) : (

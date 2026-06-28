@@ -46,7 +46,7 @@ export default function DonatePrompt({ className = "" }: DonatePromptProps) {
 
   return (
     <aside
-      className={`mt-12 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 p-5 ${className}`}
+      className={`mt-12 pt-8 border-t border-gray-100 dark:border-gray-800/60 ${className}`}
       aria-label="Support the author"
     >
       <div className="flex items-start gap-3">
@@ -88,7 +88,7 @@ export default function DonatePrompt({ className = "" }: DonatePromptProps) {
                     </div>
                     <button
                       onClick={() => handleCopy(c.symbol, c.address)}
-                      className="text-xs text-blue-700 dark:text-blue-300 hover:underline"
+                      className="text-xs text-teal-700 dark:text-teal-300 hover:underline"
                     >
                       Copy
                     </button>

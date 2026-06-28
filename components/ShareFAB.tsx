@@ -20,7 +20,7 @@ export default function ShareFAB({ title, url }: { title: string; url: string })
       type="button"
       onClick={share}
       aria-label="Share this post"
-      className="xl:hidden fixed bottom-6 right-4 z-40 flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-lg px-4 py-3 text-sm font-medium transition-all"
+      className="xl:hidden fixed bottom-6 right-4 z-40 flex items-center gap-2 rounded-full bg-teal-600 hover:bg-teal-700 active:scale-95 text-white shadow-lg px-4 py-3 text-sm font-medium transition-all"
     >
       {copied ? (
         <>
