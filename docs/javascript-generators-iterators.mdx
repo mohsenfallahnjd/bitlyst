@@ -1,0 +1,168 @@
+---
+title: "JavaScript Generators & Iterators — Lazy Sequences Explained"
+summary: "Generators let you produce values on demand instead of all at once. Learn how iterators and generator functions work, and when to reach for them."
+publishedTime: "2026-06-29"
+tags: ["javascript", "generators", "iterators", "es6"]
+---
+
+## 🧠 What's the Problem?
+
+When you build an array of 1,000,000 numbers, JavaScript allocates memory for all of them upfront — even if you only need the first 10.
+
+```js
+const million = Array.from({ length: 1_000_000 }, (_, i) => i);
+console.log(million[0]); // 0 — but you just allocated 1M slots
+```
+
+Generators solve this by producing values **lazily** — only when you ask for the next one.
+
+---
+
+## ⚙️ The Iterator Protocol
+
+An **iterator** is any object with a `next()` method that returns `{ value, done }`.
+
+```js
+const iter = [1, 2, 3][Symbol.iterator]();
+
+iter.next(); // { value: 1, done: false }
+iter.next(); // { value: 2, done: false }
+iter.next(); // { value: 3, done: false }
+iter.next(); // { value: undefined, done: true }
+```
+
+Anything that implements this protocol works with `for...of`, spread `[...]`, and destructuring.
+
+---
+
+## ⚙️ Generator Functions
+
+A generator function uses `function*` and `yield` to pause and resume execution.
+
+```js
+function* count() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+
+const gen = count();
+gen.next(); // { value: 1, done: false }
+gen.next(); // { value: 2, done: false }
+gen.next(); // { value: 3, done: false }
+gen.next(); // { value: undefined, done: true }
+```
+
+Each `yield` pauses the function. The next `.next()` call resumes it from exactly where it left off.
+
+---
+
+## ⚙️ Infinite Sequences — The Real Power
+
+Generators shine when the sequence has no fixed end.
+
+```js
+function* naturals(start = 0) {
+  while (true) {
+    yield start++;
+  }
+}
+
+function take(n, iter) {
+  const result = [];
+  for (const val of iter) {
+    result.push(val);
+    if (result.length === n) break;
+  }
+  return result;
+}
+
+take(5, naturals(1)); // [1, 2, 3, 4, 5]
+```
+
+No memory wasted. No upfront computation. The sequence runs only as far as you pull it.
+
+---
+
+## ⚙️ Passing Values In
+
+`next(value)` lets you send data back into a paused generator.
+
+```js
+function* adder() {
+  let total = 0;
+  while (true) {
+    const n = yield total;
+    total += n;
+  }
+}
+
+const acc = adder();
+acc.next();    // { value: 0, done: false }  — primes the generator
+acc.next(10);  // { value: 10, done: false }
+acc.next(5);   // { value: 15, done: false }
+acc.next(20);  // { value: 35, done: false }
+```
+
+---
+
+## ✅ Real-World Use Cases
+
+| Use case | Why generators help |
+|---|---|
+| Paginated API fetching | Pull next page only when needed |
+| Infinite scroll data | Produce IDs lazily |
+| Custom iteration order | Full control over `for...of` |
+| Async coordination | `async function*` for async streams |
+| State machines | Each `yield` is a state transition |
+
+---
+
+## ⚠️ Gotchas
+
+**Generators are single-pass.** Once exhausted, they don't reset.
+
+```js
+const gen = count();
+[...gen]; // [1, 2, 3]
+[...gen]; // [] — already done
+```
+
+**You can't use `yield` inside a regular callback** inside a generator.
+
+```js
+function* broken() {
+  [1, 2, 3].forEach(n => yield n); // ❌ SyntaxError
+}
+
+function* works() {
+  yield* [1, 2, 3]; // ✅ delegate to another iterable
+}
+```
+
+Use `yield*` to delegate to another iterable — it flattens it into the outer generator.
+
+---
+
+## 🔍 Flow
+
+<FlowDiagram
+  nodes="Call generator fn → Get iterator object → Call .next() → Resume from yield → Return { value, done }"
+  branch1="[green] done: false → yield produces value → pauses"
+  branch2="[orange] done: true → function returned or threw"
+/>
+
+---
+
+> **Final Takeaway:** Generators let you describe a sequence without computing it all upfront. Reach for them when you need infinite sequences, lazy pipelines, or fine-grained control over iteration. They're the foundation of async iterators (`for await...of`) too.
+
+## Summary
+
+| Concept | What it is |
+|---|---|
+| Iterator protocol | Object with `.next()` returning `{ value, done }` |
+| `function*` | Declares a generator function |
+| `yield` | Pauses execution, emits a value |
+| `yield*` | Delegates to another iterable |
+| `next(val)` | Resumes generator and passes a value in |
+| `for...of` | Consumes any iterable automatically |
