@@ -1,0 +1,243 @@
+---
+title: "?? vs || — The Default-Value Trap That Breaks Real Apps"
+summary: "`||` treats 0 and '' as missing. `??` only treats null/undefined as missing. Know the difference before it bites you in an interview or in prod."
+publishedTime: "2026-07-08"
+level: "beginner"
+tags: ["javascript", "typescript", "operators", "interview", "tips"]
+---
+
+You want a fallback when a value is missing:
+
+```js
+const count = userInput || 10;
+```
+
+Looks fine. Until someone enters **`0`**.
+
+```js
+const count = 0 || 10;
+console.log(count); // 10 ❌ — zero is a valid number!
+```
+
+This bug ships to production more often than you'd think — pagination, quantities, toggles, form fields.
+
+The fix is one character difference: **`??`** instead of **`||`**.
+
+> **`||`** falls back on **any falsy** value.  
+> **`??`** falls back only on **`null` or `undefined`**.
+
+That's the whole interview answer. The rest is learning when each one is correct.
+
+---
+
+## 🧠 Falsy vs Nullish
+
+JavaScript has **6 falsy values**:
+
+```js
+false
+0
+""        // empty string
+null
+undefined
+NaN
+```
+
+**Nullish** means only two of those:
+
+```js
+null
+undefined
+```
+
+| Value | `value \|\| "default"` | `value ?? "default"` |
+|-------|------------------------|----------------------|
+| `null` | `"default"` ✅ | `"default"` ✅ |
+| `undefined` | `"default"` ✅ | `"default"` ✅ |
+| `0` | `"default"` ❌ | `0` ✅ |
+| `""` | `"default"` ❌ | `""` ✅ |
+| `false` | `"default"` ❌ | `false` ✅ |
+| `NaN` | `"default"` ❌ | `NaN` ✅ |
+
+**Rule of thumb:** If `0`, `""`, or `false` are **valid data**, use `??`. If you truly want to replace all falsy values, use `||`.
+
+---
+
+## ❌ Real Bugs with `||`
+
+### Pagination page 0
+
+```js
+const page = searchParams.get("page") || 1;
+// get("page") returns "0" → truthy string "0" ✅ fine
+// but if page is numeric 0:
+const pageNum = currentPage || 1; // 0 becomes 1 ❌
+```
+
+### Empty string is valid
+
+```js
+const nickname = user.nickname || "Anonymous";
+// user wants blank display name → forced to "Anonymous" ❌
+```
+
+### Checkbox / toggle off
+
+```js
+const enabled = settings.enabled || true;
+// false (intentionally off) → becomes true ❌
+```
+
+### React default props pattern
+
+```tsx
+function Badge({ count }: { count?: number }) {
+  const display = count || "—";
+  // count = 0 → shows "—" instead of 0 ❌
+}
+```
+
+### ✅ Fixes
+
+```js
+const pageNum = currentPage ?? 1;
+const nickname = user.nickname ?? "Anonymous";
+const enabled = settings.enabled ?? true;
+const display = count ?? "—"; // still wrong for 0 — use explicit check:
+const display = count != null ? count : "—";
+```
+
+---
+
+## ✅ When `||` Is Actually Correct
+
+Sometimes you **want** to treat falsy as "missing":
+
+```js
+// Show placeholder when name is empty, null, or undefined
+const label = name.trim() || "Untitled";
+
+// Enable feature unless explicitly disabled (false) — rare, but intentional
+const showBanner = config.showBanner || true; // ❌ still wrong for false!
+
+// Better for booleans:
+const showBanner = config.showBanner ?? true;
+```
+
+```js
+// Guard before calling a function
+callback && callback();  // short-circuit, not defaulting
+if (!token) return;      // explicit check > operator magic
+```
+
+Use `||` when **any falsy value should trigger the fallback** — e.g. empty strings in display logic:
+
+```js
+const title = post.title || "Draft"; // "" → "Draft" is probably what you want
+```
+
+Be **deliberate**. Don't use `||` as a lazy default for numbers and booleans.
+
+---
+
+## 🔗 Chaining: `??` vs `||`
+
+Both short-circuit, but differently:
+
+```js
+// || stops at first truthy
+0 || "" || "hello"   // "hello"
+0 ?? "" ?? "hello"   // ""  (0 is not nullish, so ?? returns 0... wait)
+
+0 ?? "" ?? "hello"   // 0 ✅ (first nullish check: 0 is not null/undefined → return 0)
+null ?? "" ?? "hello" // "" ✅
+```
+
+```js
+// Common pattern: default chain
+const port = process.env.PORT ?? 3000;
+const theme = user.theme ?? system.theme ?? "light";
+```
+
+`??` only falls through on `null`/`undefined`, so `0` and `""` survive the chain correctly.
+
+---
+
+## ⚠️ Mixing `??` and `||` (Syntax Trap)
+
+```js
+const x = a || b ?? c;  // ❌ SyntaxError without parentheses
+```
+
+You must add parentheses — they have different precedence:
+
+```js
+const x = (a || b) ?? c;  // ✅
+const x = a || (b ?? c);  // ✅ different meaning
+```
+
+In TypeScript/JavaScript, **`??` cannot mix with `||` or `&&` without parens**. ESLint will catch this.
+
+---
+
+## 🎯 Interview Cheat Sheet
+
+| Question | Answer |
+|----------|--------|
+| What does `\|\|` do? | Returns first **truthy** value, or last if all falsy |
+| What does `??` do? | Returns first value that is **not null/undefined** |
+| Falsy values? | `false`, `0`, `""`, `null`, `undefined`, `NaN` |
+| Nullish values? | Only `null` and `undefined` |
+| Default for a number that can be 0? | `??` |
+| Replace empty string with placeholder? | `\|\|` is often fine |
+| Default boolean when `false` is valid? | `??` |
+
+---
+
+## 🧪 Quick Quiz
+
+What gets logged?
+
+```js
+console.log(0 || 42);    // 42
+console.log(0 ?? 42);    // 0
+console.log("" || "hi"); // "hi"
+console.log("" ?? "hi"); // ""
+console.log(null ?? 42); // 42
+console.log(undefined || 42); // 42
+```
+
+If you got all six, you're interview-ready on this topic.
+
+---
+
+## ✅ Decision Flow
+
+```
+Is 0, "", or false a valid value?
+├── Yes → use ??
+└── No  → || might be OK (e.g. empty string → placeholder)
+
+Is it a number or boolean?
+├── Yes → almost always ??
+└── No  → think again about empty string cases
+```
+
+---
+
+## ✨ Final Takeaway
+
+> **`||` asks: "Is this truthy?"**  
+> **`??` asks: "Is this null or undefined?"**
+
+For numbers, booleans, and APIs — **`??` is usually the safer default**.  
+For display strings where empty means "show fallback" — **`||` still has its place**.
+
+Know which question you're asking before you pick the operator.
+
+---
+
+### Suggested follow-ups
+- [Deep vs Shallow Copy](/blog/deep-vs-shallow-copy) — another "looks fine until prod" JavaScript trap
+- [TypeScript Enums vs Alternatives](/blog/typescript-enums-vs-alternatives) — type-safe patterns for defaults
+- [JavaScript Closures](/blog/javascript-closures) — how scope and values interact

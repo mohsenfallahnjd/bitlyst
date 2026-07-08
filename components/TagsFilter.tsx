@@ -21,41 +21,47 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const sortedTags = useMemo(
-    () => [...tags].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
-    [tags],
-  );
+  const sortedTags = useMemo(() => [...tags].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)), [tags]);
 
   const topTen = useMemo(() => sortedTags.slice(0, 10), [sortedTags]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) { return sortedTags; }
+    if (!q) {
+      return sortedTags;
+    }
     return sortedTags.filter((t) => t.name.toLowerCase().includes(q));
   }, [sortedTags, query]);
 
   useEffect(() => {
-    if (!open) { return; }
+    if (!open) {
+      return;
+    }
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") { setOpen(false); }
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
     }
     window.addEventListener("keydown", onKey);
-    return () => { window.removeEventListener("keydown", onKey); };
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   const pillBase = "inline-flex items-center gap-1.5 text-xs rounded-full px-3 py-1 border transition-colors";
-  const pillActive = "border-teal-600 dark:border-teal-400 bg-teal-50/60 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 font-medium";
-  const pillIdle = "border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900";
+  const pillActive =
+    "border-blue-600 dark:border-blue-400 bg-blue-50/60 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-medium";
+  const pillIdle =
+    "border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900";
 
   return (
     <div>
       <div className="flex flex-wrap gap-2">
         {/* All pill */}
-        <Link
-          href="/blog"
-          className={`${pillBase} ${!selectedTag ? pillActive : pillIdle}`}
-        >
+        <Link href="/blog" className={`${pillBase} ${!selectedTag ? pillActive : pillIdle}`}>
           All
-          <span className={`rounded-full px-1.5 py-px text-[10px] leading-none ${!selectedTag ? "bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
+          <span
+            className={`rounded-full px-1.5 py-px text-[10px] leading-none ${!selectedTag ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
+          >
             {tags.reduce((s, t) => s + t.count, 0)}
           </span>
         </Link>
@@ -70,7 +76,9 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
               title={`${t.count} post${t.count !== 1 ? "s" : ""}`}
             >
               #{t.name}
-              <span className={`rounded-full px-1.5 py-px text-[10px] leading-none ${isSelected ? "bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}>
+              <span
+                className={`rounded-full px-1.5 py-px text-[10px] leading-none ${isSelected ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
+              >
                 {t.count}
               </span>
             </Link>
@@ -80,7 +88,9 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
         {sortedTags.length > 10 && (
           <button
             type="button"
-            onClick={() => { setOpen(true); }}
+            onClick={() => {
+              setOpen(true);
+            }}
             className={`${pillBase} ${pillIdle}`}
             aria-haspopup="dialog"
             aria-expanded={open}
@@ -93,14 +103,21 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
       {/* All-tags modal */}
       {open && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="All tags">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setOpen(false); }} />
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              setOpen(false);
+            }}
+          />
           <div className="absolute inset-x-4 bottom-0 md:inset-auto md:left-1/2 md:-translate-x-1/2 md:top-24 md:w-[480px] bg-white dark:bg-gray-950 rounded-t-2xl md:rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
             {/* Modal header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
               <h2 className="text-sm font-semibold">All topics</h2>
               <button
                 type="button"
-                onClick={() => { setOpen(false); }}
+                onClick={() => {
+                  setOpen(false);
+                }}
                 className="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Close"
               >
@@ -114,9 +131,11 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
               <input
                 autoFocus
                 value={query}
-                onChange={(e) => { setQuery(e.target.value); }}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                }}
                 placeholder="Search topics…"
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/30 placeholder:text-gray-400"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-gray-400"
               />
 
               <div className="max-h-[55vh] overflow-y-auto -mx-1 px-1">
@@ -127,10 +146,12 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
                       <li key={t.key}>
                         <Link
                           href={`/blog?tag=${encodeURIComponent(t.name)}`}
-                          onClick={() => { setOpen(false); }}
+                          onClick={() => {
+                            setOpen(false);
+                          }}
                           className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors ${
                             isSelected
-                              ? "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300"
+                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
                               : "hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300"
                           }`}
                         >

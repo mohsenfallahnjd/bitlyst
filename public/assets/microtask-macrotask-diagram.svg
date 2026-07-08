@@ -3,7 +3,7 @@
   <defs>
     <style>
       .lane { fill: #f1f5f9; }
-      .box { fill: #ffffff; stroke: #0ea5e9; stroke-width: 2; rx: 10; }
+      .box { fill: #ffffff; stroke: #0e36e9; stroke-width: 2; rx: 10; }
       .mic { stroke: #22c55e; }
       .mac { stroke: #f59e0b; }
       .label { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; font-size: 14px; fill: #0f172a; }

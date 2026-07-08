@@ -1,0 +1,288 @@
+---
+title: "CORS Explained Simply — Why Your Fetch Works in Postman but Fails in the Browser"
+summary: "Cross-Origin Resource Sharing in plain language: what blocks your request, what preflight means, and how to fix the errors you'll see in every frontend job."
+publishedTime: "2026-07-08"
+level: "intermediate"
+tags: ["cors", "http", "security", "fetch", "frontend", "interview", "nextjs"]
+---
+
+Your API works in Postman. Same URL, same headers, same body.  
+Open the app in Chrome → **red error in the console**:
+
+```
+Access to fetch at 'https://api.example.com/users' from origin 'https://app.example.com'
+has been blocked by CORS policy...
+```
+
+Nothing is "broken" on the server. The browser is doing its job.
+
+> **CORS is not a server bug — it's a browser security rule.**  
+> Postman doesn't enforce it. Browsers do.
+
+Once you understand that one line, CORS stops feeling random.
+
+---
+
+## 🧠 What Problem Does CORS Solve?
+
+Browsers enforce the **Same-Origin Policy**:
+
+> JavaScript on `https://app.example.com` should not silently read data from `https://bank.com`.
+
+An **origin** = protocol + domain + port:
+
+```
+https://app.example.com:443
+  ↑        ↑              ↑
+protocol  host          port
+```
+
+These are **different origins**:
+
+| From | To | Cross-origin? |
+|------|-----|---------------|
+| `https://app.com` | `https://api.app.com` | ✅ Yes (different host) |
+| `https://app.com` | `http://app.com` | ✅ Yes (different protocol) |
+| `https://app.com:443` | `https://app.com:3000` | ✅ Yes (different port) |
+| `https://app.com/page` | `https://app.com/other` | ❌ No (same origin) |
+
+Without CORS, any website could `fetch()` your logged-in session from another domain and steal data.
+
+**CORS** is the mechanism that lets a server say:
+
+> "Yes, I allow `https://app.example.com` to read my responses in the browser."
+
+---
+
+## 🔍 Simple Request vs Preflight
+
+Not every cross-origin request triggers a preflight. The browser decides.
+
+### Simple request (no preflight)
+
+Usually:
+- Methods: `GET`, `HEAD`, `POST`
+- "Safe" headers only (`Accept`, `Content-Type` like `text/plain`, `application/x-www-form-urlencoded`, `multipart/form-data`)
+- No custom headers like `Authorization`
+
+```
+Browser → GET https://api.example.com/users
+Server  → 200 + Access-Control-Allow-Origin: https://app.example.com
+Browser → ✅ JS can read the response
+```
+
+### Preflight request (OPTIONS first)
+
+Happens for most modern APIs:
+- Methods: `PUT`, `PATCH`, `DELETE`
+- Custom headers: `Authorization`, `X-API-Key`
+- `Content-Type: application/json`
+
+<FlowDiagram
+  nodes="Browser → OPTIONS (preflight) → Server"
+  branch1="[cyan] Server allows origin + method + headers"
+  branch2="[green] Browser → Real request (GET/POST/...) → Server → ✅ Response"
+/>
+
+1. Browser sends **`OPTIONS`** — "Can I do this?"
+2. Server responds with allowed origin, methods, headers
+3. If allowed → browser sends the **real request**
+4. If not → browser **blocks before your fetch even runs**
+
+You'll see **two** requests in DevTools Network tab. That's normal.
+
+---
+
+## 📋 The Headers That Matter
+
+### Server → Browser (response)
+
+| Header | Meaning |
+|--------|---------|
+| `Access-Control-Allow-Origin` | Which origin may read the response (`https://app.com` or `*`) |
+| `Access-Control-Allow-Methods` | Allowed HTTP methods (`GET, POST, PUT`) |
+| `Access-Control-Allow-Headers` | Allowed custom request headers (`Authorization, Content-Type`) |
+| `Access-Control-Allow-Credentials` | Whether cookies/auth work cross-origin (`true`) |
+| `Access-Control-Max-Age` | How long browser caches preflight result (seconds) |
+
+### Browser → Server (preflight request)
+
+| Header | Meaning |
+|--------|---------|
+| `Origin` | Where the JS page lives |
+| `Access-Control-Request-Method` | Method the app wants to use |
+| `Access-Control-Request-Headers` | Custom headers the app wants to send |
+
+---
+
+## 🍪 Cookies & Credentials
+
+Cross-origin fetch **does not send cookies by default**.
+
+```js
+fetch("https://api.example.com/me", {
+  credentials: "include", // send cookies
+});
+```
+
+Server must respond with:
+
+```
+Access-Control-Allow-Origin: https://app.example.com   ← exact origin, NOT *
+Access-Control-Allow-Credentials: true
+```
+
+⚠️ **`Allow-Origin: *` + credentials = blocked.** Browsers reject that combo.
+
+This connects to [HttpOnly cookies](/blog/httpOnly-cookies-guide) — session auth across origins needs careful CORS + cookie config (`SameSite`, `Secure`, correct domain).
+
+---
+
+## ❌ Common Errors & Fixes
+
+### 1. "No `Access-Control-Allow-Origin` header"
+
+**Meaning:** Server didn't grant permission (or error response omitted CORS headers).
+
+**Fix:** Add CORS headers on the **API server** for successful *and* error responses.
+
+```js
+// Express example
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://app.example.com");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+```
+
+### 2. Preflight fails (OPTIONS returns 404 or 401)
+
+**Meaning:** Server doesn't handle `OPTIONS`, or auth middleware blocks it.
+
+**Fix:** Respond to `OPTIONS` **before** auth middleware:
+
+```js
+app.options("*", (req, res) => {
+  res.sendStatus(204);
+});
+```
+
+### 3. "Header `Authorization` is not allowed"
+
+**Fix:** Include it in `Access-Control-Allow-Headers`.
+
+### 4. Works locally, fails in production
+
+Different origins in dev vs prod:
+
+```
+Dev:  http://localhost:3000  →  https://api.staging.com
+Prod: https://app.com        →  https://api.com
+```
+
+Whitelist **both** origins (or use env-based config).
+
+### 5. "I'll fix it with a CORS browser extension"
+
+That only fixes **your** machine. Not users. Not interviews. Fix the server or proxy.
+
+---
+
+## 🛠️ Frontend Fixes That Actually Work
+
+### Option A: Fix CORS on the API (correct for public APIs)
+
+The API owner adds proper headers. Required when third-party frontends call your API.
+
+### Option B: Same-origin proxy (common in Next.js)
+
+Browser calls **your** domain; server forwards to the API. No cross-origin from browser's view.
+
+```js
+// app/api/users/route.ts (Next.js App Router)
+export async function GET() {
+  const res = await fetch("https://api.example.com/users", {
+    headers: { Authorization: `Bearer ${process.env.API_TOKEN}` },
+  });
+  return Response.json(await res.json());
+}
+```
+
+```js
+// Client — same origin, no CORS issue
+fetch("/api/users");
+```
+
+✅ Hides secrets (API keys stay on server)  
+✅ Avoids browser CORS entirely  
+✅ Pattern used in most production Next.js apps
+
+### Option C: Server-side fetch only
+
+RSC / `getServerSideProps` / Server Actions fetch external APIs on the **server** — CORS doesn't apply server-to-server.
+
+---
+
+## 🚫 Myths (Interview Gold)
+
+| Myth | Reality |
+|------|---------|
+| "CORS protects the API from hackers" | CORS protects **browser users**. curl/Postman ignore it |
+| "Disable CORS in fetch" | No such option — it's enforced by the browser |
+| "CORS = authentication" | No — it only controls **which origins can read responses in JS** |
+| `Access-Control-Allow-Origin: *` always works | Fails with `credentials: "include"` |
+| "The backend is down" | Often a CORS misconfig — check Network tab for blocked response |
+
+---
+
+## 🔬 How to Debug in 60 Seconds
+
+1. Open **DevTools → Network**
+2. Find the failing request (often **OPTIONS** in red)
+3. Check **Response Headers** — is `Access-Control-Allow-Origin` present?
+4. Compare **Request Headers** → `Origin` with what server allows
+5. If OPTIONS fails → fix preflight before touching the real endpoint
+
+---
+
+## 🎯 Interview Cheat Sheet
+
+| Question | Answer |
+|----------|--------|
+| What is CORS? | Browser mechanism letting servers whitelist cross-origin **JavaScript** access |
+| Who enforces it? | **Browser only** — not Node, not Postman |
+| What is preflight? | `OPTIONS` request before "non-simple" cross-origin calls |
+| Why proxy in Next.js? | Same-origin fetch avoids CORS; keeps secrets on server |
+| `*` with cookies? | **Not allowed** — need exact origin + `Allow-Credentials: true` |
+| Same-origin? | Same protocol + host + port |
+
+---
+
+## ✅ Decision Guide
+
+```
+Fetch from browser to different origin?
+├── Public API you control → add CORS headers on API
+├── Private API / secret keys → Next.js API route proxy
+├── Server Component / SSR → fetch on server (no CORS)
+└── Dev-only hack (extension) → ❌ not a solution
+```
+
+---
+
+## ✨ Final Takeaway
+
+> **CORS is the browser asking the server: "Is this web app allowed to read your response?"**  
+> **If the server doesn't say yes with headers, the browser hides the data — even if the API returned 200.**
+
+Postman never asks that question. Your users' browsers always do.
+
+Learn to read the Network tab, fix headers or proxy through your backend, and this error stops wasting your afternoons.
+
+---
+
+### Suggested follow-ups
+- [HttpOnly Cookies](/blog/httpOnly-cookies-guide) — auth, cookies, and cross-origin pitfalls
+- [CDN Explained in Next.js](/blog/cdn-explained-nextjs) — caching at the edge (different from CORS, often confused)
+- [AbortController](/blog/abortcontroller-practical-guide) — cancel fetch requests cleanly

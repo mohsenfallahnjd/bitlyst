@@ -1,0 +1,209 @@
+---
+title: "Debounce vs Throttle — One Sentence to Remember Forever"
+summary: "Two patterns for taming fast events: debounce waits for silence, throttle limits how often. With examples, code, and interview answers."
+publishedTime: "2026-07-08"
+level: "beginner"
+tags: ["javascript", "performance", "debounce", "throttle", "frontend", "interview"]
+---
+
+Search boxes, scroll handlers, resize listeners, button spam — the browser fires events **fast**. Way faster than your API or UI can handle.
+
+Two tools solve 90% of these problems:
+
+> **Debounce** = wait until things **stop**, then run once.  
+> **Throttle** = run at most **once per interval**, no matter how noisy it gets.
+
+Memorize that pair. You'll never confuse them in an interview again.
+
+---
+
+## 🧠 The Core Difference
+
+| Pattern | When it runs | Mental image |
+|---------|--------------|--------------|
+| **Debounce** | After activity **pauses** | "Wait for silence, then act" |
+| **Throttle** | On a **fixed schedule** | "At most once every N ms" |
+
+**Debounce** delays execution until the user **stops** triggering the event.  
+**Throttle** guarantees execution **regularly**, even during continuous activity.
+
+---
+
+## 🔍 Debounce — "Wait for Silence"
+
+**Use when:** the **final value** matters, not every intermediate step.
+
+Classic examples:
+- Search-as-you-type (wait until user stops typing)
+- Auto-save after editing stops
+- Window resize → recalculate layout **once** after drag ends
+
+```js
+function debounce(fn, delay = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+```
+
+### Timeline
+
+User types: `h` → `he` → `hel` → `hello` (stops)
+
+```
+h ── he ── hel ── hello ── [300ms silence] ── ✅ fetch("hello")
+                         ↑ only this one runs
+```
+
+Three keystrokes, **one** API call.
+
+### React example
+
+```tsx
+const debouncedSearch = useMemo(
+  () => debounce((q: string) => fetch(`/api?q=${q}`), 300),
+  []
+);
+
+function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+  debouncedSearch(e.target.value);
+}
+```
+
+Or use a library: `lodash.debounce`, or `useDeferredValue` / `useTransition` in React 18+ for UI-specific cases.
+
+---
+
+## ⏱️ Throttle — "Once Per Interval"
+
+**Use when:** you need **regular updates** during continuous activity.
+
+Classic examples:
+- Scroll → update sticky header / progress bar
+- Mouse move → drag preview
+- Button spam → prevent double-submit
+- Infinite scroll → check position while scrolling
+
+```js
+function throttle(fn, interval = 200) {
+  let last = 0;
+  return (...args) => {
+    const now = Date.now();
+    if (now - last >= interval) {
+      last = now;
+      fn(...args);
+    }
+  };
+}
+```
+
+### Timeline
+
+User scrolls continuously for 2 seconds (interval = 200ms):
+
+```
+scroll scroll scroll ... → ✅ run → scroll scroll ... → ✅ run → ...
+                           ~every 200ms max
+```
+
+Many scroll events, **~10** handler runs (not hundreds).
+
+---
+
+## ❌ Common Mistakes
+
+### Using debounce for scroll
+
+```js
+window.addEventListener("scroll", debounce(updateProgress, 100));
+```
+
+User scrolls for 5 seconds → `updateProgress` runs **once at the end**.  
+Progress bar stays frozen until they stop. Feels broken.
+
+✅ Use **throttle** for scroll.
+
+### Using throttle for search
+
+```js
+input.addEventListener("input", throttle(search, 300));
+```
+
+User types `"react"` → searches `"r"`, `"re"`, `"rea"`, `"reac"`, `"react"`.  
+Wasteful API calls; you only care about the final query.
+
+✅ Use **debounce** for search.
+
+### Forgetting cleanup
+
+```tsx
+useEffect(() => {
+  const handler = throttle(onScroll, 200);
+  window.addEventListener("scroll", handler);
+  return () => window.removeEventListener("scroll", handler);
+}, []);
+```
+
+Always remove listeners on unmount.
+
+---
+
+## 🆚 Side-by-Side
+
+| Scenario | Pick | Why |
+|----------|------|-----|
+| Search input | **Debounce** | Only final query matters |
+| Scroll position | **Throttle** | Need updates while scrolling |
+| Window resize | **Debounce** | Recalc layout once after resize ends |
+| Button double-click guard | **Throttle** | Block rapid repeats |
+| Drag & drop preview | **Throttle** | Smooth updates during drag |
+| Form auto-save | **Debounce** | Save after user pauses typing |
+| Analytics "scroll depth" | **Throttle** | Sample during scroll, not after |
+
+---
+
+## 🎯 Interview Cheat Sheet
+
+| Question | Answer |
+|----------|--------|
+| What is debounce? | Delay execution until events **stop** for N ms |
+| What is throttle? | Run at most **once every** N ms |
+| Search box? | Debounce |
+| Scroll handler? | Throttle |
+| Leading vs trailing? | Debounce usually **trailing** (after pause); throttle can be **leading** (first event fires immediately) |
+| React alternative? | `useDeferredValue`, `useTransition` for UI deferral — not the same, but related |
+
+---
+
+## 🧪 Leading vs Trailing (Bonus)
+
+Most debounce/throttle implementations are **trailing** — run after the wait period.
+
+Some libraries support **leading** throttle — fire immediately, then ignore until interval passes:
+
+```js
+// Leading throttle: first click works, then blocked for 1s
+button.addEventListener("click", throttle(submit, 1000, { leading: true, trailing: false }));
+```
+
+Useful for "submit once, ignore spam clicks" UX.
+
+---
+
+## ✅ The One-Line Rule
+
+> **Debounce = wait for quiet. Throttle = cap the rate.**
+
+When in doubt: ask *"Do I care about the final value, or updates while it's happening?"*
+
+- Final value → **debounce**
+- Updates during activity → **throttle**
+
+---
+
+### Suggested follow-ups
+- [useTransition](/blog/useTransition-explained) — React's built-in way to defer heavy UI updates
+- [useDeferredValue](/blog/useDeferredValue-explained) — defer expensive renders while typing
+- [JavaScript Event Loop](/blog/javascript-event-loop) — how timers (`setTimeout`) fit in

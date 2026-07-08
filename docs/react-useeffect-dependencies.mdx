@@ -1,0 +1,288 @@
+---
+title: "React useEffect Dependencies — The Bug That Keeps Coming Back"
+summary: "Why your effect reads old state, fires twice, or loops forever — and the simple rules to fix it (interview-ready)."
+publishedTime: "2026-07-08"
+level: "intermediate"
+tags: ["react", "hooks", "useEffect", "closures", "frontend", "interview"]
+---
+
+`useEffect` looks simple. Add a function, add a dependency array, done.
+
+Then production hits you with:
+- a timer that logs the **wrong count**
+- a fetch that sends a **stale token**
+- an effect that **runs forever**
+- or React Strict Mode making everything run **twice**
+
+These are not random React bugs. They all come from one idea:
+
+> **Every render is a snapshot. Your effect remembers the values from the render that scheduled it.**
+
+Once you internalize that sentence, most `useEffect` pain disappears.
+
+---
+
+## 🧠 The Core Mental Model
+
+When React renders your component, it creates a **snapshot** of props and state for that moment.
+
+```tsx
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      console.log(count); // 👈 frozen at the count from THIS render
+    }, 1000);
+    return () => clearInterval(id);
+  }, []); // empty deps = only first render's count
+
+  return <button onClick={() => setCount(c => c + 1)}>{count}</button>;
+}
+```
+
+You click the button → UI shows `1`, `2`, `3`…  
+But the interval still logs `0` forever.
+
+**Why?** The callback inside `setInterval` is a **closure**. It captured `count = 0` from the first render and never saw updates.
+
+This is the famous **stale closure** problem — the #1 `useEffect` interview trap.
+
+---
+
+## ❌ Mistake 1: Empty `[]` When You Need Fresh Values
+
+```tsx
+useEffect(() => {
+  fetch(`/api/user/${userId}`); // userId from first render only
+}, []);
+```
+
+Looks clean. Breaks when `userId` changes via routing or props.
+
+### ✅ Fix
+
+```tsx
+useEffect(() => {
+  fetch(`/api/user/${userId}`);
+}, [userId]); // re-run when userId changes
+```
+
+**Rule:** If your effect **reads** a value from the component, that value probably belongs in the dependency array.
+
+---
+
+## ❌ Mistake 2: Missing Dependencies (Ignoring ESLint)
+
+```tsx
+useEffect(() => {
+  document.title = `Count: ${count}`;
+}); // no deps → runs after EVERY render
+```
+
+Without deps, the effect runs on **every render** — often causing extra work or infinite loops if the effect also sets state.
+
+### ✅ Fix
+
+```tsx
+useEffect(() => {
+  document.title = `Count: ${count}`;
+}, [count]);
+```
+
+Trust `eslint-plugin-react-hooks`. When it says *"missing dependency"*, it is usually right.
+
+---
+
+## ❌ Mistake 3: Objects & Arrays in Deps → Infinite Loop
+
+```tsx
+useEffect(() => {
+  loadData({ page, filter });
+}, [{ page, filter }]); // ❌ new object every render → effect → render → ...
+```
+
+In JavaScript, `{ page, filter } !== { page, filter }`. A fresh object every render means React thinks deps **changed** every time.
+
+### ✅ Fix options
+
+**A) List primitives directly**
+
+```tsx
+useEffect(() => {
+  loadData({ page, filter });
+}, [page, filter]);
+```
+
+**B) Memoize the object**
+
+```tsx
+const params = useMemo(() => ({ page, filter }), [page, filter]);
+
+useEffect(() => {
+  loadData(params);
+}, [params]);
+```
+
+**Rule:** Dependencies are compared with **`Object.is`** (like `===`). New references every render = infinite loop.
+
+---
+
+## ❌ Mistake 4: Functions in Deps Without `useCallback`
+
+```tsx
+function Search() {
+  const [q, setQ] = useState("");
+
+  const search = () => fetch(`/api?q=${q}`);
+
+  useEffect(() => {
+    search();
+  }, [search]); // search is recreated every render → loop
+}
+```
+
+Every render creates a **new** `search` function → deps change → effect runs → state update → render → repeat.
+
+### ✅ Fix: define inside the effect
+
+```tsx
+useEffect(() => {
+  const search = () => fetch(`/api?q=${q}`);
+  search();
+}, [q]);
+```
+
+Or wrap with `useCallback` if the function is passed to children:
+
+```tsx
+const search = useCallback(() => {
+  fetch(`/api?q=${q}`);
+}, [q]);
+```
+
+**Prefer moving logic inside the effect** when nothing else needs that function.
+
+---
+
+## ❌ Mistake 5: Fetch Race Conditions
+
+```tsx
+useEffect(() => {
+  fetch(`/api?q=${query}`)
+    .then(r => r.json())
+    .then(setResults);
+}, [query]);
+```
+
+User types fast → request for `"a"` finishes **after** `"abc"`. UI shows wrong data.
+
+### ✅ Fix: cleanup + ignore flag
+
+```tsx
+useEffect(() => {
+  let cancelled = false;
+
+  fetch(`/api?q=${query}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!cancelled) setResults(data);
+    });
+
+  return () => { cancelled = true; };
+}, [query]);
+```
+
+Or use **`AbortController`** (see [AbortController guide](/blog/abortcontroller-practical-guide)).
+
+**Rule:** If an effect starts async work, **clean it up** on re-run or unmount.
+
+---
+
+## 🔄 When You Need the Latest Value *Without* Re-running
+
+Sometimes you want a stable interval/subscription but still read fresh state:
+
+```tsx
+const countRef = useRef(count);
+countRef.current = count; // always latest, no extra effect runs
+
+useEffect(() => {
+  const id = setInterval(() => {
+    console.log(countRef.current); // ✅ always fresh
+  }, 1000);
+  return () => clearInterval(id);
+}, []); // stable setup, fresh reads
+```
+
+Use `useRef` when you need **latest value** but don't want the effect to **re-subscribe** on every change.
+
+Related: [useRef vs useState](/blog/react-useref-vs-usestate).
+
+---
+
+## 🧪 Why Strict Mode Runs Effects Twice (Dev Only)
+
+In React 18+ dev mode, Strict Mode **mounts → unmounts → remounts** components to expose missing cleanups.
+
+You might see:
+- double `fetch` in Network tab
+- double `console.log` on mount
+
+This is **intentional**. It catches bugs like:
+
+```tsx
+useEffect(() => {
+  socket.connect();
+  // ❌ no cleanup → duplicate connections in prod navigations too
+}, []);
+```
+
+### ✅ Always return cleanup
+
+```tsx
+useEffect(() => {
+  socket.connect();
+  return () => socket.disconnect();
+}, []);
+```
+
+Production does **not** double-invoke. Dev pain saves prod bugs.
+
+---
+
+## 🎯 Interview Cheat Sheet
+
+| Question | Short answer |
+|----------|--------------|
+| What does `[]` mean? | Run once after mount (plus cleanup on unmount) |
+| What if deps are omitted? | Run after **every** render |
+| Why stale closures? | Effect callbacks capture values from their render snapshot |
+| Why infinite loops? | Unstable deps (new object/function each render) |
+| How to fix unstable deps? | Primitives in array, `useMemo`, `useCallback`, or move logic inside effect |
+| Why double fetch in dev? | Strict Mode remount test — add cleanup |
+| `useRef` vs state in effects? | Ref = read latest without re-running effect; state = triggers re-render |
+
+---
+
+## ✅ The 4 Rules to Remember
+
+1. **Every value you read inside the effect should be in deps** — unless you have a deliberate reason not to.
+2. **Never put freshly created objects/functions in deps** — use primitives, memoization, or inline them.
+3. **Always clean up** — timers, listeners, fetches, subscriptions.
+4. **Stale closure?** Either add the value to deps, or store it in a `ref` if re-running is too expensive.
+
+---
+
+## ✨ Final Takeaway
+
+> **`useEffect` doesn't watch live variables — it remembers the snapshot from when it was scheduled.**
+
+Write that on a sticky note. Next time a timer logs `0`, a fetch sends an old token, or an effect loops forever — you'll know exactly where to look.
+
+---
+
+### Suggested follow-ups
+- [JavaScript Closures](/blog/javascript-closures) — the underlying mechanism
+- [useRef vs useState](/blog/react-useref-vs-usestate) — when refs beat state in effects
+- [AbortController](/blog/abortcontroller-practical-guide) — cancel fetches on unmount

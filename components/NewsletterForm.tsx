@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import clsx from "clsx";
+import { useState } from "react";
 
 type State = "idle" | "loading" | "success" | "error";
 
@@ -17,9 +17,7 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [checkedTopics, setCheckedTopics] = useState<Set<string>>(
-    () => new Set(topics.map((t) => t.id)),
-  );
+  const [checkedTopics, setCheckedTopics] = useState<Set<string>>(() => new Set(topics.map((t) => t.id)));
 
   const toggleTopic = (id: string) => {
     setCheckedTopics((prev) => {
@@ -41,9 +39,7 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
         email,
         topicIds: checkedTopics.size > 0 ? [...checkedTopics] : undefined,
         interests:
-          checkedTopics.size > 0
-            ? topics.filter((t) => checkedTopics.has(t.id)).map((t) => t.label)
-            : undefined,
+          checkedTopics.size > 0 ? topics.filter((t) => checkedTopics.has(t.id)).map((t) => t.label) : undefined,
       }),
     });
 
@@ -62,7 +58,7 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
       <div
         className={clsx(
           "rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-6 py-5 text-center",
-          className,
+          className
         )}
       >
         <p className="text-emerald-700 dark:text-emerald-400 font-medium">🎉 You're subscribed!</p>
@@ -75,7 +71,7 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
     <div
       className={clsx(
         "rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 px-6 py-6",
-        className,
+        className
       )}
     >
       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Get new posts in your inbox</p>
@@ -91,11 +87,12 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
               className={clsx(
                 "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 checkedTopics.has(t.id)
-                  ? "border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300"
-                  : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600",
+                  ? "border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                  : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600"
               )}
             >
-              {checkedTopics.has(t.id) ? "✓ " : ""}{t.label}
+              {checkedTopics.has(t.id) ? "✓ " : ""}
+              {t.label}
             </button>
           ))}
         </div>
@@ -109,12 +106,12 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={state === "loading"}
-          className="flex-1 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 disabled:opacity-50"
+          className="flex-1 min-w-0 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={state === "loading"}
-          className="rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2 transition-colors disabled:opacity-50 shrink-0"
+          className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 transition-colors disabled:opacity-50 shrink-0"
         >
           {state === "loading" ? "…" : "Subscribe"}
         </button>

@@ -9,7 +9,7 @@ export function SniplyRoundedMark({ size = 24, className }: { size?: number; cla
       className={className}
     >
       <title>Bitlyst</title>
-      <rect width="64" height="64" rx="14" fill="#0d9488" />
+      <rect width="64" height="64" rx="14" fill="#0e36e9" />
       {/* Upper bullet */}
       <circle cx="18" cy="26" r="4.5" fill="#fff" />
       <rect x="28" y="21.5" width="22" height="9" rx="4.5" fill="#fff" />

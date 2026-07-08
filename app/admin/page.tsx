@@ -1,8 +1,7 @@
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { createClient } from "redis";
 import { prisma } from "@/lib/prisma";
 import AdminClient from "./AdminClient";
-import { createClient } from "redis";
 
 async function getReactionTotals() {
   try {
@@ -22,11 +21,7 @@ async function getReactionTotals() {
   }
 }
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ secret?: string }>;
-}) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ secret?: string }> }) {
   const sp = await searchParams;
   const cookieStore = await cookies();
   const sessionSecret = cookieStore.get("admin_secret")?.value;
@@ -44,11 +39,11 @@ export default async function AdminPage({
             name="secret"
             type="password"
             placeholder="Secret"
-            className="w-full text-sm border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:border-teal-500"
+            className="w-full text-sm border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500"
           />
           <button
             type="submit"
-            className="w-full text-sm px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+            className="w-full text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Enter
           </button>

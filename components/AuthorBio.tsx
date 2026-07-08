@@ -3,7 +3,9 @@ import Link from "next/link";
 import type { DocMeta } from "@/lib/mdSource";
 
 export default function AuthorBio({ authors }: { authors: DocMeta["authors"] }) {
-  if (!authors?.length) return null;
+  if (!authors?.length) {
+    return null;
+  }
 
   return (
     <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800/60">
@@ -27,7 +29,7 @@ export default function AuthorBio({ authors }: { authors: DocMeta["authors"] }) 
               href={author.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+              className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               {author.name}
             </Link>

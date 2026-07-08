@@ -94,10 +94,12 @@ export default function AboutPage() {
 
         <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-prose">
           <p>
-            Hey — I&apos;m Mohsen. I build web products and write about the things I learn along the way. Bitlyst is where I publish short, focused posts on JavaScript, React, and Next.js.
+            Hey — I&apos;m Mohsen. I build web products and write about the things I learn along the way. Bitlyst is
+            where I publish short, focused posts on JavaScript, React, and Next.js.
           </p>
           <p>
-            Each post targets one concept. No long intros, no filler — just the thing you need to know, with code you can use today.
+            Each post targets one concept. No long intros, no filler — just the thing you need to know, with code you
+            can use today.
           </p>
         </div>
 
@@ -134,7 +136,7 @@ export default function AboutPage() {
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           New posts weekly.{" "}
-          <Link href="/blog" className="text-teal-600 dark:text-teal-400 hover:underline">
+          <Link href="/blog" className="text-blue-600 dark:text-blue-400 hover:underline">
             Browse all {totalPosts} posts →
           </Link>
         </p>

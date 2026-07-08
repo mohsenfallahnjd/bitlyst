@@ -27,7 +27,7 @@ export function GET(request: NextRequest) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
-        <span style={{ color: "#0d9488", fontSize: 28, fontWeight: 700 }}>Bitlyst</span>
+        <span style={{ color: "#0e36e9", fontSize: 28, fontWeight: 700 }}>Bitlyst</span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -66,7 +66,7 @@ export function GET(request: NextRequest) {
               style={{
                 background: "#ffffff",
                 border: "1px solid #e8e2d9",
-                color: "#0d9488",
+                color: "#0e36e9",
                 padding: "6px 16px",
                 borderRadius: "999px",
                 fontSize: 18,

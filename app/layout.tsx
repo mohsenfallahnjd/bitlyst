@@ -66,8 +66,8 @@ export const metadata: Metadata = {
     title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
     description:
       "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
-    site: "@mohsenfallahnjd",
-    creator: "@mohsenfallahnjd",
+    site: "@themohsenme",
+    creator: "@themohsenme",
   },
 };
 

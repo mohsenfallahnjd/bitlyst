@@ -1,7 +1,32 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type Item = { id: string; text: string; level: number };
+type Item = { id: string; text: string; level: 1 | 2 };
+
+function cleanHeadingText(text: string) {
+  return (
+    text
+      .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]/gu, "")
+      .replace(/\s+/g, " ")
+      .trim() || text
+  );
+}
+
+function resolveActiveSectionId(activeId: string, allItems: Item[]) {
+  const index = allItems.findIndex((item) => item.id === activeId);
+  if (index === -1) {
+    return activeId;
+  }
+  if (allItems[index].level === 1) {
+    return activeId;
+  }
+  for (let i = index; i >= 0; i--) {
+    if (allItems[i].level === 1) {
+      return allItems[i].id;
+    }
+  }
+  return activeId;
+}
 
 function TOCList({
   items,
@@ -13,22 +38,23 @@ function TOCList({
   scrollTo: (id: string) => (e: React.MouseEvent) => void;
 }) {
   return (
-    <ul className="space-y-0.5">
-      {items.map((i) => {
-        const isActive = i.id === activeId;
+    <ul className="space-y-0.5 border-l border-stone-200/80 dark:border-stone-800">
+      {items.map((item) => {
+        const isActive = item.id === activeId;
         return (
-          <li key={i.id} style={{ paddingLeft: (i.level - 1) * 10 }}>
+          <li key={item.id}>
             <a
-              href={`#${i.id}`}
-              onClick={scrollTo(i.id)}
-              className={`block py-1 text-[13px] transition-colors leading-snug ${
+              href={`#${item.id}`}
+              onClick={scrollTo(item.id)}
+              aria-current={isActive ? "location" : undefined}
+              className={[
+                "block border-l-2 -ml-px py-1 pl-3 pr-1 text-[13px] leading-snug transition-colors",
                 isActive
-                  ? "text-gray-900 dark:text-gray-100"
-                  : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-              }`}
-              aria-current={isActive ? "true" : undefined}
+                  ? "border-blue-600 font-medium text-stone-900 dark:border-blue-400 dark:text-stone-50"
+                  : "border-transparent text-stone-500 hover:text-stone-800 dark:text-stone-500 dark:hover:text-stone-200",
+              ].join(" ")}
             >
-              {i.text}
+              <span className="line-clamp-2">{item.text}</span>
             </a>
           </li>
         );
@@ -38,33 +64,38 @@ function TOCList({
 }
 
 export default function TOC({ collapsible = false }: { collapsible?: boolean }) {
-  const [items, setItems] = useState<Item[]>([]);
+  const [allItems, setAllItems] = useState<Item[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [open, setOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
+  const sectionItems = useMemo(() => allItems.filter((item) => item.level === 1), [allItems]);
+  const activeSectionId = useMemo(() => resolveActiveSectionId(activeId, allItems), [activeId, allItems]);
+
   useEffect(() => {
     const headings = Array.from(document.querySelectorAll("h2, h3")) as HTMLElement[];
-    const parsed = headings.map((el) => ({
+    const parsed: Item[] = headings.map((el) => ({
       id: el.id || "",
-      text: el.innerText,
+      text: cleanHeadingText(el.innerText),
       level: el.tagName === "H2" ? 1 : 2,
     }));
-    setItems(parsed.filter((i) => i.id));
+    setAllItems(parsed.filter((item) => item.id));
 
     observerRef.current?.disconnect();
 
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => (a.boundingClientRect.top > b.boundingClientRect.top ? 1 : -1));
-        if (visible[0]) { setActiveId((visible[0].target as HTMLElement).id); }
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          setActiveId((visible[0].target as HTMLElement).id);
+        }
       },
-      { rootMargin: "-10% 0px -75% 0px", threshold: 0 },
+      { rootMargin: "-15% 0px -70% 0px", threshold: 0 }
     );
 
-    headings.forEach((h) => observer.observe(h));
+    headings.forEach((heading) => observer.observe(heading));
     observerRef.current = observer;
     return () => observer.disconnect();
   }, []);
@@ -72,35 +103,52 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
   const scrollTo = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     const el = document.getElementById(id);
-    if (!el) { return; }
+    if (!el) {
+      return;
+    }
     window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: "smooth" });
     window.history.replaceState(null, "", `#${id}`);
-    if (collapsible) { setOpen(false); }
+    if (collapsible) {
+      setOpen(false);
+    }
   };
 
-  if (!items.length) { return null; }
+  if (!sectionItems.length) {
+    return null;
+  }
+
+  const activeLabel = sectionItems.find((item) => item.id === activeSectionId)?.text;
 
   if (collapsible) {
     return (
-      <div className="border-b border-gray-100 dark:border-gray-800/60 pb-4 mb-8">
+      <div className="rounded-lg border border-stone-200/80 dark:border-stone-800">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="flex items-center justify-between w-full text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors py-1"
+          onClick={() => setOpen((value) => !value)}
+          className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left"
           aria-expanded={open}
         >
-          <span>Contents</span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+              On this page
+            </p>
+            {!open && activeLabel && (
+              <p className="mt-0.5 truncate text-sm text-stone-700 dark:text-stone-200">{activeLabel}</p>
+            )}
+          </div>
           <svg
             viewBox="0 0 16 16"
             fill="currentColor"
-            className={`size-3.5 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+            aria-hidden
+            className={`size-4 shrink-0 text-stone-400 transition-transform ${open ? "rotate-180" : ""}`}
           >
             <path d="M4.427 6.427a.75.75 0 0 1 1.06 0L8 8.94l2.513-2.513a.75.75 0 0 1 1.06 1.06l-3.043 3.043a.75.75 0 0 1-1.06 0L4.427 7.487a.75.75 0 0 1 0-1.06Z" />
           </svg>
         </button>
+
         {open && (
-          <nav className="mt-3">
-            <TOCList items={items} activeId={activeId} scrollTo={scrollTo} />
+          <nav className="border-t border-stone-200/80 px-1 py-2 dark:border-stone-800">
+            <TOCList items={sectionItems} activeId={activeSectionId} scrollTo={scrollTo} />
           </nav>
         )}
       </div>
@@ -108,9 +156,14 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
   }
 
   return (
-    <nav className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-auto">
-      <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Contents</p>
-      <TOCList items={items} activeId={activeId} scrollTo={scrollTo} />
+    <nav
+      aria-label="Table of contents"
+      className="max-h-[calc(100vh-7rem)] overflow-y-auto [mask-image:linear-gradient(to_bottom,black_90%,transparent)]"
+    >
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        On this page
+      </p>
+      <TOCList items={sectionItems} activeId={activeSectionId} scrollTo={scrollTo} />
     </nav>
   );
 }

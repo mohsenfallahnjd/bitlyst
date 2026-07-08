@@ -67,18 +67,23 @@ export default function AdminClient({
         <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-50">Admin</h1>
         <div className="flex gap-1">
           <button className={tabCls("pending")} onClick={() => setTab("pending")}>
-            Pending {pendingList.length > 0 && <span className="ml-1 text-teal-600 dark:text-teal-400">{pendingList.length}</span>}
+            Pending{" "}
+            {pendingList.length > 0 && (
+              <span className="ml-1 text-blue-600 dark:text-blue-400">{pendingList.length}</span>
+            )}
           </button>
-          <button className={tabCls("approved")} onClick={() => setTab("approved")}>Approved</button>
-          <button className={tabCls("reactions")} onClick={() => setTab("reactions")}>Reactions</button>
+          <button className={tabCls("approved")} onClick={() => setTab("approved")}>
+            Approved
+          </button>
+          <button className={tabCls("reactions")} onClick={() => setTab("reactions")}>
+            Reactions
+          </button>
         </div>
       </div>
 
       {tab === "pending" && (
         <div className="space-y-4">
-          {pendingList.length === 0 && (
-            <p className="text-sm text-gray-400 dark:text-gray-500">No pending comments.</p>
-          )}
+          {pendingList.length === 0 && <p className="text-sm text-gray-400 dark:text-gray-500">No pending comments.</p>}
           {pendingList.map((c) => (
             <CommentRow key={c.id} comment={c} onApprove={() => approve(c.id)} onDelete={() => remove(c.id)} />
           ))}
@@ -98,13 +103,14 @@ export default function AdminClient({
 
       {tab === "reactions" && (
         <div className="space-y-2">
-          {reactions.length === 0 && (
-            <p className="text-sm text-gray-400 dark:text-gray-500">No reactions yet.</p>
-          )}
+          {reactions.length === 0 && <p className="text-sm text-gray-400 dark:text-gray-500">No reactions yet.</p>}
           {reactions.map((r) => (
-            <div key={r.slug} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/60">
+            <div
+              key={r.slug}
+              className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/60"
+            >
               <span className="text-sm text-gray-700 dark:text-gray-300">/blog/{r.slug}</span>
-              <span className="text-sm font-medium text-teal-600 dark:text-teal-400">{r.total} reactions</span>
+              <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{r.total} reactions</span>
             </div>
           ))}
         </div>
@@ -133,7 +139,11 @@ function CommentRow({
             <span className="text-xs text-gray-400 dark:text-gray-500">/blog/{comment.slug}</span>
             <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
             <span className="text-xs text-gray-400 dark:text-gray-500">
-              {new Date(comment.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              {new Date(comment.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
             </span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{comment.body}</p>
@@ -142,7 +152,7 @@ function CommentRow({
           {onApprove && (
             <button
               onClick={onApprove}
-              className="text-xs px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-md transition-colors"
+              className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
             >
               Approve
             </button>

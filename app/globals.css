@@ -11,7 +11,7 @@
   --fg:       #1c1917;
   --muted:    #78716c;
   --border:   #e8e2d9;
-  --accent:   #0d9488;
+  --accent:   #0e36e9;
 
   --radius-sm: 0.375rem;
   --radius:    0.5rem;
@@ -24,7 +24,7 @@
   --fg:      #faf8f5;
   --muted:   #a8a29e;
   --border:  #292524;
-  --accent:  #2dd4bf;
+  --accent:  #0e6df9;
 }
 
 /* ── Base ────────────────────────────────────────────────────── */
@@ -45,7 +45,7 @@ body {
 
 /* ── Selection ───────────────────────────────────────────────── */
 ::selection {
-  background-color: #0d948820;
+  background-color: #0e36e920;
   color: inherit;
 }
 .dark ::selection {
@@ -67,7 +67,7 @@ body {
 
 /* ── Container ───────────────────────────────────────────────── */
 .container {
-  max-width: 48rem;
+  max-width: 58rem;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.25rem;
@@ -126,11 +126,11 @@ body {
 .progress-shimmer {
   background: linear-gradient(
     90deg,
-    #0d9488 0%,
-    #2dd4bf 45%,
+    #0e36e9 0%,
+    #0e6df9 45%,
     #ffffff50 50%,
-    #2dd4bf 55%,
-    #0d9488 100%
+    #0e6df9 55%,
+    #0e36e9 100%
   );
   background-size: 200% auto;
   animation: shimmer 2s linear infinite;
@@ -148,7 +148,7 @@ body {
   --diagram-bg:          #f8f6f2;
   --diagram-border:      #e8e2d9;
   --diagram-node-bg:     #f0fdfb;
-  --diagram-node-border: #0d9488;
+  --diagram-node-border: #0e36e9;
   --diagram-node-text:   #134e4a;
   --diagram-arrow:       #a8a29e;
   --diagram-label-text:  #57534e;
@@ -157,7 +157,7 @@ body {
   --diagram-bg:          #1a1715;
   --diagram-border:      #292524;
   --diagram-node-bg:     #132726;
-  --diagram-node-border: #0d9488;
+  --diagram-node-border: #0e36e9;
   --diagram-node-text:   #99f6e4;
   --diagram-arrow:       #57534e;
   --diagram-label-text:  #a8a29e;

@@ -88,7 +88,7 @@ export default function DonatePrompt({ className = "" }: DonatePromptProps) {
                     </div>
                     <button
                       onClick={() => handleCopy(c.symbol, c.address)}
-                      className="text-xs text-teal-700 dark:text-teal-300 hover:underline"
+                      className="text-xs text-blue-700 dark:text-blue-300 hover:underline"
                     >
                       Copy
                     </button>

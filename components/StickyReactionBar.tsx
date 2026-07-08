@@ -20,16 +20,24 @@ export default function StickyReactionBar({ postSlug }: { postSlug: string }) {
   useEffect(() => {
     const onScroll = () => {
       const scrolled = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-      if (scrolled > 0.55 && !dismissed) { setVisible(true); }
+      if (scrolled > 0.55 && !dismissed) {
+        setVisible(true);
+      }
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); };
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [dismissed]);
 
   const react = async (type: R) => {
-    if (loading || reacted) { return; }
+    if (loading || reacted) {
+      return;
+    }
     const userId = getUserId();
-    if (!userId) { return; }
+    if (!userId) {
+      return;
+    }
     setLoading(true);
     setReacted(type);
     try {
@@ -38,34 +46,38 @@ export default function StickyReactionBar({ postSlug }: { postSlug: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reactionType: type, userId, action: "add" }),
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setLoading(false);
-    setTimeout(() => { setDismissed(true); setVisible(false); }, 2000);
+    setTimeout(() => {
+      setDismissed(true);
+      setVisible(false);
+    }, 2000);
   };
 
-  if (!visible || dismissed) { return null; }
+  if (!visible || dismissed) {
+    return null;
+  }
 
   return (
-    <div
-      className="fixed bottom-0 inset-x-0 z-50 xl:hidden"
-      style={{ animation: "fadeUp 0.3s ease-out both" }}
-    >
+    <div className="fixed bottom-0 inset-x-0 z-50 xl:hidden" style={{ animation: "fadeUp 0.3s ease-out both" }}>
       <div className="mx-3 mb-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-xl px-4 py-3 flex items-center justify-between gap-3">
         {reacted ? (
-          <p className="flex-1 text-center text-sm font-medium text-teal-700 dark:text-teal-300">
+          <p className="flex-1 text-center text-sm font-medium text-blue-700 dark:text-blue-300">
             Thanks for the reaction! 🙌
           </p>
         ) : (
           <>
-            <p className="text-sm text-gray-600 dark:text-gray-300 shrink-0">
-              Was this helpful?
-            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 shrink-0">Was this helpful?</p>
             <div className="flex items-center gap-2">
               {QUICK.map(({ type, emoji }) => (
                 <button
                   key={type}
                   type="button"
-                  onClick={() => { react(type); }}
+                  onClick={() => {
+                    react(type);
+                  }}
                   disabled={loading}
                   className="flex items-center justify-center size-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-90 transition-all"
                   aria-label={type}
@@ -76,7 +88,10 @@ export default function StickyReactionBar({ postSlug }: { postSlug: string }) {
             </div>
             <button
               type="button"
-              onClick={() => { setDismissed(true); setVisible(false); }}
+              onClick={() => {
+                setDismissed(true);
+                setVisible(false);
+              }}
               className="shrink-0 rounded-full p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               aria-label="Dismiss"
             >

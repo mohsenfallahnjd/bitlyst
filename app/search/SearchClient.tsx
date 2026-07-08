@@ -27,29 +27,45 @@ function tokenize(query: string): string[] {
 }
 
 function countOccurrences(haystack: string, needle: string): number {
-  if (!needle) { return 0; }
+  if (!needle) {
+    return 0;
+  }
   let count = 0;
   let idx = haystack.indexOf(needle);
-  while (idx !== -1) { count++; idx = haystack.indexOf(needle, idx + needle.length); }
+  while (idx !== -1) {
+    count++;
+    idx = haystack.indexOf(needle, idx + needle.length);
+  }
   return count;
 }
 
 function fuzzySubsequenceScore(text: string, query: string): number {
-  if (!query) { return 0; }
+  if (!query) {
+    return 0;
+  }
   let i = 0;
   const q = query.toLowerCase();
   const t = text.toLowerCase();
-  for (let j = 0; j < t.length && i < q.length; j++) { if (t[j] === q[i]) { i++; } }
+  for (let j = 0; j < t.length && i < q.length; j++) {
+    if (t[j] === q[i]) {
+      i++;
+    }
+  }
   return i === q.length ? Math.min(2, Math.ceil(q.length / 8)) : 0;
 }
 
 function buildExcerpt(content: string, terms: string[], maxLen = 160): string {
-  if (!content) { return ""; }
+  if (!content) {
+    return "";
+  }
   const lower = content.toLowerCase();
   let bestIdx = 0;
   for (const term of terms) {
     const idx = lower.indexOf(term);
-    if (idx !== -1) { bestIdx = idx; break; }
+    if (idx !== -1) {
+      bestIdx = idx;
+      break;
+    }
   }
   const start = Math.max(0, bestIdx - Math.floor(maxLen / 2));
   const end = Math.min(content.length, start + maxLen);
@@ -57,14 +73,19 @@ function buildExcerpt(content: string, terms: string[], maxLen = 160): string {
 }
 
 function highlight(text: string, terms: string[]) {
-  if (!terms.length || !text) { return <>{text}</>; }
+  if (!terms.length || !text) {
+    return <>{text}</>;
+  }
   const pattern = new RegExp(`(${terms.map(escapeRegExp).join("|")})`, "gi");
   const parts = text.split(pattern);
   return (
     <>
       {parts.map((part, idx) =>
         terms.some((t) => part.toLowerCase() === t.toLowerCase()) ? (
-          <mark key={idx} className="bg-teal-100 dark:bg-teal-900/50 text-teal-900 dark:text-teal-100 rounded px-0.5 not-italic">
+          <mark
+            key={idx}
+            className="bg-blue-100 dark:bg-blue-900/50 text-blue-900 dark:text-blue-100 rounded px-0.5 not-italic"
+          >
             {part}
           </mark>
         ) : (
@@ -76,7 +97,9 @@ function highlight(text: string, terms: string[]) {
 }
 
 function scoreDoc(doc: SearchDoc, terms: string[], rawQuery: string): number {
-  if (!terms.length) { return 0; }
+  if (!terms.length) {
+    return 0;
+  }
   const title = doc.title.toLowerCase();
   const summary = (doc.summary || "").toLowerCase();
   const tags = (doc.tags || []).map((t) => t.toLowerCase());
@@ -95,8 +118,12 @@ function scoreDoc(doc: SearchDoc, terms: string[], rawQuery: string): number {
 function useDebounced<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
-    const id = setTimeout(() => { setDebounced(value); }, delayMs);
-    return () => { clearTimeout(id); };
+    const id = setTimeout(() => {
+      setDebounced(value);
+    }, delayMs);
+    return () => {
+      clearTimeout(id);
+    };
   }, [value, delayMs]);
   return debounced;
 }
@@ -112,28 +139,48 @@ export default function SearchClient({ docs, initialQuery }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (firstRenderRef.current) { firstRenderRef.current = false; return; }
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false;
+      return;
+    }
     const q = debouncedQuery.trim();
     router.replace(`/search${q ? `?q=${encodeURIComponent(q)}` : ""}`);
   }, [debouncedQuery, router]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) { return; }
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) {
+        return;
+      }
       const tag = (e.target as HTMLElement | null)?.tagName?.toLowerCase();
-      const isTyping = tag === "input" || tag === "textarea" || tag === "select" || (e.target as HTMLElement | null)?.isContentEditable;
-      if (!isTyping) { e.preventDefault(); inputRef.current?.focus(); }
+      const isTyping =
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        (e.target as HTMLElement | null)?.isContentEditable;
+      if (!isTyping) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
     }
     window.addEventListener("keydown", onKey);
-    return () => { window.removeEventListener("keydown", onKey); };
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   const terms = useMemo(() => tokenize(debouncedQuery), [debouncedQuery]);
 
   const results = useMemo(() => {
-    if (!terms.length) { return [] as Array<{ doc: SearchDoc; score: number; excerpt: string }>; }
+    if (!terms.length) {
+      return [] as Array<{ doc: SearchDoc; score: number; excerpt: string }>;
+    }
     return docs
-      .map((doc) => ({ doc, score: scoreDoc(doc, terms, debouncedQuery), excerpt: buildExcerpt(doc.summary || doc.content, terms) }))
+      .map((doc) => ({
+        doc,
+        score: scoreDoc(doc, terms, debouncedQuery),
+        excerpt: buildExcerpt(doc.summary || doc.content, terms),
+      }))
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 50);
@@ -141,8 +188,15 @@ export default function SearchClient({ docs, initialQuery }: Props) {
 
   const topTags = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const doc of docs) { for (const t of doc.tags ?? []) { counts[t] = (counts[t] ?? 0) + 1; } }
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([t]) => t);
+    for (const doc of docs) {
+      for (const t of doc.tags ?? []) {
+        counts[t] = (counts[t] ?? 0) + 1;
+      }
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 14)
+      .map(([t]) => t);
   }, [docs]);
 
   const isEmpty = !debouncedQuery.trim();
@@ -163,16 +217,21 @@ export default function SearchClient({ docs, initialQuery }: Props) {
           ref={inputRef}
           name="q"
           value={query}
-          onChange={(e) => { setQuery(e.target.value); }}
+          onChange={(e) => {
+            setQuery(e.target.value);
+          }}
           placeholder="Search posts, tags, or topics…"
           autoFocus
-          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 dark:focus:border-teal-600 transition"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-600 transition"
         />
 
         {query ? (
           <button
             type="button"
-            onClick={() => { setQuery(""); inputRef.current?.focus(); }}
+            onClick={() => {
+              setQuery("");
+              inputRef.current?.focus();
+            }}
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="Clear search"
           >
@@ -206,7 +265,9 @@ export default function SearchClient({ docs, initialQuery }: Props) {
               <button
                 key={tag}
                 type="button"
-                onClick={() => { setQuery(tag); }}
+                onClick={() => {
+                  setQuery(tag);
+                }}
                 className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
               >
                 #{tag}
@@ -234,7 +295,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
                     ))}
                   </div>
                 )}
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors leading-snug">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors leading-snug">
                   {highlight(doc.title, terms)}
                 </p>
                 {excerpt && (
@@ -261,7 +322,9 @@ export default function SearchClient({ docs, initialQuery }: Props) {
               <button
                 key={tag}
                 type="button"
-                onClick={() => { setQuery(tag); }}
+                onClick={() => {
+                  setQuery(tag);
+                }}
                 className="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
               >
                 #{tag}
