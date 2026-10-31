@@ -1,0 +1,288 @@
+---
+title: "I Optimized a Button From O(n) to O(1). The Speed Didn't Matter."
+summary: "A bug report, a route map, and three rounds of making it faster — a story about what Big O really measures, why constants win at small n, and why the best algorithm is sometimes deleting the question."
+publishedTime: "2026-10-31"
+level: "intermediate"
+tags: ["big-o", "algorithms", "performance", "react", "nextjs", "component-design", "refactoring"]
+---
+
+The bug report was one line long:
+
+> "Audit logs from the Users page show nothing."
+
+I opened the Users list, clicked **Audit logs**, and landed here:
+
+```
+/audit-logs?type=Users&ResourceId=users
+```
+
+`ResourceId=users`. There's no user called "users." Somewhere, a component had looked at the URL, grabbed the last segment, and decided that was an id.
+
+I found it in about a minute. It was the shared `<AuditLogButton />` — rendered on 35 pages of our admin panel, and proud of taking **zero props**:
+
+```tsx
+<AuditLogButton />
+```
+
+Clean call sites. Magic inside. This is the story of how I tried to make that magic faster, learned what Big O actually tells you, and ended up deleting the magic altogether.
+
+---
+
+## The magic
+
+Inside, the button carried a map from route prefixes to log types and searched it on every render:
+
+```tsx
+const AuditLogPathNameTypes: Record<string, AuditLogTypeEnum> = {
+  "/lists/users": AuditLogTypeEnum.Users,
+  "/lists/merchants": AuditLogTypeEnum.Merchants,
+  "/shop/display": AuditLogTypeEnum.ShopDisplay,
+  // ...17 more
+};
+
+const AuditLogButton: FC = () => {
+  const pathname = usePathname();
+
+  const matchedPath = Object.keys(AuditLogPathNameTypes)
+    .find((path) => pathname.startsWith(path));
+  const type = matchedPath ? AuditLogPathNameTypes[matchedPath] : undefined;
+
+  const ResourceId = pathname.split("/").filter(Boolean).at(-1);
+
+  return <ActionMenuItem component={Link} href={{ pathname: "/audit-logs", query: { type, ResourceId } }} />;
+};
+```
+
+The bug was obvious once I saw it: on `/lists/users` the last segment is `users`. On `/lists/users/123/edit` it's `edit`.
+
+But I didn't see the bug first. I saw `Object.keys(...).find(...)` running inside a component on every render, and an old reflex kicked in:
+
+*That's a linear search. That's O(n). I can make that faster.*
+
+So before fixing anything, I did what every engineer does when they spot a loop. I started thinking in Big O.
+
+---
+
+## Chapter 1: What is n?
+
+Big O doesn't tell you how fast code is. It tells you **how the cost grows as the input grows**. So the first question is never "how fast?" It's "**what's the input, and can it grow?**"
+
+This button had two inputs:
+
+- **R** — the number of routes in the map. About 20.
+- **L** — the length of the pathname. Maybe 40 characters.
+
+`Object.keys(map).find(...)` walks the routes one by one until a prefix matches. Each `startsWith` compares up to *m* characters (the key's length). So:
+
+| Step | Work | Big O |
+|------|------|-------|
+| `Object.keys(map)` | build an array of R keys | O(R) |
+| `.find(startsWith)` | check up to R keys, m chars each | O(R · m) |
+| `.split("/").filter().at(-1)` | walk the path once | O(L) |
+| **Total** | | **O(R · m + L)** |
+
+Two details from that table come up constantly:
+
+**Best case vs worst case.** `find` stops at the first match. If the route you're on is first in the map, it's one comparison. If it's last (or missing), it's R comparisons. When people say "this is O(n)," they almost always mean the **worst case** — the guarantee, not the lucky day.
+
+**m and L are small and fixed.** Route keys don't get longer as the app grows. So in practice this is **O(R)**: double the routes, roughly double the work.
+
+Linear. It felt like a problem.
+
+---
+
+## Chapter 2: I fixed the bug and made it slower
+
+First I fixed the actual bugs. Match only on segment boundaries, and only look for an id *after* the matched prefix:
+
+```tsx
+const matchedPath = Object.keys(AuditLogPathNameTypes).find(
+  (path) => pathname === path || pathname.startsWith(`${path}/`)
+);
+
+const ResourceId = matchedPath
+  ? pathname.slice(matchedPath.length).split("/").filter(Boolean).at(-1)
+  : undefined;
+```
+
+The list page stopped sending `ResourceId=users`. `/lists/users-archive` stopped matching `/lists/users`. Progress.
+
+Big O of this version? Still O(R · m + L). Same shape, same growth.
+
+Then I measured it — and this is where the story turns. I wrote a micro-benchmark of every version in this post (Bun 1.4, Apple Silicon, worst case: the matching route is last in the map):
+
+| Version | 20 routes |
+|---------|-----------|
+| Original | 178 ns |
+| Attempt 1 (bug fix) | **407 ns** |
+
+My fix was **2.3× slower**. Same Big O.
+
+Why? `` `${path}/` `` builds a brand-new string for every route on every check. Big O can't see that. It deliberately throws away constant factors: O(2R) and O(R) are both just O(R).
+
+That's not a flaw. It's the entire point. Big O answers "what happens when R becomes 2,000?", not "which of these is faster at R = 20?" For the second question, there's only one honest tool: **measure**.
+
+---
+
+## Chapter 3: The O(1) version
+
+Still, the linear scan bothered me. The textbook fix for "search a list for a key" is a **hash map**: hash the key, jump straight to its bucket. Average cost O(1), no matter how many entries.
+
+Our routes were all two segments deep (`/lists/users`, `/shop/display`), so I could build the key directly from the pathname and look it up:
+
+```tsx
+const routeTypes = new Map(Object.entries(AuditLogPathNameTypes));
+
+const [, section, resource] = pathname.split("/", 3);
+const type = routeTypes.get(`/${section}/${resource}`);
+
+// and take the id from the router instead of slicing strings
+const { id } = useParams<{ id?: string }>();
+```
+
+No loop over routes. And `useParams()` hands over the `[id]` segment **by name**, so `/edit` and `/details` can't impersonate an id anymore.
+
+Then I ran the benchmark again, this time with a map 100× bigger too:
+
+| Version | Big O | 20 routes | 2,000 routes | Growth |
+|---------|-------|-----------|--------------|--------|
+| Original | O(R) | 178 ns | 26,872 ns | **151×** |
+| Attempt 1 | O(R) | 407 ns | 54,819 ns | **135×** |
+| Hash map | O(1) | 84 ns | 93 ns | **1.1×** |
+
+*This* is what Big O looks like in real life. Grow the input 100× and the linear versions grow ~100× (plus a little more as the data spills out of the fastest CPU caches). The hash map barely notices.
+
+If our admin panel ever had 2,000 routes, the original would spend 27 microseconds per render guessing where it is. The hash map would spend 0.09.
+
+I felt great about this for about ten minutes.
+
+---
+
+## Chapter 4: The number that ended the optimization
+
+Then I put the real numbers next to each other.
+
+We have **20 routes**, not 2,000. At 20 routes, the slowest version costs **0.4 microseconds**. Rendering the menu item it returns — React reconciling the element, the link, the DOM — costs far more than that. I had been optimizing something you couldn't find in a profiler.
+
+That's the second lesson Big O hides in plain sight:
+
+> **Big O tells you the slope. It doesn't tell you where you are on the line.**
+
+At small n, constants dominate. A "worse" O(n) loop over 20 items often beats a "better" O(1) structure, because hashing a string, allocating, and chasing pointers all have fixed costs. The crossover only shows up when n is large enough. So before reaching for a better complexity class, ask:
+
+1. **What is n — really?** Count it.
+2. **Can it grow?** Routes in an admin panel grow by a few a year. Rows in a table can grow by millions.
+3. **Does this run often enough to matter?** Once per render of one button is not a hot path.
+
+Our n was 20 and stuck there. The O(1) version was faster, and the speed was worth nothing.
+
+But something else in my hash map version bugged me more than speed. Look at what it still needed:
+
+- a map that mirrors the folder structure,
+- a rule that every route is exactly two segments deep,
+- folder names like `[id]` matching the keys I read in `useParams`.
+
+Rename `[id]` to `[userId]` and the button silently stops sending an id. No error. No warning. I'd made the guessing faster. I hadn't questioned the guessing.
+
+---
+
+## Chapter 5: The fastest code is the code that doesn't run
+
+So I asked a different question: **who renders this button?**
+
+```
+lists/users/_sections/index.tsx
+lists/users/[id]/_sections/HeaderInfo/index.tsx
+card-logistic/print-house/[id]/order/[orderId]/_sections/OrderDetailsInfo.tsx
+...35 call sites
+```
+
+Every one was a page-specific component. Every one already *knew* what it was showing. Most had the id in hand — they'd just used it to fetch the data on screen.
+
+The parent knew the answer. The child was reverse-engineering it from the URL.
+
+So the button stopped guessing:
+
+```tsx
+interface AuditLogButtonProps {
+  type: AuditLogTypeEnum;
+  resourceId?: string | null;
+}
+
+const AuditLogButton: FC<AuditLogButtonProps> = ({ type, resourceId }) => (
+  <ActionMenuItem
+    component={Link}
+    href={{ pathname: "/audit-logs", query: { type, ...(resourceId && { ResourceId: resourceId }) } }}
+  />
+);
+```
+
+And the call sites say what they mean:
+
+```tsx
+<AuditLogButton type={AuditLogTypeEnum.Users} />                              // list page
+<AuditLogButton type={AuditLogTypeEnum.Users} resourceId={user.id} />         // detail page
+<AuditLogButton type={AuditLogTypeEnum.PrintHouses} resourceId={order?.id} /> // nested page
+```
+
+No map. No `usePathname`. No `useParams`. Here's the full benchmark table:
+
+| Version | Big O | 20 routes | 2,000 routes |
+|---------|-------|-----------|--------------|
+| Original | O(R) | 178 ns | 26,872 ns |
+| Attempt 1 | O(R) | 407 ns | 54,819 ns |
+| Hash map | O(1) | 84 ns | 93 ns |
+| **Props** | **O(1)** | **5 ns** | **5 ns** |
+
+The hash map and props are both O(1). But they're O(1) in very different ways. The hash map does a constant amount of work *to find the answer*. Props do **no searching at all**, because the answer was handed over. There's no n left to grow. The route map is just gone.
+
+That's the best complexity improvement there is: not a smarter algorithm, but a question you no longer have to ask.
+
+---
+
+## What actually got better
+
+The speed-up was real: 35× faster than the original. It was also invisible to users. Here's what they *could* feel:
+
+| | Guessing from the URL | Props |
+|---|---|---|
+| Wrong id on sub-pages | Possible | Impossible |
+| Route renamed or moved | Silently breaks | Keeps working |
+| Page forgot to configure the button | Link without `type`, no error | **TypeScript error** — `type` is required |
+| Re-renders | On every navigation (`usePathname` subscribes to the router) | Only when the parent renders |
+| Client bundle | Ships the whole route map | Ships nothing extra |
+
+There was even a bonus. One route in the map had **no button rendered anywhere**. Dead config that only existed because the map was the source of truth. With props, config can't outlive its usage.
+
+---
+
+## What I took away
+
+**About Big O:**
+
+- Big O describes **growth**, not speed. First find n, then ask if it can grow.
+- It drops constants on purpose. Two O(n) versions can differ by 2× or more, so **measure** when n is small.
+- Worst case is the default promise. Early exits help the lucky case only.
+- O(1) from a hash map means "constant work to find it." O(1) from props means "no finding at all." Prefer the second when you can get it.
+
+**About components:**
+
+When a shared component starts reading global state — the URL, the router, `window`, a store — to figure out *its own context*, ask:
+
+1. Who renders this?
+2. Do they already know the answer?
+3. If yes, why is the child guessing?
+
+Zero-prop components look elegant at the call site. But the knowledge doesn't disappear. It moves into a hidden map that has to mirror your folder structure forever.
+
+> **Explicit props are boring. Boring is what you want in a component used 35 times.**
+
+---
+
+## TL;DR
+
+- A shared button guessed its type and id from the URL with a route map, a linear scan (O(R)) on every render.
+- My bug fix kept the same Big O but ran **2.3× slower**. Big O ignores constant factors, so only measuring shows that.
+- A hash-map lookup made it O(1): flat at **~90 ns** whether there were 20 routes or 2,000, while the linear scan grew **150×**.
+- With only 20 routes, every version cost under half a microsecond. **Big O gives the slope; n tells you where you are.**
+- The real fix was passing `type` and `resourceId` as props: no searching left, 5 ns, and bugs that TypeScript now catches.

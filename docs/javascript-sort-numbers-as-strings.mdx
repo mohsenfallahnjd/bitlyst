@@ -1,0 +1,158 @@
+---
+title: "The Leaderboard That Ranked 9 Points Above 100"
+summary: "Why JavaScript's sort() compares numbers as strings, why a 'lazy' comparator works in Safari but breaks in Chrome, and the one-line fix."
+publishedTime: "2026-10-31"
+level: "beginner"
+series: "js-plot-twists"
+seriesOrder: 1
+tags: ["javascript", "arrays", "sort", "gotchas", "interview"]
+---
+
+The message in our team chat was a screenshot and three words:
+
+> "I'm in last??"
+
+It was Friday quiz day. Every week we answer ten silly JavaScript questions, and I'd built a tiny leaderboard page for it. Lena had scored **100**, the best result we'd ever had. My page put her fourth. First place went to Arash, with **9**.
+
+Here's the code I'd shipped that morning:
+
+```js
+const scores = players.map((p) => p.score); // [9, 100, 25, 10, 3]
+
+const ranking = scores.sort().reverse();
+// expected: [100, 25, 10, 9, 3]
+// got:      [9, 3, 25, 100, 10]
+```
+
+Sort ascending, reverse it, done. What could go wrong with two built-in methods?
+
+---
+
+## The wrong turn: "the API sends strings"
+
+My first thought was the one every web developer has: *the data must be strings.* JSON from an API, a form field, a query param. Strings sort letter by letter, so `"100"` before `"9"` would make sense.
+
+So I spent twenty minutes making sure every score was a real number:
+
+```js
+const scores = players.map((p) => Number(p.score));
+typeof scores[0]; // "number"
+
+scores.sort().reverse(); // [9, 3, 25, 100, 10]  ← still wrong
+```
+
+Real numbers. Same broken result.
+
+The data was never the problem. `sort()` was doing exactly what it's designed to do.
+
+---
+
+## The reveal: sort() turns your numbers into text
+
+When you call `sort()` **without a compare function**, the spec says: convert each element to a string, then compare the strings by their character codes. Numbers don't get special treatment, not even an array made entirely of numbers.
+
+So JavaScript doesn't compare `100` and `25`. It compares `"100"` and `"25"`, the way a dictionary would:
+
+<FlowDiagram
+  title="How sort() compares 100 and 25"
+  nodes="sort() needs to order 100 and 25 → Both become strings → Compare the first character → '1' vs '2'"
+  notes="No compare function was passed, so the default rule kicks in|“100” and “25” — they aren't numbers any more|Like a dictionary: left to right, one character at a time|Character code 49 vs 50. '1' is smaller, so the decision is made right here"
+  branch1="[orange] Result → “100” goes before “25” → the remaining digits are never even looked at"
+  caption="The same rule puts 10 before 9 (“1” < “9”) and -1 before -10 (the shorter string wins a tie)."
+/>
+
+Run the whole array through that rule and you get my leaderboard:
+
+```js
+[9, 100, 25, 10, 3].sort();
+// as strings: "10" < "100" < "25" < "3" < "9"
+// result:     [10, 100, 25, 3, 9]
+
+// .reverse() → [9, 3, 25, 100, 10]   ← Arash wins with 9
+```
+
+The `.reverse()` made it worse. It turned "string order" into "backwards string order," and that put the single-digit scores on top.
+
+Why is this the default? `sort()` has to work on *any* array: strings, numbers, objects, mixed. Turning everything into strings is the only comparison that never throws. It's predictable, just not what you'd guess.
+
+---
+
+## The second wrong turn: the comparator that worked on my machine
+
+OK, so you pass a compare function. I knew that. I wrote this, tested it, and it worked:
+
+```js
+players.sort((a, b) => b.score > a.score); // highest first… right?
+```
+
+I tested in Safari. 100, 25, 10, 9, 3. Perfect. I pushed it.
+
+Ten minutes later, from someone using Chrome: "Lena's still not first."
+
+Same code, same data, two answers. I ran it in both engines to be sure:
+
+```js
+// JavaScriptCore (Safari, Bun) → 100, 25, 10, 9, 3   ✅
+// V8 (Chrome, Node 22)         → 9, 100, 25, 10, 3   ❌
+```
+
+The reason is the compare function's contract. The engine calls `compare(a, b)` many times and only cares about the **sign** of what you return:
+
+<FlowDiagram
+  title="What sort() does with your compare function's answer"
+  nodes="Engine calls compare(a, b)"
+  branch1="[green] Negative number → a goes first"
+  branch2="[cyan] Zero → keep the current order"
+  branch3="[orange] Positive number → b goes first"
+  branch4="[red] true / false → coerced to 1 / 0 → never negative, so 'a first' can never be said"
+/>
+
+A boolean comparator can only say "b first" (`true` → 1) or "equal" (`false` → 0). It can never say "a first." That breaks the contract, and the spec leaves the result of a broken comparator up to the engine. Safari's sorting algorithm happened to survive it on this data. Chrome's didn't.
+
+"Works in my browser" is the most dangerous kind of working. It's exactly how this bug got past me.
+
+---
+
+## The fix
+
+Return a number. For numbers, subtraction does it in one expression:
+
+```js
+const ranking = players.toSorted((a, b) => b.score - a.score);
+// 100, 25, 10, 9, 3 — in every engine
+```
+
+- `b.score - a.score` is negative when `a` should come first, positive when `b` should, zero when tied. Highest first. Swap to `a - b` for lowest first.
+- `toSorted()` returns a **new** array. Plain `sort()` sorts *in place*, so it would quietly mutate `players`. That's a second bug waiting to happen if `players` is React state or a prop. (`toSorted()` is in every modern browser and Node 20+.)
+
+The same default bites with text too, because uppercase letters have smaller character codes than lowercase:
+
+```js
+["banana", "apple", "Cherry"].sort();
+// ["Cherry", "apple", "banana"]  ← capital C first
+
+["banana", "apple", "Cherry"].sort((a, b) => a.localeCompare(b));
+// ["apple", "banana", "Cherry"]
+```
+
+For strings people will read, use `localeCompare` (or `Intl.Collator` for big lists). It sorts the way humans expect, accents and all.
+
+I fixed the leaderboard and posted the corrected ranking. Lena took first, 75 points clear of second place, and she brings up "the incident" every Friday. 🏆
+
+---
+
+## The rule
+
+> **Never call `sort()` without a compare function, and never return a boolean from one.**
+
+If you remember one thing: `sort()` sorts **text** by default. The moment your array holds numbers, dates or objects, you have to tell it how to compare them. And that answer must be a number.
+
+---
+
+## TL;DR
+
+- `sort()` with no arguments converts elements to strings and compares character codes, so `[10, 9, 1].sort()` gives `[1, 10, 9]`.
+- Converting your data to numbers doesn't help. The default comparison turns them back into strings.
+- A compare function must return a negative, zero or positive **number**. A boolean comparator gives different results in Safari and Chrome.
+- Use `(a, b) => a - b` for numbers and `a.localeCompare(b)` for human-readable strings.
+- Prefer `toSorted()` over `sort()` so you don't mutate the original array, especially React state.

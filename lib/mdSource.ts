@@ -15,7 +15,18 @@ export type DocMeta = {
   draft?: boolean;
   readingTime?: number;
   level?: "beginner" | "intermediate" | "advanced";
+  /** key from lib/series.ts */
+  series?: string;
+  /** part number inside the series */
+  seriesOrder?: number;
 };
+
+/** DocMeta without the body — what list UIs (and client components) need. */
+export type PostSummary = Omit<DocMeta, "content">;
+
+export function toSummary({ content: _content, ...rest }: DocMeta): PostSummary {
+  return rest;
+}
 
 const BLOG_DIR = path.join(process.cwd(), "docs");
 const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me", avatar: "/mohsen.JPEG" }];
@@ -50,6 +61,8 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
         content,
         readingTime: calcReadingTime(content),
         level: (data.level as DocMeta["level"]) ?? undefined,
+        series: (data.series as string | undefined) ?? undefined,
+        seriesOrder: (data.seriesOrder as number | undefined) ?? undefined,
       };
     })
     .filter((p) => !p.draft)
@@ -84,5 +97,7 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
     content,
     readingTime: calcReadingTime(content),
     level: (data.level as DocMeta["level"]) ?? undefined,
+    series: (data.series as string | undefined) ?? undefined,
+    seriesOrder: (data.seriesOrder as number | undefined) ?? undefined,
   };
 }

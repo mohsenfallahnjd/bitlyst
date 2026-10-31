@@ -5,7 +5,7 @@ export const AboutPage: FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">
           About Bitlyst
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
@@ -14,8 +14,8 @@ export const AboutPage: FC = () => {
       </div>
 
       <div className="prose prose-lg max-w-none dark:prose-invert">
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-8 border border-blue-200/50 dark:border-blue-800/50">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-900 dark:text-blue-100">What is Bitlyst?</h2>
+        <div className="bg-gradient-to-r from-brand-50 to-purple-50 dark:from-brand-900/20 dark:to-purple-900/20 rounded-xl p-8 border border-brand-200/50 dark:border-brand-800/50">
+          <h2 className="text-2xl font-semibold mb-4 text-brand-900 dark:text-brand-100">What is Bitlyst?</h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
             Bitlyst is a minimal blog focused on delivering concise, actionable tech insights. In a world overflowing
             with lengthy tutorials and overwhelming documentation, Bitlyst cuts through the noise to bring you the
@@ -67,7 +67,7 @@ export const AboutPage: FC = () => {
           <div className="mt-4 flex flex-wrap gap-3">
             <a
               href="https://www.linkedin.com/in/mohsenfallahnjd/"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              className="inline-flex items-center gap-2 text-brand-600 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -78,7 +78,7 @@ export const AboutPage: FC = () => {
             </a>
             <a
               href="https://themohsen.me"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              className="inline-flex items-center gap-2 text-brand-600 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >

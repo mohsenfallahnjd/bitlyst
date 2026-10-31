@@ -174,9 +174,9 @@ export default function PostReactions({ postSlug, className = "", showLabels = t
                 "flex items-center gap-1 px-2 py-1 rounded-full transition-all duration-200",
                 "border hover:scale-105 active:scale-95",
                 isUserReacted
-                  ? "border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                  ? "border-brand-300 dark:border-brand-600 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300"
                   : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
+                "focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-opacity-50",
                 isLoading && "opacity-50 cursor-not-allowed"
               )}
               title={`${reactionLabels[reactionType]} this post`}
@@ -188,7 +188,7 @@ export default function PostReactions({ postSlug, className = "", showLabels = t
                 <span
                   className={clsx(
                     "text-xs font-medium",
-                    isUserReacted ? "text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400"
+                    isUserReacted ? "text-brand-700 dark:text-brand-300" : "text-gray-600 dark:text-gray-400"
                   )}
                 >
                   {count}

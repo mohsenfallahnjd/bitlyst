@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 export type TagItem = {
+  /** URL slug — links go to /tags/[key] */
   key: string;
   name: string;
   count: number;
@@ -15,9 +15,7 @@ type TagsFilterProps = {
   selectedTag?: string;
 };
 
-export default function TagsFilter({ tags }: TagsFilterProps) {
-  const sp = useSearchParams();
-  const selectedTag = sp.get("tag")?.toLowerCase() ?? "";
+export default function TagsFilter({ tags, selectedTag = "" }: TagsFilterProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -49,7 +47,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
 
   const pillBase = "inline-flex items-center gap-1.5 text-xs rounded-full px-3 py-1 border transition-colors";
   const pillActive =
-    "border-blue-600 dark:border-blue-400 bg-blue-50/60 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 font-medium";
+    "border-brand-600 dark:border-brand-400 bg-brand-50/60 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300 font-medium";
   const pillIdle =
     "border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900";
 
@@ -60,7 +58,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
         <Link href="/blog" className={`${pillBase} ${!selectedTag ? pillActive : pillIdle}`}>
           All
           <span
-            className={`rounded-full px-1.5 py-px text-[10px] leading-none ${!selectedTag ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
+            className={`rounded-full px-1.5 py-px text-[10px] leading-none ${!selectedTag ? "bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
           >
             {tags.reduce((s, t) => s + t.count, 0)}
           </span>
@@ -71,13 +69,13 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
           return (
             <Link
               key={t.key}
-              href={isSelected ? "/blog" : `/blog?tag=${encodeURIComponent(t.name)}`}
+              href={isSelected ? "/blog" : `/tags/${t.key}`}
               className={`${pillBase} ${isSelected ? pillActive : pillIdle}`}
               title={`${t.count} post${t.count !== 1 ? "s" : ""}`}
             >
               #{t.name}
               <span
-                className={`rounded-full px-1.5 py-px text-[10px] leading-none ${isSelected ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
+                className={`rounded-full px-1.5 py-px text-[10px] leading-none ${isSelected ? "bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
               >
                 {t.count}
               </span>
@@ -135,7 +133,7 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
                   setQuery(e.target.value);
                 }}
                 placeholder="Search topics…"
-                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-gray-400"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500/30 placeholder:text-gray-400"
               />
 
               <div className="max-h-[55vh] overflow-y-auto -mx-1 px-1">
@@ -145,13 +143,13 @@ export default function TagsFilter({ tags }: TagsFilterProps) {
                     return (
                       <li key={t.key}>
                         <Link
-                          href={`/blog?tag=${encodeURIComponent(t.name)}`}
+                          href={`/tags/${t.key}`}
                           onClick={() => {
                             setOpen(false);
                           }}
                           className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-colors ${
                             isSelected
-                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                              ? "bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300"
                               : "hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-700 dark:text-gray-300"
                           }`}
                         >

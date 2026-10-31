@@ -3,12 +3,21 @@ import Image from "next/image";
 import Link from "next/link";
 import DonatePrompt from "@/components/DonatePrompt";
 import NewsletterForm from "@/components/NewsletterForm";
-import { loadMarkdownDocs } from "@/lib/mdSource";
+import PostCard from "@/components/PostCard";
+import TopicRequest from "@/components/TopicRequest";
+import { formatCount } from "@/lib/format";
+import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
+import { getPostStats } from "@/lib/stats";
+import { getAllTopics } from "@/lib/tags";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "About · Bitlyst",
-  description: "Mohsen Fallahnejad — the person behind Bitlyst. Bite-sized JavaScript, React & Next.js tips.",
-  alternates: { canonical: "https://bitlyst.vercel.app/about" },
+  title: "About",
+  description:
+    "Mohsen Fallahnejad — full-stack developer behind Bitlyst. Short, diagram-first posts on JavaScript, React & Next.js.",
+  alternates: { canonical: "/about" },
+  openGraph: { type: "profile", url: "/about", title: "About Mohsen Fallahnejad · Bitlyst" },
 };
 
 const LINKS = [
@@ -50,109 +59,139 @@ const LINKS = [
   },
 ];
 
-const TOPICS = ["JavaScript", "React", "Next.js", "TypeScript", "CSS", "Performance", "Node.js", "Web APIs"];
-
-export default function AboutPage() {
+export default async function AboutPage() {
   const posts = loadMarkdownDocs();
-  const totalPosts = posts.length;
-  const avgRead = Math.round(posts.reduce((s, p) => s + (p.readingTime ?? 0), 0) / posts.length);
-  const totalTopics = new Set(posts.flatMap((p) => p.tags ?? [])).size;
+  const stats = await getPostStats();
+  const topics = getAllTopics(posts).slice(0, 10);
+  const totalViews = Object.values(stats.views).reduce((n, v) => n + v, 0);
+  const totalComments = Object.values(stats.comments).reduce((n, v) => n + v, 0);
+  const avgRead = Math.round(posts.reduce((s, p) => s + (p.readingTime ?? 0), 0) / Math.max(posts.length, 1));
+
+  // "Start here": most read beginner/intermediate posts, falling back to the newest
+  const startHere = [...posts]
+    .filter((p) => p.level !== "advanced")
+    .sort((a, b) => (stats.views[b.slug] ?? 0) - (stats.views[a.slug] ?? 0))
+    .slice(0, 3);
+
+  const figures = [
+    { value: posts.length, label: "posts" },
+    { value: getAllTopics(posts).length, label: "topics" },
+    { value: `~${avgRead} min`, label: "avg read" },
+    ...(totalViews >= 100 ? [{ value: formatCount(totalViews), label: "reads" }] : []),
+    ...(totalComments >= 10 ? [{ value: totalComments, label: "comments" }] : []),
+  ];
 
   return (
-    <div className="space-y-12">
+    <div className="mx-auto max-w-[42rem] space-y-14">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ProfilePage",
+            mainEntity: {
+              "@type": "Person",
+              name: "Mohsen Fallahnejad",
+              url: "https://themohsen.me",
+              image: "https://bitlyst.vercel.app/mohsen.JPEG",
+              jobTitle: "Full-stack developer",
+              sameAs: LINKS.map((l) => l.href),
+              knowsAbout: topics.map((t) => t.name),
+            },
+          }),
+        }}
+      />
+
       {/* Hero */}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row items-start gap-5">
+      <section className="space-y-6">
+        <div className="flex items-center gap-5">
           <Image
             src="/mohsen.JPEG"
             alt="Mohsen Fallahnejad"
-            width={80}
-            height={80}
-            className="rounded-full object-cover size-20 ring-2 ring-gray-100 dark:ring-gray-800 shrink-0"
+            width={88}
+            height={88}
+            className="rounded-2xl object-cover size-[88px] shrink-0 ring-1 ring-black/5 dark:ring-white/10"
             priority
           />
-          <div className="space-y-1 sm:pt-1">
-            <h1 className="text-2xl font-bold tracking-tight">Mohsen Fallahnejad</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Full-stack developer · Author of Bitlyst</p>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {LINKS.map((l) => (
-                <a
-                  key={l.label}
-                  href={l.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={l.label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-                >
-                  {l.icon}
-                  {l.label}
-                </a>
-              ))}
-            </div>
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Hi, I&apos;m Mohsen 👋</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Full-stack developer · writing Bitlyst</p>
           </div>
         </div>
 
-        <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-prose">
+        <div className="space-y-4 text-[1.0625rem] leading-relaxed text-gray-700 dark:text-gray-300">
           <p>
-            Hey — I&apos;m Mohsen. I build web products and write about the things I learn along the way. Bitlyst is
-            where I publish short, focused posts on JavaScript, React, and Next.js.
+            I build web products for a living and keep running into the same questions: <em>why</em> does the event
+            loop do that, <em>when</em> does React re-render, <em>what</em> is Next.js actually caching?
           </p>
           <p>
-            Each post targets one concept. No long intros, no filler — just the thing you need to know, with code you
-            can use today.
+            Bitlyst is where I write down the answers — one concept per post, with diagrams and code you can paste
+            today. No 3,000-word intros. If you can&apos;t finish it over a coffee, it&apos;s too long.
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="flex flex-wrap gap-x-8 gap-y-4 pt-1">
-          {[
-            { value: totalPosts, label: "posts published" },
-            { value: totalTopics, label: "topics covered" },
-            { value: `~${avgRead} min`, label: "avg read time" },
-          ].map(({ value, label }) => (
-            <div key={label}>
-              <div className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">{value}</div>
-              <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{label}</div>
-            </div>
+        <div className="flex flex-wrap gap-2">
+          {LINKS.map((l) => (
+            <a
+              key={l.label}
+              href={l.href}
+              target="_blank"
+              rel="noopener noreferrer me"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+            >
+              {l.icon}
+              {l.label}
+            </a>
           ))}
         </div>
-      </div>
 
-      <hr className="border-gray-100 dark:border-gray-800" />
+        <dl className="grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-px overflow-hidden rounded-xl border border-gray-200/80 dark:border-gray-800 bg-gray-200/80 dark:bg-gray-800">
+          {figures.map(({ value, label }) => (
+            <div key={label} className="bg-surface-light dark:bg-surface-dark px-4 py-3">
+              <dt className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">{label}</dt>
+              <dd className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-50">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {/* Start here */}
+      <section>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          New here? Start with these
+        </h2>
+        <div>
+          {startHere.map((p) => (
+            <PostCard key={p.slug} post={toSummary(p)} views={stats.views[p.slug]} comments={stats.comments[p.slug]} />
+          ))}
+        </div>
+      </section>
 
       {/* Topics */}
-      <div className="space-y-4">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">What I write about</h2>
-        <div className="flex flex-wrap gap-2">
-          {TOPICS.map((t) => (
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          What I write about
+        </h2>
+        <div className="flex flex-wrap gap-1.5">
+          {topics.map((t) => (
             <Link
-              key={t}
-              href={`/blog?tag=${encodeURIComponent(t.toLowerCase())}`}
-              className="rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+              key={t.slug}
+              href={`/tags/${t.slug}`}
+              className="rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs text-gray-600 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
             >
-              {t}
+              #{t.name} <span className="text-gray-400 dark:text-gray-600">{t.count}</span>
             </Link>
           ))}
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          New posts weekly.{" "}
-          <Link href="/blog" className="text-blue-600 dark:text-blue-400 hover:underline">
-            Browse all {totalPosts} posts →
-          </Link>
-        </p>
-      </div>
+      </section>
 
-      <hr className="border-gray-100 dark:border-gray-800" />
-
-      {/* Newsletter */}
-      <div className="space-y-3">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Stay in the loop</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">New post drops? You&apos;ll be the first to know.</p>
+      {/* Talk to me */}
+      <section className="grid gap-4">
+        <TopicRequest />
         <NewsletterForm />
-      </div>
+      </section>
 
-      {/* Donate */}
-      <DonatePrompt />
+      <DonatePrompt className="!mt-0" />
     </div>
   );
 }

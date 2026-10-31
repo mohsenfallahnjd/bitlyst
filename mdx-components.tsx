@@ -3,40 +3,53 @@ import CodeBlock from "@/components/CodeBlock";
 import FlowDiagram from "@/components/FlowDiagram";
 import ParallelFlow from "@/components/ParallelFlow";
 
-const baseHeading = "font-semibold tracking-tight text-gray-900 dark:text-gray-100 scroll-m-20";
-const proseText = "text-gray-700 dark:text-gray-300 leading-relaxed";
+const baseHeading = "font-bold tracking-tight text-gray-900 dark:text-gray-50 scroll-mt-24";
+
+/** h2/h3 with a hover "#" link so readers can share a section. */
+function Heading({ as: Tag, className, children, id, ...props }: React.ComponentProps<"h2"> & { as: "h2" | "h3" }) {
+  return (
+    <Tag id={id} {...props} className={className}>
+      {children}
+      {id && (
+        <a href={`#${id}`} className="heading-anchor" aria-label="Link to this section">
+          #
+        </a>
+      )}
+    </Tag>
+  );
+}
 
 const components: MDXComponents = {
-  h1: (props) => <h1 {...props} className={`${baseHeading} text-3xl mt-8 mb-4`} />,
-  h2: (props) => <h2 {...props} className={`${baseHeading} text-2xl mt-8 mb-3`} />,
-  h3: (props) => <h3 {...props} className={`${baseHeading} text-xl mt-6 mb-2`} />,
-  p: (props) => <p {...props} className={`${proseText} my-4`} />,
-  ul: (props) => (
-    <ul {...props} className="list-disc list-inside my-4 pl-2 space-y-2 text-gray-700 dark:text-gray-300" />
-  ),
-  ol: (props) => (
-    <ol {...props} className="list-decimal list-inside my-4 pl-2 space-y-2 text-gray-700 dark:text-gray-300" />
-  ),
+  h1: (props) => <h2 {...props} className={`${baseHeading} text-[1.6rem] leading-tight mt-14 mb-4`} />,
+  h2: (props) => <Heading as="h2" {...props} className={`${baseHeading} text-[1.45rem] leading-snug mt-14 mb-4`} />,
+  h3: (props) => <Heading as="h3" {...props} className={`${baseHeading} text-[1.15rem] leading-snug mt-10 mb-3`} />,
+  h4: (props) => <h4 {...props} className={`${baseHeading} text-base mt-8 mb-2`} />,
+  p: (props) => <p {...props} className="my-5" />,
+  ul: (props) => <ul {...props} className="list-disc my-5 pl-6 space-y-2" />,
+  ol: (props) => <ol {...props} className="list-decimal my-5 pl-6 space-y-2" />,
   a: (props) => {
-    const { target, rel, ...rest } = props as any;
-    const isExternal = target === "_blank";
+    const { target, rel, ...rest } = props as React.ComponentProps<"a">;
+    const isExternal = target === "_blank" || /^https?:\/\//.test(rest.href ?? "");
     const safeRel = isExternal ? (rel ? `${rel} noopener noreferrer` : "noopener noreferrer") : rel;
     return (
-      <a {...rest} target={target} rel={safeRel}
-        className="text-cyan-600 hover:underline hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300"
+      <a
+        {...rest}
+        target={isExternal ? "_blank" : target}
+        rel={safeRel}
+        className="font-medium text-brand-600 dark:text-brand-400 underline decoration-brand-600/30 dark:decoration-brand-400/30 underline-offset-[3px] hover:decoration-current transition-colors"
       />
     );
   },
   blockquote: (props) => (
     <blockquote
       {...props}
-      className="border-l-4 border-cyan-500 bg-cyan-50/50 dark:bg-cyan-950/20 pl-4 pr-3 py-2 rounded-r-lg italic my-4 text-gray-600 dark:text-gray-400"
+      className="my-6 rounded-r-xl border-l-[3px] border-brand-500 bg-brand-50/70 dark:bg-brand-950/40 px-5 py-1 text-gray-700 dark:text-gray-300 [&>p]:my-3"
     />
   ),
   code: (props) => <code {...props} />,
   pre: (props) => <CodeBlock {...props} />,
   table: (props) => (
-    <div className="my-6 w-full text-sm overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+    <div className="my-7 w-full text-[0.9rem] leading-relaxed overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
       <table {...props} className="w-full border-collapse" />
     </div>
   ),
@@ -49,9 +62,9 @@ const components: MDXComponents = {
   td: (props) => (
     <td {...props} className="px-4 py-2.5" />
   ),
-  hr: () => <hr className="my-8 border-gray-200 dark:border-gray-800" />,
+  hr: () => <hr className="my-12 border-gray-200 dark:border-gray-800" />,
   img: ({ src, alt, width, height, ...props }) => (
-    <span className="my-6 flex bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+    <span className="my-8 flex flex-col gap-2 rounded-xl border border-gray-200/70 dark:border-gray-800 bg-surface-light dark:bg-surface-dark p-3">
       <img
         {...props}
         src={src}
@@ -62,6 +75,7 @@ const components: MDXComponents = {
         decoding="async"
         className="rounded-lg w-full h-auto"
       />
+      {alt && <span className="text-center text-xs text-gray-500 dark:text-gray-400">{alt}</span>}
     </span>
   ),
   FlowDiagram,

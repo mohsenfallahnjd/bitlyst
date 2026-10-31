@@ -69,7 +69,7 @@ export default function AdminClient({
           <button className={tabCls("pending")} onClick={() => setTab("pending")}>
             Pending{" "}
             {pendingList.length > 0 && (
-              <span className="ml-1 text-blue-600 dark:text-blue-400">{pendingList.length}</span>
+              <span className="ml-1 text-brand-600 dark:text-brand-400">{pendingList.length}</span>
             )}
           </button>
           <button className={tabCls("approved")} onClick={() => setTab("approved")}>
@@ -110,7 +110,7 @@ export default function AdminClient({
               className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/60"
             >
               <span className="text-sm text-gray-700 dark:text-gray-300">/blog/{r.slug}</span>
-              <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{r.total} reactions</span>
+              <span className="text-sm font-medium text-brand-600 dark:text-brand-400">{r.total} reactions</span>
             </div>
           ))}
         </div>
@@ -152,7 +152,7 @@ function CommentRow({
           {onApprove && (
             <button
               onClick={onApprove}
-              className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+              className="text-xs px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white rounded-md transition-colors"
             >
               Approve
             </button>

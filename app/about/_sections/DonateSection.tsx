@@ -7,7 +7,7 @@ import { cryptoAddresses } from "@/lib/donations";
 export const DonateSection: FC = () => {
   return (
     <div
-      className="mt-12 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-2xl py-8 px-4 md:px-12 border border-green-200/50 dark:border-green-800/50"
+      className="mt-12 bg-gradient-to-br from-green-50 to-brand-50 dark:from-green-900/20 dark:to-brand-900/20 rounded-2xl py-8 px-4 md:px-12 border border-green-200/50 dark:border-green-800/50"
       id="donate"
     >
       <div className="text-center mb-8">
@@ -54,7 +54,7 @@ export const DonateSection: FC = () => {
                 </div>
                 <button
                   onClick={() => navigator.clipboard.writeText(crypto.address)}
-                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors opacity-0 group-hover:opacity-100"
+                  className="text-brand-600 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300 transition-colors opacity-0 group-hover:opacity-100"
                   title="Copy address"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,10 +76,10 @@ export const DonateSection: FC = () => {
           ))}
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="mt-6 p-4 bg-brand-50 dark:bg-brand-900/20 rounded-lg border border-brand-200 dark:border-brand-800">
           <div className="flex items-start gap-3">
             <svg
-              className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0"
+              className="w-5 h-5 text-brand-600 dark:text-brand-400 mt-0.5 flex-shrink-0"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -90,8 +90,8 @@ export const DonateSection: FC = () => {
               />
             </svg>
             <div>
-              <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">Recommended cryptocurrencies</p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
+              <p className="text-sm text-brand-800 dark:text-brand-200 font-medium mb-1">Recommended cryptocurrencies</p>
+              <p className="text-sm text-brand-700 dark:text-brand-300">
                 BTC, ETH, and USDC are recommended for broad support and stable value. All donations are greatly
                 appreciated, regardless of the cryptocurrency used.
               </p>

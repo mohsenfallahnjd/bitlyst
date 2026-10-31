@@ -12,6 +12,19 @@ export type UsefulLink = {
 
 export const usefulLinks: UsefulLink[] = [
   {
+    title: "How Turbopack Chunks Your JavaScript",
+    url: "https://nextjs.org/blog/turbopack-chunking",
+    description:
+      "How Turbopack splits code into chunks to speed up page loads and share code across pages, plus the new chunking features in Next.js 16.3.",
+    tags: ["nextjs", "turbopack", "bundling", "performance"],
+  },
+  {
+    title: "How We Closed 1,500 GitHub Issues in One Month",
+    url: "https://nextjs.org/blog/how-we-closed-1500-github-issues",
+    description: "How the Next.js team used an agent to research old reports and work through the issue backlog.",
+    tags: ["nextjs", "ai-agents", "open-source"],
+  },
+  {
     title: "Liquid Glass in the Browser",
     url: "https://kube.io/blog/liquid-glass-css-svg/",
     description: "Liquid Glass in the Browser: Refraction with CSS and SVG",

@@ -9,9 +9,12 @@ export default async function Comments({ slug }: { slug: string }) {
   });
 
   return (
-    <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800/60">
-      <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
-        {comments.length > 0 ? `${comments.length} comment${comments.length > 1 ? "s" : ""}` : "Comments"}
+    <section id="comments" className="scroll-mt-24 mt-12 pt-8 border-t border-gray-100 dark:border-gray-800/60">
+      <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+        {comments.length > 0 ? `${comments.length} comment${comments.length > 1 ? "s" : ""}` : "Start the discussion"}
+      </h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        Questions, corrections, a better approach? I read and reply to every comment.
       </p>
 
       {comments.length > 0 && (
@@ -31,6 +34,6 @@ export default async function Comments({ slug }: { slug: string }) {
       )}
 
       <CommentForm slug={slug} />
-    </div>
+    </section>
   );
 }

@@ -6,11 +6,9 @@ export default function CodeBlock({ children, ...props }: any) {
   const [copied, setCopied] = useState(false);
   const preRef = useRef<HTMLPreElement>(null);
 
-  // Only extract lang if className actually starts with "language-"
+  // rehype-highlight emits e.g. "hljs language-js" — pick the language- class wherever it is
   const codeClassName = (children as any)?.props?.className || "";
-  const lang = codeClassName.startsWith("language-")
-    ? codeClassName.replace("language-", "").split(" ")[0]
-    : "";
+  const lang = /(?:^|\s)language-(\S+)/.exec(codeClassName)?.[1] ?? "";
 
   const handleCopy = async () => {
     const text = preRef.current?.textContent?.trim() || "";
@@ -22,9 +20,9 @@ export default function CodeBlock({ children, ...props }: any) {
   };
 
   return (
-    <div className="relative my-5 rounded-xl overflow-hidden shadow-lg">
+    <div className="relative my-6 rounded-xl overflow-hidden border border-black/5 dark:border-white/[0.06] shadow-sm">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1e2227] border-b border-white/5">
+      <div className="flex items-center justify-between px-4 py-2 bg-[var(--code-head)] border-b border-white/[0.06]">
         <span className="text-[11px] font-mono text-gray-500 uppercase tracking-wider">
           {lang || "code"}
         </span>
@@ -55,8 +53,8 @@ export default function CodeBlock({ children, ...props }: any) {
 
       <pre
         ref={preRef}
-        style={{ backgroundColor: "#282c34" }}
-        className="overflow-x-auto p-5 text-gray-100 text-sm leading-relaxed"
+        style={{ backgroundColor: "var(--code-bg)" }}
+        className="overflow-x-auto p-5 text-gray-100 text-[13.5px] leading-[1.7]"
       >
         {children}
       </pre>

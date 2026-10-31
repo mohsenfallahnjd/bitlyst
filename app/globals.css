@@ -6,12 +6,16 @@
 
 /* ── Design tokens ───────────────────────────────────────────── */
 :root {
-  --bg:       #faf8f5;
-  --surface:  #ffffff;
-  --fg:       #1c1917;
-  --muted:    #78716c;
-  --border:   #e8e2d9;
-  --accent:   #0e36e9;
+  color-scheme: light;
+  --bg:          #fafbfc;
+  --surface:     #ffffff;
+  --fg:          #16181e;
+  --muted:       #636979;
+  --border:      #e3e5ea;
+  --accent:      #3a52ee;
+  --accent-soft: #f0f4ff;
+  --code-bg:     #15171e;
+  --code-head:   #1c1f28;
 
   --radius-sm: 0.375rem;
   --radius:    0.5rem;
@@ -19,12 +23,16 @@
 }
 
 .dark {
-  --bg:      #141210;
-  --surface: #1c1917;
-  --fg:      #faf8f5;
-  --muted:   #a8a29e;
-  --border:  #292524;
-  --accent:  #0e6df9;
+  color-scheme: dark;
+  --bg:          #0b0c10;
+  --surface:     #12141a;
+  --fg:          #e8eaf0;
+  --muted:       #9a9fae;
+  --border:      #23262f;
+  --accent:      #7b93ff;
+  --accent-soft: #161c4f;
+  --code-bg:     #12141a;
+  --code-head:   #181b23;
 }
 
 /* ── Base ────────────────────────────────────────────────────── */
@@ -45,11 +53,8 @@ body {
 
 /* ── Selection ───────────────────────────────────────────────── */
 ::selection {
-  background-color: #0e36e920;
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
   color: inherit;
-}
-.dark ::selection {
-  background-color: #2dd4bf20;
 }
 
 /* ── Focus ───────────────────────────────────────────────────── */
@@ -62,8 +67,8 @@ body {
 /* ── Scrollbar ───────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background-color: #d6d3d1; border-radius: 99px; }
-.dark ::-webkit-scrollbar-thumb { background-color: #44403c; }
+::-webkit-scrollbar-thumb { background-color: #cdd0d8; border-radius: 99px; }
+.dark ::-webkit-scrollbar-thumb { background-color: #373b48; }
 
 /* ── Container ───────────────────────────────────────────────── */
 .container {
@@ -76,18 +81,16 @@ body {
 
 /* ── Inline code ─────────────────────────────────────────────── */
 :not(pre) > code {
-  background-color: #f5f3ef;
-  color: #0e7490;
+  background-color: var(--accent-soft);
+  color: #2b3fd4;
   border-radius: var(--radius-sm);
-  padding: 0.1em 0.35em;
-  font-size: 0.84em;
+  padding: 0.12em 0.38em;
+  font-size: 0.86em;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  border: 1px solid #e8e2d9;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .dark :not(pre) > code {
-  background-color: #292524;
-  color: #5eead4;
-  border-color: #3c3734;
+  color: #a3b6ff;
 }
 
 /* ── Prose ───────────────────────────────────────────────────── */
@@ -124,16 +127,19 @@ body {
 
 /* ── Reading progress ────────────────────────────────────────── */
 .progress-shimmer {
-  background: linear-gradient(
-    90deg,
-    #0e36e9 0%,
-    #0e6df9 45%,
-    #ffffff50 50%,
-    #0e6df9 55%,
-    #0e36e9 100%
-  );
-  background-size: 200% auto;
-  animation: shimmer 2s linear infinite;
+  background: var(--accent);
+}
+
+/* ── Route change progress ───────────────────────────────────── */
+.route-progress {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 70;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: width 200ms ease-out, opacity 300ms ease 150ms;
+  pointer-events: none;
 }
 
 /* ── Post card ───────────────────────────────────────────────── */
@@ -145,20 +151,66 @@ body {
 
 /* ── FlowDiagram ─────────────────────────────────────────────── */
 :root {
-  --diagram-bg:          #f8f6f2;
-  --diagram-border:      #e8e2d9;
-  --diagram-node-bg:     #f0fdfb;
-  --diagram-node-border: #0e36e9;
-  --diagram-node-text:   #134e4a;
-  --diagram-arrow:       #a8a29e;
-  --diagram-label-text:  #57534e;
+  --diagram-bg:          #f8f9fb;
+  --diagram-border:      #e3e5ea;
+  --diagram-node-bg:     #f0f4ff;
+  --diagram-node-border: #3a52ee;
+  --diagram-node-text:   #232f86;
+  --diagram-arrow:       #7e8494;
+  --diagram-label-text:  #4b5060;
 }
 .dark {
-  --diagram-bg:          #1a1715;
-  --diagram-border:      #292524;
-  --diagram-node-bg:     #132726;
-  --diagram-node-border: #0e36e9;
-  --diagram-node-text:   #99f6e4;
-  --diagram-arrow:       #57534e;
-  --diagram-label-text:  #a8a29e;
+  --diagram-bg:          #12141a;
+  --diagram-border:      #23262f;
+  --diagram-node-bg:     #161c4f;
+  --diagram-node-border: #5672fa;
+  --diagram-node-text:   #c9d5ff;
+  --diagram-arrow:       #636979;
+  --diagram-label-text:  #9a9fae;
+}
+
+/* ── Code highlighting: match palette ────────────────────────── */
+pre code.hljs {
+  background: transparent;
+  padding: 0;
+}
+
+/* ── Article typography ──────────────────────────────────────── */
+.post-prose {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: #373b48;
+}
+.dark .post-prose { color: #c4c8d4; }
+.post-prose > :first-child { margin-top: 0; }
+.post-prose strong { color: var(--fg); font-weight: 600; }
+.post-prose li::marker { color: #7e8494; }
+.post-prose li > p { margin: 0.25em 0; }
+
+.heading-anchor {
+  opacity: 0;
+  margin-left: 0.4em;
+  color: #7e8494;
+  text-decoration: none;
+  transition: opacity 150ms;
+}
+:is(h2, h3):hover > .heading-anchor,
+.heading-anchor:focus-visible { opacity: 1; }
+
+/* ── Pixel mascots (components/PixelSprite.tsx) ──────────────── */
+:root { --pixel-outline: #1f1d1a; }
+.dark { --pixel-outline: #b9bdc9; }
+@keyframes pixel-bob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+@keyframes pixel-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+@keyframes pixel-blink { 0%, 92%, 100% { opacity: 0; } 94%, 98% { opacity: 1; } }
+
+.pixel-lid { opacity: 0; }
+.pixel-animate .pixel-bob   { animation: pixel-bob 1.4s steps(1, end) infinite; }
+.pixel-animate .pixel-float { animation: pixel-float 2.2s steps(1, end) infinite 0.3s; }
+.pixel-animate .pixel-lid   { animation: pixel-blink 4.5s steps(1, end) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pixel-animate .pixel-bob,
+  .pixel-animate .pixel-float,
+  .pixel-animate .pixel-lid { animation: none; }
 }

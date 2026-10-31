@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 import { searchDocs } from "@/lib/search";
+import { getAllViews } from "@/lib/stats";
 import SearchClient from "./SearchClient";
 
 export default async function SearchPage({ searchParams }: PageProps<"/search">) {
@@ -15,18 +16,23 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
     summary: d.summary || "",
     tags: d.tags || [],
     content: d.content || "",
+    readingTime: d.readingTime,
   }));
+
+  const views = await getAllViews();
+  const ranked = [...docs].sort((a, b) => (views[b.slug] ?? 0) - (views[a.slug] ?? 0));
+  const popular = ranked.slice(0, 5).map(({ slug, title, readingTime }) => ({ slug, title, readingTime }));
 
   // Server-side results for SEO + fast first paint
   const serverResults = initialQuery ? searchDocs(initialQuery, docs, 20) : [];
   // tokens are computed client-side; no need to keep on server
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Search</h1>
+    <div className="mx-auto max-w-[42rem] space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Search</h1>
 
       {/* Hydrated client search with SSR initial state below */}
-      <SearchClient docs={clientDocs} initialQuery={initialQuery} />
+      <SearchClient docs={clientDocs} initialQuery={initialQuery} popular={popular} />
 
       {/* SSR results for crawlers / no-JS */}
       {initialQuery && (

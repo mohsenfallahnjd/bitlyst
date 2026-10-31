@@ -1,0 +1,263 @@
+---
+title: "Stop Parsing the URL — Let the Caller Tell the Component"
+summary: "A shared Next.js button that guessed its context from the pathname, three rounds of 'optimizing' it, and why the real fix was a two-prop API instead of a smarter algorithm."
+publishedTime: "2026-10-31"
+level: "intermediate"
+tags: ["react", "nextjs", "component-design", "refactoring", "performance", "typescript", "app-router"]
+---
+
+I had a small shared button in an admin panel. Its job: link to the **audit logs** page, filtered by *what* you're looking at — "show me the history of this user", "show me the history of this order".
+
+It was used on ~35 pages. And it took **zero props**:
+
+```tsx
+<AuditLogButton />
+```
+
+Clean call sites. Magic inside. You can probably guess where this is going.
+
+> **When a component has to *figure out* where it is, it's usually being asked a question its parent already knows the answer to.**
+
+This post walks through the version I started with, the two "optimizations" I tried, and the change that actually fixed it.
+
+---
+
+## 🧩 The Original: Guess Everything From the URL
+
+The button kept a map from route prefixes to log types, matched the current pathname against it, and pulled the resource id out of the URL:
+
+```tsx
+"use client";
+
+const AuditLogPathNameTypes: Record<string, AuditLogTypeEnum> = {
+  "/lists/users": AuditLogTypeEnum.Users,
+  "/lists/merchants": AuditLogTypeEnum.Merchants,
+  "/shop/display": AuditLogTypeEnum.ShopDisplay,
+  "/card-logistic/print-house": AuditLogTypeEnum.PrintHouses,
+  // ...16 more
+};
+
+const AuditLogButton: FC = () => {
+  const pathname = usePathname();
+
+  const matchedPath = Object.keys(AuditLogPathNameTypes)
+    .find((path) => pathname.startsWith(path));
+
+  const type = matchedPath ? AuditLogPathNameTypes[matchedPath] : undefined;
+
+  const ResourceId = pathname.split("/").filter(Boolean).at(-1);
+
+  return (
+    <ActionMenuItem
+      component={Link}
+      href={{
+        pathname: "/audit-logs",
+        query: {
+          ...(type !== undefined && { type }),
+          ...(ResourceId && { ResourceId }),
+        },
+      }}
+    />
+  );
+};
+```
+
+It worked on the happy path. It also had three bugs hiding in plain sight.
+
+### 🐛 Bug 1 — the "id" on a list page
+
+On `/lists/users` the last segment is… `users`. So the list page linked to `/audit-logs?ResourceId=users`.
+
+### 🐛 Bug 2 — prefix matching without boundaries
+
+`"/lists/users-archive".startsWith("/lists/users")` is `true`. Add a route like that one day and it silently inherits the wrong log type.
+
+### 🐛 Bug 3 — "last segment" isn't "the id"
+
+| URL | Last segment | What we wanted |
+|-----|--------------|----------------|
+| `/lists/users/123` | `123` | `123` ✅ |
+| `/lists/users/123/edit` | `edit` | `123` ❌ |
+| `/financial/transactions/details` | `details` | nothing ❌ |
+
+The URL is a **string**. We were treating it like **structured data**.
+
+---
+
+## 🔧 Attempt 1: Parse Smarter
+
+First instinct: fix the matching and only look *after* the matched prefix.
+
+```tsx
+const matchedPath = Object.keys(AuditLogPathNameTypes).find(
+  (path) => pathname === path || pathname.startsWith(`${path}/`)
+);
+
+const ResourceId = matchedPath
+  ? pathname.slice(matchedPath.length).split("/").filter(Boolean).at(-1)
+  : undefined;
+```
+
+- ✅ Bug 1 fixed — on a list page nothing is left after the prefix.
+- ✅ Bug 2 fixed — a match must end at `/` or at the end of the string.
+- ❌ Bug 3 still there — `/edit` and `/details` still win.
+
+Better, but we're still parsing a string we don't own.
+
+---
+
+## 🔧 Attempt 2: Let the Router Do the Parsing
+
+In the App Router, dynamic segments are already parsed for you. The folders were named `[id]` and `[orderId]`, so `useParams()` hands them over **by name**:
+
+```tsx
+const AuditLogPathNameTypes: Record<string, { type: AuditLogTypeEnum; queryKey?: string[] }> = {
+  "/lists/users": { type: AuditLogTypeEnum.Users, queryKey: ["id"] },
+  "/card-logistic/print-house": { type: AuditLogTypeEnum.PrintHouses, queryKey: ["id", "orderId"] },
+  // ...
+};
+
+const params = useParams<Record<string, string>>();
+
+const resourceKey = queryKey?.findLast((key) => params[key]);
+const ResourceId = resourceKey ? params[resourceKey] : undefined;
+```
+
+`findLast` picks the deepest param present, so `/print-house/12/order/34` gives `34` and `/print-house/12` gives `12`.
+
+- ✅ Bug 3 fixed — `/edit` is not a param, so it's ignored.
+- ✅ No string splitting at all.
+
+But look at what we built: a config object that must stay **in sync with folder names**. Rename `[id]` to `[userId]` and the button quietly stops sending an id. No error. No warning.
+
+We'd made the guessing *more accurate*. We hadn't questioned the guessing.
+
+---
+
+## 💡 The Actual Fix: Ask the Caller
+
+So I checked where `<AuditLogButton />` was actually rendered:
+
+```
+lists/users/_sections/index.tsx
+lists/users/[id]/_sections/HeaderInfo/index.tsx
+card-logistic/print-house/[id]/order/[orderId]/_sections/OrderDetailsInfo.tsx
+...35 call sites
+```
+
+**Every single one** was a page-specific component. Every one of them already *knew* what it was showing. Most detail pages already had the id in hand — they'd just used it to fetch the data.
+
+The parent knew the answer. The child was reverse-engineering it from the URL.
+
+So the button became this:
+
+```tsx
+interface AuditLogButtonProps {
+  type: AuditLogTypeEnum;
+  resourceId?: string | null;
+}
+
+const AuditLogButton: FC<AuditLogButtonProps> = ({ type, resourceId }) => (
+  <ActionMenuItem
+    component={Link}
+    href={{
+      pathname: "/audit-logs",
+      query: { type, ...(resourceId && { ResourceId: resourceId }) },
+    }}
+  />
+);
+```
+
+And the call sites say what they mean:
+
+```tsx
+// list page
+<AuditLogButton type={AuditLogTypeEnum.Users} />
+
+// detail page
+<AuditLogButton type={AuditLogTypeEnum.Users} resourceId={params.id as string} />
+
+// nested order page
+<AuditLogButton type={AuditLogTypeEnum.PrintHouses} resourceId={order?.id} />
+```
+
+No map. No `usePathname`. No `useParams`. No config to keep in sync with the folder tree.
+
+---
+
+## ⏱️ Complexity, Honestly
+
+Let **R** = number of routes in the map (~20), **m** = average key length, **L** = pathname length.
+
+| Version | Route match | Resource id | Total |
+|---------|-------------|-------------|-------|
+| Original | O(R·m) | O(L) split + filter | **O(R·m + L)** |
+| Attempt 1 | O(R·m) | O(L) slice + split | **O(R·m + L)** |
+| Attempt 2 | O(R·m) | O(k), k ≤ 2 | **O(R·m + k)** |
+| Props | — | — | **O(1)** |
+
+Memory per render tells the same story: the map versions allocate an `Object.keys` array, a template string per key, and a couple of arrays from `split`/`filter`. The props version allocates the `href` object — which every version builds anyway.
+
+Now the honest part:
+
+> **All four versions run in well under a microsecond.**  
+> Rendering the menu item itself costs more than any of this.
+
+If you refactor something like this *for speed*, you're optimizing noise. The Big-O table is nice, but it's not why the change matters.
+
+### What actually improved
+
+| | URL guessing | Props |
+|---|---|---|
+| Wrong id from sub-pages | Possible | Impossible |
+| Route renamed / moved | Silently breaks | Keeps working |
+| Forgot to configure a page | Link without `type`, no error | **TypeScript error** — `type` is required |
+| Re-renders | On every navigation (`usePathname` subscribes to the router) | Only when the parent renders |
+| Client bundle | Ships the whole route map | Ships nothing extra |
+| "What does this link send?" | Open another file and trace the map | Read the call site |
+
+That table is the real reason. Speed was a side effect.
+
+There was even a bonus: one route in the map had **no button rendered anywhere**. Dead config that only existed because the map was the source of truth. With props, config can't outlive its usage.
+
+---
+
+## 🤔 "But Now I Repeat the Type Everywhere"
+
+Yes — `AuditLogTypeEnum.ShopDisplay` appears on the list page and four detail sections. Is that duplication?
+
+Not really. Each call is a **separate statement about a separate page**: "this page shows shop displays." If the enum value ever changes, you change it in the enum, not at the call sites.
+
+When *would* I reach for something else? If one feature had a dozen buttons, I'd let that feature's `layout.tsx` provide the type through a tiny context and keep `resourceId` as a prop:
+
+```tsx
+// card-logistic/print-house/layout.tsx
+<AuditLogScope type={AuditLogTypeEnum.PrintHouses}>{children}</AuditLogScope>
+```
+
+Below that threshold, context is an extra layer of indirection that buys you almost nothing.
+
+---
+
+## 📌 The Pattern to Remember
+
+When a shared component starts reading global state — URL, router, window, a store — to figure out **its own context**, ask:
+
+1. **Who renders this?**
+2. **Do they already know the answer?**
+3. **If yes — why is the child guessing?**
+
+"Zero-prop" components feel elegant at the call site. But that elegance is borrowed: the knowledge doesn't disappear, it moves into a hidden map that has to mirror your folder structure forever.
+
+> **Explicit props are boring. Boring is what you want in a component used 35 times.**
+
+---
+
+## ✅ TL;DR
+
+- The button guessed its type and id from `usePathname()` + a route map.
+- Guessing caused real bugs: list pages sent `ResourceId=users`, prefixes over-matched, and "last segment" wasn't always the id.
+- Smarter parsing and `useParams()` fixed the bugs but kept a config coupled to folder names.
+- The fix was to **pass `type` and `resourceId` as props** — callers already knew both.
+- Result: O(1), no router hooks, fewer re-renders, smaller bundle, and TypeScript catches a missing `type`.
+- The performance gain is real but tiny. **Correctness and clarity** are why you do this.

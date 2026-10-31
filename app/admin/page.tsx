@@ -1,12 +1,14 @@
 import { cookies } from "next/headers";
-import { createClient } from "redis";
+import { getRedis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import AdminClient from "./AdminClient";
 
 async function getReactionTotals() {
   try {
-    const redis = createClient({ url: process.env.REDIS_URL });
-    await redis.connect();
+    const redis = await getRedis();
+    if (!redis) {
+      return [];
+    }
     const keys = await redis.keys("reactions:*");
     const totals: { slug: string; total: number }[] = [];
     for (const key of keys) {
@@ -14,7 +16,6 @@ async function getReactionTotals() {
       const total = Object.values(data).reduce((sum, v) => sum + parseInt(v || "0"), 0);
       totals.push({ slug: key.replace("reactions:", ""), total });
     }
-    await redis.disconnect();
     return totals.sort((a, b) => b.total - a.total).slice(0, 20);
   } catch {
     return [];
@@ -39,11 +40,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             name="secret"
             type="password"
             placeholder="Secret"
-            className="w-full text-sm border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500"
+            className="w-full text-sm border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:border-brand-500"
           />
           <button
             type="submit"
-            className="w-full text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="w-full text-sm px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors"
           >
             Enter
           </button>

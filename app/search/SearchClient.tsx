@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
@@ -9,11 +10,14 @@ export type SearchDoc = {
   summary: string;
   tags: string[];
   content: string;
+  readingTime?: number;
 };
 
 type Props = {
   docs: SearchDoc[];
   initialQuery: string;
+  /** shown before the user types */
+  popular: { slug: string; title: string; readingTime?: number }[];
 };
 
 // ── helpers ────────────────────────────────────────────────────
@@ -84,7 +88,7 @@ function highlight(text: string, terms: string[]) {
         terms.some((t) => part.toLowerCase() === t.toLowerCase()) ? (
           <mark
             key={idx}
-            className="bg-blue-100 dark:bg-blue-900/50 text-blue-900 dark:text-blue-100 rounded px-0.5 not-italic"
+            className="bg-brand-100 dark:bg-brand-900/50 text-brand-900 dark:text-brand-100 rounded px-0.5 not-italic"
           >
             {part}
           </mark>
@@ -130,7 +134,7 @@ function useDebounced<T>(value: T, delayMs: number): T {
 
 // ── component ──────────────────────────────────────────────────
 
-export default function SearchClient({ docs, initialQuery }: Props) {
+export default function SearchClient({ docs, initialQuery, popular }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   const deferredQuery = useDeferredValue(query);
@@ -144,7 +148,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
       return;
     }
     const q = debouncedQuery.trim();
-    router.replace(`/search${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+    router.replace(`/search${q ? `?q=${encodeURIComponent(q)}` : ""}`, { scroll: false });
   }, [debouncedQuery, router]);
 
   useEffect(() => {
@@ -222,7 +226,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
           }}
           placeholder="Search posts, tags, or topics…"
           autoFocus
-          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-600 transition"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 dark:focus:border-brand-600 transition"
         />
 
         {query ? (
@@ -255,6 +259,29 @@ export default function SearchClient({ docs, initialQuery }: Props) {
       )}
 
       {/* Empty state — popular topics */}
+      {isEmpty && popular.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Most read</p>
+          <ul>
+            {popular.map((p) => (
+              <li key={p.slug}>
+                <Link
+                  href={`/blog/${p.slug}`}
+                  className="group flex items-baseline justify-between gap-3 border-b border-gray-200/70 dark:border-gray-800/60 py-3"
+                >
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                    {p.title}
+                  </span>
+                  {p.readingTime && (
+                    <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">{p.readingTime} min</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {isEmpty && (
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
@@ -282,7 +309,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
         <ul className="space-y-0.5">
           {results.map(({ doc, excerpt }) => (
             <li key={doc.slug}>
-              <a
+              <Link
                 href={`/blog/${doc.slug}`}
                 className="group block -mx-3 rounded-xl px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-900/60 border border-transparent hover:border-gray-100 dark:hover:border-gray-800/60 transition-all"
               >
@@ -295,7 +322,7 @@ export default function SearchClient({ docs, initialQuery }: Props) {
                     ))}
                   </div>
                 )}
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors leading-snug">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors leading-snug">
                   {highlight(doc.title, terms)}
                 </p>
                 {excerpt && (
@@ -303,7 +330,10 @@ export default function SearchClient({ docs, initialQuery }: Props) {
                     {highlight(excerpt, terms)}
                   </p>
                 )}
-              </a>
+                {doc.readingTime && (
+                  <p className="mt-1.5 text-[11px] text-gray-400 dark:text-gray-500">{doc.readingTime} min read</p>
+                )}
+              </Link>
             </li>
           ))}
         </ul>

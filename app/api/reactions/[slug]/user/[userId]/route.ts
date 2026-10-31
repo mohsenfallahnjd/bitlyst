@@ -1,19 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "redis";
+import { getRedis } from "@/lib/redis";
 
-// Create Redis client
-const redis = createClient({
-  url: process.env.REDIS_URL,
-});
-
-// Connect to Redis (only once)
-let isConnected = false;
 async function connectRedis() {
-  if (!isConnected) {
-    await redis.connect();
-    isConnected = true;
+  const client = await getRedis();
+  if (!client) {
+    throw new Error("REDIS_URL is not configured");
   }
-  return redis;
+  return client;
 }
 
 // GET /api/reactions/[slug]/user/[userId] - Get user's reactions for a post

@@ -7,6 +7,7 @@ function cleanHeadingText(text: string) {
   return (
     text
       .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{Emoji}\uFE0F\u200D]/gu, "")
+      .replace(/#\s*$/, "") // hover anchor link
       .replace(/\s+/g, " ")
       .trim() || text
   );
@@ -38,7 +39,7 @@ function TOCList({
   scrollTo: (id: string) => (e: React.MouseEvent) => void;
 }) {
   return (
-    <ul className="space-y-0.5 border-l border-stone-200/80 dark:border-stone-800">
+    <ul className="space-y-0.5 border-l border-gray-200/80 dark:border-gray-800">
       {items.map((item) => {
         const isActive = item.id === activeId;
         return (
@@ -50,8 +51,8 @@ function TOCList({
               className={[
                 "block border-l-2 -ml-px py-1 pl-3 pr-1 text-[13px] leading-snug transition-colors",
                 isActive
-                  ? "border-blue-600 font-medium text-stone-900 dark:border-blue-400 dark:text-stone-50"
-                  : "border-transparent text-stone-500 hover:text-stone-800 dark:text-stone-500 dark:hover:text-stone-200",
+                  ? "border-brand-600 font-medium text-gray-900 dark:border-brand-400 dark:text-gray-50"
+                  : "border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-500 dark:hover:text-gray-200",
               ].join(" ")}
             >
               <span className="line-clamp-2">{item.text}</span>
@@ -73,7 +74,7 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
   const activeSectionId = useMemo(() => resolveActiveSectionId(activeId, allItems), [activeId, allItems]);
 
   useEffect(() => {
-    const headings = Array.from(document.querySelectorAll("h2, h3")) as HTMLElement[];
+    const headings = Array.from(document.querySelectorAll("#post-body h2, #post-body h3")) as HTMLElement[];
     const parsed: Item[] = headings.map((el) => ({
       id: el.id || "",
       text: cleanHeadingText(el.innerText),
@@ -121,7 +122,7 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
 
   if (collapsible) {
     return (
-      <div className="rounded-lg border border-stone-200/80 dark:border-stone-800">
+      <div className="rounded-lg border border-gray-200/80 dark:border-gray-800">
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -129,25 +130,25 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
           aria-expanded={open}
         >
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
               On this page
             </p>
             {!open && activeLabel && (
-              <p className="mt-0.5 truncate text-sm text-stone-700 dark:text-stone-200">{activeLabel}</p>
+              <p className="mt-0.5 truncate text-sm text-gray-700 dark:text-gray-200">{activeLabel}</p>
             )}
           </div>
           <svg
             viewBox="0 0 16 16"
             fill="currentColor"
             aria-hidden
-            className={`size-4 shrink-0 text-stone-400 transition-transform ${open ? "rotate-180" : ""}`}
+            className={`size-4 shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
           >
             <path d="M4.427 6.427a.75.75 0 0 1 1.06 0L8 8.94l2.513-2.513a.75.75 0 0 1 1.06 1.06l-3.043 3.043a.75.75 0 0 1-1.06 0L4.427 7.487a.75.75 0 0 1 0-1.06Z" />
           </svg>
         </button>
 
         {open && (
-          <nav className="border-t border-stone-200/80 px-1 py-2 dark:border-stone-800">
+          <nav className="border-t border-gray-200/80 px-1 py-2 dark:border-gray-800">
             <TOCList items={sectionItems} activeId={activeSectionId} scrollTo={scrollTo} />
           </nav>
         )}
@@ -160,7 +161,7 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
       aria-label="Table of contents"
       className="max-h-[calc(100vh-7rem)] overflow-y-auto [mask-image:linear-gradient(to_bottom,black_90%,transparent)]"
     >
-      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
         On this page
       </p>
       <TOCList items={sectionItems} activeId={activeSectionId} scrollTo={scrollTo} />

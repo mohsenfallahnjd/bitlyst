@@ -24,20 +24,20 @@ export default function CommentForm({ slug }: { slug: string }) {
 
   return (
     <form onSubmit={submit} className="space-y-3 mt-4">
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <input
           required
           placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 text-sm bg-transparent border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
+          className="w-full min-w-0 sm:flex-1 text-sm bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2.5 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 dark:focus:border-brand-400"
         />
         <input
           type="email"
           placeholder="Email (optional)"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 text-sm bg-transparent border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400"
+          className="w-full min-w-0 sm:flex-1 text-sm bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2.5 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 dark:focus:border-brand-400"
         />
       </div>
       <textarea
@@ -46,13 +46,13 @@ export default function CommentForm({ slug }: { slug: string }) {
         placeholder="Your comment…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        className="w-full text-sm bg-transparent border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 resize-none"
+        className="w-full text-sm bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:border-brand-500 dark:focus:border-brand-400 resize-none"
       />
       {status === "error" && <p className="text-xs text-red-500">Something went wrong. Try again.</p>}
       <button
         type="submit"
         disabled={status === "loading"}
-        className="text-sm px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+        className="w-full sm:w-auto text-sm font-medium px-5 py-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:opacity-90 disabled:opacity-50 rounded-lg transition-opacity"
       >
         {status === "loading" ? "Sending…" : "Post comment"}
       </button>

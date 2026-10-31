@@ -3,17 +3,13 @@ import { GoogleTagManager } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { JsonLd, OrgJsonLd } from "@/components/JsonLD";
+import RouteProgress from "@/components/RouteProgress";
 import ScrollToTop from "@/components/ScrollToTop";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
+import VisitTracker from "@/components/VisitTracker";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -21,6 +17,10 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafbfc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0c10" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -32,6 +32,7 @@ export const metadata: Metadata = {
     ],
   },
   title: { default: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips", template: "%s · Bitlyst" },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
   description:
     "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
   authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }],
@@ -49,7 +50,6 @@ export const metadata: Metadata = {
   ],
   alternates: {
     types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] },
-    canonical: "https://bitlyst.vercel.app/",
   },
   openGraph: {
     title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -91,10 +91,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd />
       </head>
       <body className="font-sans antialiased bg-background-light text-foreground-light dark:bg-background-dark dark:text-foreground-dark transition-colors duration-300">
+        <Suspense>
+          <RouteProgress />
+        </Suspense>
         <Header />
         <main className="container py-10 min-h-[calc(100dvh-233px)]">{children}</main>
         <Footer />
         <ScrollToTop />
+        <VisitTracker />
         <SpeedInsights />
         <Analytics />
       </body>

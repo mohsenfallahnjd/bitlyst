@@ -64,7 +64,7 @@ export default function ShareButton({
       const ring = "ring-1 ring-gray-200 dark:ring-gray-800";
       const palette = copied
         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 focus-visible:ring-emerald-500/40"
-        : "bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-sky-500/40";
+        : "bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-brand-500/40";
       return `${base} ${size} ${ring} ${palette} ${className}`.trim();
     }
 
@@ -73,7 +73,7 @@ export default function ShareButton({
     const extras = "backdrop-blur-sm";
     const palette = copied
       ? "bg-emerald-500 text-white hover:bg-emerald-600 focus-visible:ring-emerald-500/50"
-      : "bg-gradient-to-r from-sky-500 to-blue-500 text-white hover:from-sky-600 hover:to-blue-600 focus-visible:ring-sky-500/50";
+      : "bg-gradient-to-r from-brand-500 to-brand-500 text-white hover:from-brand-600 hover:to-brand-600 focus-visible:ring-brand-500/50";
 
     return `${base} ${size} ${extras} ${palette} ${className}`.trim();
   }, [variant, className, copied]);

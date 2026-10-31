@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { DocMeta } from "@/lib/mdSource";
-import { loadMarkdownDocs } from "@/lib/mdSource";
+import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
+import PostCard from "./PostCard";
 
 function getRelated(current: DocMeta, all: DocMeta[], limit = 3): DocMeta[] {
   const currentTags = new Set((current.tags ?? []).map((t) => t.toLowerCase()));
@@ -16,31 +16,28 @@ function getRelated(current: DocMeta, all: DocMeta[], limit = 3): DocMeta[] {
     .map(({ post }) => post);
 }
 
-export default function RelatedPosts({ current }: { current: DocMeta }) {
-  const all = loadMarkdownDocs();
-  const related = getRelated(current, all);
-
-  if (related.length === 0) return null;
+export default function RelatedPosts({
+  current,
+  views = {},
+  comments = {},
+}: {
+  current: DocMeta;
+  views?: Record<string, number>;
+  comments?: Record<string, number>;
+}) {
+  const related = getRelated(current, loadMarkdownDocs());
+  if (related.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800/60">
-      <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Related</p>
-      <div className="space-y-3">
+    <section className="mt-14">
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Read next</h2>
+      <div>
         {related.map((p) => (
-          <Link
-            key={p.slug}
-            href={`/blog/${p.slug}`}
-            className="group flex items-start justify-between gap-4"
-          >
-            <p className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors leading-snug">
-              {p.title}
-            </p>
-            <span className="text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors shrink-0 text-sm">
-              →
-            </span>
-          </Link>
+          <PostCard key={p.slug} post={toSummary(p)} views={views[p.slug]} comments={comments[p.slug]} />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
