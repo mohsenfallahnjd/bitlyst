@@ -6,26 +6,27 @@ import PostCard, { PostStatsLine } from "@/components/PostCard";
 import ReaderPanel from "@/components/ReaderPanel";
 import TopicRequest from "@/components/TopicRequest";
 import { formatCount } from "@/lib/format";
-import { type DocMeta, loadMarkdownDocs, toSummary } from "@/lib/mdSource";
+import { cacheLife } from "next/cache";
+import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getPostStats, getTrending } from "@/lib/stats";
 import { getAllSeries } from "@/lib/series";
 import { getAllTopics } from "@/lib/tags";
 
-// Static, refreshed every 10 minutes: trending, read counts and "today's pick" stay fresh
-export const revalidate = 600;
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
 /** Rotates daily through older posts so there's always something to (re)discover. */
-function todaysPick(posts: DocMeta[], exclude: Set<string>) {
-  const pool = posts.filter((p) => !exclude.has(p.slug));
-  if (pool.length === 0) {
+async function todaysPickSlug(slugs: string[]) {
+  "use cache";
+  // the pick changes once a day; cached so reading the clock doesn't block prerendering
+  cacheLife("hours");
+  if (slugs.length === 0) {
     return undefined;
   }
   const day = Math.floor(Date.now() / 86_400_000);
-  return pool[day % pool.length];
+  return slugs[day % slugs.length];
 }
 
 function SectionTitle({ children, href, more }: { children: React.ReactNode; href?: string; more?: string }) {
@@ -65,7 +66,9 @@ export default async function HomePage() {
           .slice(0, 5)
           .map((post) => ({ post, views: stats.views[post.slug] }));
 
-  const pick = todaysPick(all, new Set([featured?.slug, ...latest.map((p) => p.slug)]));
+  const exclude = new Set([featured?.slug, ...latest.map((p) => p.slug)]);
+  const pickSlug = await todaysPickSlug(all.filter((p) => !exclude.has(p.slug)).map((p) => p.slug));
+  const pick = pickSlug ? bySlug.get(pickSlug) : undefined;
   const topics = getAllTopics(all).slice(0, 12);
   const series = getAllSeries(all);
   const totalViews = Object.values(stats.views).reduce((s, n) => s + n, 0);

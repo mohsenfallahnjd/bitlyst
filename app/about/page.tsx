@@ -10,7 +10,6 @@ import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { getAllTopics } from "@/lib/tags";
 
-export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "About",

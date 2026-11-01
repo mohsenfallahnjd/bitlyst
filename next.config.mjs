@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   compress: true,
+  cacheComponents: true,
+  // links prefetch one shared App Shell per route instead of every linked page
+  partialPrefetching: true,
+  cacheLife: {
+    // read counts, trending, comments: refresh in the background every 5 minutes
+    stats: { stale: 300, revalidate: 300, expire: 86_400 },
+  },
   // API routes read post slugs from disk at runtime
   outputFileTracingIncludes: {
     "/api/views/[slug]": ["./docs/**/*"],

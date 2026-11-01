@@ -1,12 +1,26 @@
+import { cacheLife, cacheTag } from "next/cache";
 import CommentForm from "./CommentForm";
 import { prisma } from "@/lib/prisma";
 
+/** Approved comments for a post — cached, and invalidated when a comment is approved or deleted. */
+async function getApprovedComments(slug: string) {
+  "use cache";
+  cacheLife("stats");
+  cacheTag("comments");
+  try {
+    return await prisma.comment.findMany({
+      where: { slug, approved: true },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, name: true, body: true, createdAt: true },
+    });
+  } catch (err) {
+    console.error("getApprovedComments failed:", err);
+    return [];
+  }
+}
+
 export default async function Comments({ slug }: { slug: string }) {
-  const comments = await prisma.comment.findMany({
-    where: { slug, approved: true },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, name: true, body: true, createdAt: true },
-  });
+  const comments = await getApprovedComments(slug);
 
   return (
     <section id="comments" className="scroll-mt-24 mt-12 pt-8 border-t border-gray-100 dark:border-gray-800/60">

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { Suspense } from "react";
 import { getRedis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import AdminClient from "./AdminClient";
@@ -22,7 +23,16 @@ async function getReactionTotals() {
   }
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ secret?: string }> }) {
+export default function AdminPage(props: { searchParams: Promise<{ secret?: string }> }) {
+  // reads cookies + searchParams, so it renders per request inside Suspense
+  return (
+    <Suspense>
+      <AdminContent {...props} />
+    </Suspense>
+  );
+}
+
+async function AdminContent({ searchParams }: { searchParams: Promise<{ secret?: string }> }) {
   const sp = await searchParams;
   const cookieStore = await cookies();
   const sessionSecret = cookieStore.get("admin_secret")?.value;

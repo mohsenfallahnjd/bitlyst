@@ -8,13 +8,13 @@ seriesOrder: 1
 tags: ["javascript", "arrays", "sort", "gotchas", "interview"]
 ---
 
-The message in our team chat was a screenshot and three words:
+Picture a tiny leaderboard for a weekly team quiz. Ten silly JavaScript questions, scores out of 100. This week someone finally gets a perfect **100**, and the page puts them fourth. First place goes to a score of **9**.
+
+The screenshot lands in the team chat with three words:
 
 > "I'm in last??"
 
-It was Friday quiz day. Every week we answer ten silly JavaScript questions, and I'd built a tiny leaderboard page for it. Lena had scored **100**, the best result we'd ever had. My page put her fourth. First place went to Arash, with **9**.
-
-Here's the code I'd shipped that morning:
+Here's the code behind the page:
 
 ```js
 const scores = players.map((p) => p.score); // [9, 100, 25, 10, 3]
@@ -30,9 +30,9 @@ Sort ascending, reverse it, done. What could go wrong with two built-in methods?
 
 ## The wrong turn: "the API sends strings"
 
-My first thought was the one every web developer has: *the data must be strings.* JSON from an API, a form field, a query param. Strings sort letter by letter, so `"100"` before `"9"` would make sense.
+The first suspect is the one every web developer reaches for: *the data must be strings.* JSON from an API, a form field, a query param. Strings sort letter by letter, so `"100"` before `"9"` would make sense.
 
-So I spent twenty minutes making sure every score was a real number:
+So you make sure every score is a real number:
 
 ```js
 const scores = players.map((p) => Number(p.score));
@@ -61,14 +61,14 @@ So JavaScript doesn't compare `100` and `25`. It compares `"100"` and `"25"`, th
   caption="The same rule puts 10 before 9 (“1” < “9”) and -1 before -10 (the shorter string wins a tie)."
 />
 
-Run the whole array through that rule and you get my leaderboard:
+Run the whole array through that rule and you get exactly that leaderboard:
 
 ```js
 [9, 100, 25, 10, 3].sort();
 // as strings: "10" < "100" < "25" < "3" < "9"
 // result:     [10, 100, 25, 3, 9]
 
-// .reverse() → [9, 3, 25, 100, 10]   ← Arash wins with 9
+// .reverse() → [9, 3, 25, 100, 10]   ← 9 points takes first place
 ```
 
 The `.reverse()` made it worse. It turned "string order" into "backwards string order," and that put the single-digit scores on top.
@@ -77,19 +77,19 @@ Why is this the default? `sort()` has to work on *any* array: strings, numbers, 
 
 ---
 
-## The second wrong turn: the comparator that worked on my machine
+## The second wrong turn: the comparator that works in one browser
 
-OK, so you pass a compare function. I knew that. I wrote this, tested it, and it worked:
+OK, so you pass a compare function. Most of us know that. This one looks right, and in a quick test it works:
 
 ```js
 players.sort((a, b) => b.score > a.score); // highest first… right?
 ```
 
-I tested in Safari. 100, 25, 10, 9, 3. Perfect. I pushed it.
+Test it in Safari: 100, 25, 10, 9, 3. Perfect. Ship it.
 
-Ten minutes later, from someone using Chrome: "Lena's still not first."
+Then someone on Chrome reports that the perfect score still isn't first.
 
-Same code, same data, two answers. I ran it in both engines to be sure:
+Same code, same data, two answers. Run it in both engines and you can see it:
 
 ```js
 // JavaScriptCore (Safari, Bun) → 100, 25, 10, 9, 3   ✅
@@ -109,7 +109,7 @@ The reason is the compare function's contract. The engine calls `compare(a, b)` 
 
 A boolean comparator can only say "b first" (`true` → 1) or "equal" (`false` → 0). It can never say "a first." That breaks the contract, and the spec leaves the result of a broken comparator up to the engine. Safari's sorting algorithm happened to survive it on this data. Chrome's didn't.
 
-"Works in my browser" is the most dangerous kind of working. It's exactly how this bug got past me.
+"Works in my browser" is the most dangerous kind of working. It's exactly how a bug like this slips through a quick test and a code review.
 
 ---
 
@@ -137,7 +137,7 @@ The same default bites with text too, because uppercase letters have smaller cha
 
 For strings people will read, use `localeCompare` (or `Intl.Collator` for big lists). It sorts the way humans expect, accents and all.
 
-I fixed the leaderboard and posted the corrected ranking. Lena took first, 75 points clear of second place, and she brings up "the incident" every Friday. 🏆
+With that one change, the perfect score sits on top, 75 points clear of second place, in every browser.
 
 ---
 

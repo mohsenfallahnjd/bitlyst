@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import Link from "next/link";
 
 const LINKS = [
@@ -10,6 +11,13 @@ const LINKS = [
   { label: "GitHub", href: "https://github.com/mohsenfallahnjd/bitlyst", external: true },
   { label: "X", href: "https://x.com/themohsenme", external: true },
 ];
+
+/** Current year, recomputed daily — reading the clock directly would block prerendering. */
+async function CopyrightYear() {
+  "use cache";
+  cacheLife("days");
+  return <>{new Date().getFullYear()}</>;
+}
 
 export default function Footer() {
   return (
@@ -24,7 +32,7 @@ export default function Footer() {
             </a>{" "}
             or the newsletter.
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">© {new Date().getFullYear()} Mohsen Fallahnejad</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">© <CopyrightYear /> Mohsen Fallahnejad</p>
         </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
           {LINKS.map((l) => (

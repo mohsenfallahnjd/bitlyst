@@ -1,0 +1,206 @@
+---
+title: "One Line in My Root Layout Turned 158 Static Pages Into 0"
+summary: "Reading a cookie with cookies() in the Next.js root layout opts every route out of static rendering. What it cost this blog, measured, and how to fix a theme flash without it."
+publishedTime: "2026-11-01"
+level: "intermediate"
+series: "nextjs-field-notes"
+seriesOrder: 1
+tags: ["nextjs", "app-router", "performance", "caching", "cookies"]
+---
+
+Dark mode on this blog has always had a tiny cheat in it. Before React loads, a little inline script reads your saved theme from `localStorage` and paints the page dark. It works, but it always felt like a hack. The server renders the page without knowing your theme, and a script patches it up in the browser.
+
+The "proper" fix seemed obvious. Store the theme in a cookie, read it on the server, render the right class from the start. One line in the root layout:
+
+```tsx
+// app/layout.tsx
+import { cookies } from "next/headers";
+
+export default async function RootLayout({ children }) {
+  const theme = (await cookies()).get("theme")?.value;
+
+  return (
+    <html lang="en" className={theme === "dark" ? "dark" : undefined}>
+      {/* ... */}
+    </html>
+  );
+}
+```
+
+I tried it on a copy of this blog. Dark mode worked on the very first byte. No script, no patching. Then I ran `next build`.
+
+---
+
+## The build output went all ƒ
+
+Before the change, the route table was mostly `○` and `●`: pages rendered once at build time and served as files.
+
+```
+○ /                                    10m
+○ /blog                                10m
+● /blog/[...slug]   (46 posts)          5m
+● /tags/[tag]       (102 topics)       10m
+○ /about                                1h
+○ /links
+```
+
+After the change:
+
+```
+ƒ /
+ƒ /blog
+ƒ /blog/[...slug]
+ƒ /tags/[tag]
+ƒ /about
+ƒ /links
+```
+
+`ƒ` means "server-rendered on demand." I counted the prerendered pages in each build's manifest:
+
+| Build | Prerendered HTML pages |
+|-------|------------------------|
+| Before | **158** |
+| After one `cookies()` call | **0** |
+
+Every post, every topic page, the home page, even `/links` — a page with no data at all — now renders from scratch on every request.
+
+---
+
+## The wrong turn: "it's just reading a cookie"
+
+My mental model was that `cookies()` is a cheap lookup. Read a header, get a string, move on. And it *is* cheap.
+
+The expensive part isn't reading the cookie. It's what reading it **means**.
+
+A cookie belongs to one visitor. If a page's HTML depends on a cookie, then the HTML can differ for every visitor, so Next.js can't render it once at build time and hand the same file to everyone. The docs call `cookies()`, `headers()` and `searchParams` **Request-time APIs**: use one, and the route has to render at request time.
+
+So where you call it decides how much of your app goes dynamic:
+
+<FlowDiagram
+  title="Where you read the cookie decides what goes dynamic"
+  nodes="A component calls cookies() → Its route can't be prerendered → Next.js renders that route on every request"
+  notes="cookies(), headers() and searchParams are all Request-time APIs|The HTML now depends on who is asking|And the response is marked uncacheable"
+  branch1="[green] Called in one page → only that route goes dynamic"
+  branch2="[orange] Called in a nested layout → every route under that layout goes dynamic"
+  branch3="[red] Called in the root layout → every route in the app goes dynamic"
+/>
+
+The root layout wraps every page. One line there is one line in *all* of them.
+
+---
+
+## What it actually cost
+
+I served both builds locally with `next start` and measured time to first byte: 30 requests per page after warm-up, median, on an Apple Silicon Mac with Next.js 16.4.
+
+| Page | Static build | Cookie build |
+|------|--------------|--------------|
+| `/links` (no data) | 1.0 ms | 6.5 ms |
+| A post page (Redis + Postgres) | 1.4 ms | 13.3 ms |
+
+Six to ten times slower, and that's the *best* case: my laptop is the server, so there's no network in between.
+
+The bigger difference was in the response headers:
+
+```
+# static build
+Cache-Control: s-maxage=300, stale-while-revalidate=31535700
+
+# cookie build
+Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+```
+
+The static page tells a CDN to keep it and serve it from the edge. The cookie page tells every cache in between to **never store it**. In production that means each visitor's request travels to wherever the server runs, waits for a full render, and travels back, instead of being answered by an edge server near them. Every one of those renders also costs compute.
+
+All of that for a class name on `<html>`.
+
+---
+
+## The fix: read the cookie in the browser
+
+The Next.js docs on [preventing flash before hydration](https://nextjs.org/docs/app/guides/preventing-flash-before-hydration) say it directly: reading the theme cookie in the root layout opts the whole app out of static rendering. Instead, keep the server output generic and read the preference in an inline script that runs **before the first paint**:
+
+```tsx
+// app/layout.tsx — stays static
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{
+              var m = document.cookie.match(/(?:^|; )theme=([^;]*)/);
+              if (m && m[1] === "dark") document.documentElement.classList.add("dark");
+            }catch(e){}})()`,
+          }}
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+- The browser runs the script while it parses `<head>`, before anything is painted, so there's no flash.
+- The server never reads the cookie, so all 158 pages stay prerendered and CDN-cacheable.
+- `suppressHydrationWarning` tells React the class on `<html>` was changed on purpose.
+
+That "hack" I'd been embarrassed about? It was the recommended approach all along. I deleted the experiment and kept the script.
+
+---
+
+## Make the build fail next time
+
+The scary part is how quiet this was. No warning, no error. Just a column of `ƒ` in a build log nobody reads.
+
+You can turn it into a build error. Put this in the root layout:
+
+```tsx
+// app/layout.tsx
+export const dynamic = "error";
+```
+
+Now any route that touches a Request-time API stops the build:
+
+```
+Error: Route /_not-found with `dynamic = "error"` couldn't be rendered
+statically because it used `cookies()`.
+```
+
+Pages that genuinely need to be dynamic opt back in explicitly. On this blog that's search (it reads `searchParams`) and the admin page:
+
+```tsx
+// app/search/page.tsx
+export const dynamic = "force-dynamic";
+```
+
+I tested both: without those two overrides the build fails on `/admin`; with them it passes and everything else stays `○`. Going dynamic becomes a decision written in the file, not an accident in a shared layout.
+
+---
+
+## If you use Cache Components
+
+Everything above is the default App Router behavior. This blog has since switched to [Cache Components](https://nextjs.org/docs/app/guides/migrating-to-cache-components), and two things change there:
+
+- Route segment configs like `dynamic` are no longer allowed, so the `dynamic = "error"` guardrail goes away. Its replacement is [`ensureStatic`](https://nextjs.org/docs/app/guides/keeping-pages-static) (Next.js 16.4+), which reports an error when request-specific work stops a route from prerendering.
+- A Request-time API no longer has to make a whole route dynamic. You can move the read into a component wrapped in `<Suspense>`: the rest of the page prerenders and only that part streams in per request. Search on this blog works that way now.
+
+But not for the theme. A value that sets a class on `<html>` in the root layout has no smaller child to wrap, and the migration guide points to the same fix: an inline `<script>` in `<head>`. The rule holds either way.
+
+---
+
+## The rule
+
+> **Never read cookies or headers in a layout unless you want every page under it rendered on every request.**
+
+If one small piece of UI needs per-visitor data, read it as close to that piece as possible: in the one page that needs it, in a client component, or from the browser. Keep the shared layouts boring and static.
+
+---
+
+## TL;DR
+
+- `cookies()`, `headers()` and `searchParams` are Request-time APIs. Using one makes that route render on every request.
+- In the root layout, that's every route. On this blog it took prerendered pages from **158 to 0**.
+- Measured locally, pages got 6–10× slower to respond, and the responses became `Cache-Control: private, no-store`, so CDNs can't cache them.
+- For a theme without a flash, read the cookie (or `localStorage`) in an inline `<head>` script, as the Next.js docs recommend.
+- Add `export const dynamic = "error"` to the root layout so an accidental Request-time API fails the build, and opt dynamic pages back in with `force-dynamic`.

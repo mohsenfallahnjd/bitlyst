@@ -22,8 +22,7 @@ Every post follows the same five beats. The headings change; the beats don't.
 
 ## 2. Voice rules
 
-1. **First person, past tense for the story; present tense for the explanation.**
-   "I clicked the button and nothing happened." → "`sort()` compares strings, not numbers."
+1. **First person only for things that really happened.** If the bug, the conversation or the experiment is real, tell it as "I": "I clicked the button and nothing happened." If the scenario is made up to carry the lesson, frame it as hypothetical with "picture…" and "you": "Picture a table that remembers your selection…". Never invent people, quotes from real colleagues, or events and present them as your own experience. The explanation itself is always present tense: "`sort()` compares strings, not numbers."
 2. **Start in the middle of the action.** First sentence = a concrete event, quote, or output.
    - ✅ `The leaderboard said 9 points beat 10.`
    - ❌ `Sorting is a fundamental operation in programming.`
@@ -83,6 +82,7 @@ When a part is published, remove its title from `upcoming` in `lib/series.ts`.
 ## 6. Pre-publish checklist
 
 - [ ] First sentence is a concrete moment, not a definition.
+- [ ] Anything told as "I" really happened; made-up scenarios are framed as "picture…" / "you", with no invented names.
 - [ ] There's a wrong turn before the reveal.
 - [ ] One concept only.
 - [ ] Every number is measured or sourced.

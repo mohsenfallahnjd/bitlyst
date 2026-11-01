@@ -7,8 +7,6 @@ import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { getAllTopics } from "@/lib/tags";
 
-// Static page, refreshed every 10 minutes so read & comment counts stay current
-export const revalidate = 600;
 
 export const metadata: Metadata = {
   title: "All posts — JavaScript, React, and Next.js tips",

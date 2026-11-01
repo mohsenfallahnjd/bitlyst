@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -10,6 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const comment = await prisma.comment.update({ where: { id }, data: { approved: true } });
+  revalidateTag("comments", "max");
   return NextResponse.json(comment);
 }
 
@@ -17,5 +19,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!checkAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   await prisma.comment.delete({ where: { id } });
+  revalidateTag("comments", "max");
   return NextResponse.json({ ok: true });
 }

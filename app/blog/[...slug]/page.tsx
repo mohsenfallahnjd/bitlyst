@@ -29,8 +29,6 @@ import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { useMDXComponents } from "@/mdx-components";
 
-// Pre-rendered at build, refreshed every 5 minutes (new comments, read counts)
-export const revalidate = 300;
 
 export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const params = await props.params;

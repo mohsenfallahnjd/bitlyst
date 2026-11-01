@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
 
@@ -17,8 +18,13 @@ function today(offsetDays = 0) {
   return new Date(Date.now() - offsetDays * 86_400_000).toISOString().slice(0, 10);
 }
 
+// Reads below are cached with the "stats" profile (next.config.mjs) so pages stay prerendered
+// and refresh in the background; recordView() writes and is never cached.
+
 /** All-time view counts keyed by slug. */
 export async function getAllViews(): Promise<Record<string, number>> {
+  "use cache";
+  cacheLife("stats");
   try {
     const redis = await getRedis();
     if (!redis) {
@@ -33,6 +39,8 @@ export async function getAllViews(): Promise<Record<string, number>> {
 }
 
 export async function getViews(slug: string): Promise<number> {
+  "use cache";
+  cacheLife("stats");
   try {
     const redis = await getRedis();
     if (!redis) {
@@ -46,6 +54,9 @@ export async function getViews(slug: string): Promise<number> {
 
 /** Approved comment counts keyed by slug. */
 export async function getCommentCounts(): Promise<Record<string, number>> {
+  "use cache";
+  cacheLife("stats");
+  cacheTag("comments");
   try {
     const rows = await prisma.comment.groupBy({ by: ["slug"], where: { approved: true }, _count: { _all: true } });
     return Object.fromEntries(rows.map((r) => [r.slug, r._count._all]));
@@ -62,6 +73,8 @@ export async function getPostStats(): Promise<PostStats> {
 
 /** Most-read slugs over the last `days` days, highest first. */
 export async function getTrending(days = 7, limit = 5): Promise<{ slug: string; views: number }[]> {
+  "use cache";
+  cacheLife("stats");
   try {
     const redis = await getRedis();
     if (!redis) {

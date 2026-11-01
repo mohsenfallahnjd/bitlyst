@@ -9,8 +9,6 @@ import { toSummary } from "@/lib/mdSource";
 import { getAllSeries, getSeries } from "@/lib/series";
 import { getPostStats } from "@/lib/stats";
 
-export const revalidate = 600;
-export const dynamicParams = false;
 
 export function generateStaticParams() {
   return getAllSeries().map((s) => ({ slug: s.slug }));

@@ -6,8 +6,6 @@ import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { getAllTopics, getPostsByTopic, MIN_INDEXABLE_POSTS } from "@/lib/tags";
 
-export const revalidate = 600;
-export const dynamicParams = false;
 
 export function generateStaticParams() {
   return getAllTopics().map((t) => ({ tag: t.slug }));

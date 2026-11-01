@@ -1,10 +1,23 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 import { searchDocs } from "@/lib/search";
 import { getAllViews } from "@/lib/stats";
 import SearchClient from "./SearchClient";
 
-export default async function SearchPage({ searchParams }: PageProps<"/search">) {
+export default function SearchPage({ searchParams }: PageProps<"/search">) {
+  return (
+    <div className="mx-auto max-w-[42rem] space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Search</h1>
+      {/* the query is only known at request time — everything above prerenders */}
+      <Suspense fallback={<div className="h-12 rounded-xl border border-gray-200 dark:border-gray-700 animate-pulse" />}>
+        <SearchResults searchParams={searchParams} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function SearchResults({ searchParams }: Pick<PageProps<"/search">, "searchParams">) {
   const awaited = await searchParams;
   const initialQuery = (awaited?.q || "").toString();
   const docs = loadMarkdownDocs();
@@ -28,9 +41,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   // tokens are computed client-side; no need to keep on server
 
   return (
-    <div className="mx-auto max-w-[42rem] space-y-6">
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Search</h1>
-
+    <>
       {/* Hydrated client search with SSR initial state below */}
       <SearchClient docs={clientDocs} initialQuery={initialQuery} popular={popular} />
 
@@ -49,7 +60,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
           </ul>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

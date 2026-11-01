@@ -1,0 +1,140 @@
+---
+title: "You Selected Rows 3, 8, 12, 15 and 20. JavaScript Checked 3, 1 and 8."
+summary: "Why ['1', '7', '11'].map(parseInt) returns [1, NaN, 3]: map passes the index as parseInt's radix. Plus the Number('') trap hiding in the obvious fix."
+publishedTime: "2026-11-01"
+level: "beginner"
+series: "js-plot-twists"
+seriesOrder: 2
+tags: ["javascript", "arrays", "parseint", "gotchas", "interview"]
+---
+
+Picture a table with a feature users love: select a few rows, refresh the page, and your selection is still there. The selected ids live in the URL:
+
+```
+/orders?selected=3,8,12,15,20
+```
+
+You select five orders, hit refresh, and the page comes back with **three** checkboxes ticked: orders **3**, **1** and **8**.
+
+Order 1? Nobody touched order 1. And 8 is right, but 12, 15 and 20 are gone.
+
+Here's the line that reads the URL back:
+
+```js
+const selected = params.get("selected").split(",").map(parseInt);
+// expected: [3, 8, 12, 15, 20]
+// got:      [3, NaN, 1, 1, 8]
+```
+
+Five strings in, five numbers out. Just not the five you sent.
+
+---
+
+## The wrong turn: blaming the URL
+
+URLs are messy, so that's the natural first suspect. Was the comma encoded as `%2C`? Were there spaces? Is `URLSearchParams` doing something clever?
+
+Log the input:
+
+```js
+params.get("selected");                 // "3,8,12,15,20"
+params.get("selected").split(",");      // ["3", "8", "12", "15", "20"]
+```
+
+Perfect strings. The URL is innocent. Whatever happened, it happened inside `.map(parseInt)`, a line most of us have written a hundred times without a second thought.
+
+---
+
+## The reveal: map talks more than you think
+
+`map` doesn't call your function with one argument. It calls it with **three**: the element, its **index**, and the whole array.
+
+```js
+["a", "b"].map((...args) => args.length); // [3, 3]
+```
+
+Usually that doesn't matter, because most callbacks ignore the extras. `parseInt` doesn't. Its signature is `parseInt(string, radix)`, where the second parameter is the **number base**. So `.map(parseInt)` quietly turns every index into a base:
+
+<FlowDiagram
+  title="What .map(parseInt) actually calls"
+  nodes="parseInt('3', 0) = 3 → parseInt('8', 1) = NaN → parseInt('12', 2) = 1 → parseInt('15', 3) = 1 → parseInt('20', 4) = 8"
+  notes="Index 0. A radix of 0 means 'figure it out', so base 10 — correct by luck|Index 1. Base 1 doesn't exist, so the answer is NaN|Index 2, so binary. '1' is a valid binary digit, '2' isn't, so parsing stops after the first digit|Index 3, so base 3. '1' is valid, '5' isn't — stops again|Index 4, so base 4. Both digits are valid: 2 × 4 + 0 = 8"
+  caption="That's where order 1 came from (two different ids parsed to 1), and why 8 was ticked — it wasn't the 8 you selected, it was the 20."
+/>
+
+The classic interview version is the same bug with shorter strings:
+
+```js
+["1", "7", "11"].map(parseInt);
+// parseInt("1", 0)  → 1
+// parseInt("7", 1)  → NaN   (no base 1)
+// parseInt("11", 2) → 3     (binary 11)
+// result: [1, NaN, 3]
+```
+
+Nothing is broken here. `map` passes what it always passes. `parseInt` reads what it always reads. The bug lives in the gap between two functions that were never designed to be plugged into each other.
+
+There was a hint, too: `parseInt.length` is `2`. A function that declares two parameters will happily use a second argument if you hand it one.
+
+---
+
+## The fix, and the trap inside the fix
+
+The obvious fix is `Number`, which only cares about its first argument:
+
+```js
+"3,8,12,15,20".split(",").map(Number); // [3, 8, 12, 15, 20]  ✓
+```
+
+That works until the URL ends with a stray comma, which is easy to produce, for example when the code that rebuilds the list leaves a trailing separator:
+
+```js
+"3,8,".split(",").map(Number); // [3, 8, 0]  ← order 0?
+```
+
+`Number("")` is `0`, not `NaN`. An empty piece of the string silently becomes a real-looking id. `Number` and `parseInt` disagree on more edge cases than you'd expect:
+
+| Input | `Number(x)` | `parseInt(x, 10)` |
+|-------|-------------|-------------------|
+| `"12"` | `12` | `12` |
+| `""` | **`0`** | `NaN` |
+| `" 12 "` | `12` | `12` |
+| `"12px"` | `NaN` | **`12`** |
+| `"1e3"` | `1000` | **`1`** |
+| `"0x1A"` | `26` | **`0`** |
+
+Neither is "the safe one." `Number` is strict about junk but turns empty strings into zero. `parseInt` forgives trailing junk, and that can hide bad data.
+
+For ids from a URL, you want strict parsing, with empty pieces dropped:
+
+```js
+const selected = (params.get("selected") ?? "")
+  .split(",")
+  .filter(Boolean)              // drop "" from stray commas
+  .map(Number)
+  .filter(Number.isInteger);    // drop anything that wasn't a clean number
+```
+
+If you do want `parseInt`, give it its own arrow so you choose every argument:
+
+```js
+.map((s) => parseInt(s, 10))
+```
+
+---
+
+## The rule
+
+> **Don't pass a function you didn't write straight into map, forEach or filter. Wrap it in an arrow that passes exactly what you mean.**
+
+`parseInt` is the famous case, but it's not the only one. Any function with optional parameters will grab the index or the array if you let it. `arr.map((x) => fn(x))` costs a few characters and removes the question entirely.
+
+---
+
+## TL;DR
+
+- `map` calls its callback with `(element, index, array)`, not just the element.
+- `parseInt`'s second parameter is the radix, so `.map(parseInt)` parses each string in base 0, 1, 2, 3…, which gives `[1, NaN, 3]` for `['1', '7', '11']`.
+- `map(Number)` fixes that, but `Number("")` is `0`, so filter out empty strings first.
+- `Number` and `parseInt` disagree on `""`, `"12px"`, `"1e3"` and `"0x1A"`. Pick the one whose rules match your data.
+- Wrap library functions in an arrow, `arr.map((s) => parseInt(s, 10))`, so you control every argument.

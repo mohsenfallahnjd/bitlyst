@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { DocMeta } from "@/lib/mdSource";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
-export const dynamic = "force-static";
 
 const escape = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
