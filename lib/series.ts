@@ -22,9 +22,9 @@ export const SERIES: Record<string, Series> = {
     description: "Real bugs caused by JavaScript doing exactly what the spec says — and nothing you expected.",
     mascot: { sprite: "twisty", name: "Twisty", bio: "Has read the spec. Is still surprised every time." },
     upcoming: [
-      "The return statement that returned undefined",
-      "0.1 + 0.2 and the invoice that was off by one cent",
-      "The object key that reordered itself",
+      "The birthday that showed up a day early",
+      "The forEach that didn't wait for await",
+      "The regex that matched every other time",
     ],
   },
   "nextjs-field-notes": {
@@ -32,8 +32,8 @@ export const SERIES: Record<string, Series> = {
     description: "Tricks and traps from shipping Next.js App Router apps in production.",
     mascot: { sprite: "scout", name: "Scout", bio: "Takes notes in production so you don't have to." },
     upcoming: [
-      "Why your Server Action runs twice in development",
-      "Prefetching: the hidden cost of a long list of <Link>s",
+      "The redirect() that a try/catch swallowed",
+      "The useSearchParams call that blanked half the page in the HTML",
     ],
   },
 };

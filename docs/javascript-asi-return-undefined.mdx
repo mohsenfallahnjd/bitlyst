@@ -1,0 +1,165 @@
+---
+title: "The Settings Object That Came Back undefined"
+summary: "How automatic semicolon insertion (ASI) turns `return` followed by a newline into `return;`, and the lines where JavaScript refuses to add a semicolon at all."
+publishedTime: "2026-11-02"
+level: "beginner"
+series: "js-plot-twists"
+seriesOrder: 3
+tags: ["javascript", "asi", "semicolons", "syntax", "gotchas"]
+---
+
+Picture a settings panel that crashes the moment it opens:
+
+```
+TypeError: Cannot read properties of undefined (reading 'theme')
+```
+
+The line that throws is about as boring as code gets:
+
+```js
+const settings = getDefaultSettings();
+applyTheme(settings.theme); // 💥 settings is undefined
+```
+
+And `getDefaultSettings` is even more boring. It has no branches, no `await`, no early exit. It builds an object and returns it:
+
+```js
+function getDefaultSettings() {
+  return
+  {
+    theme: "dark"
+  };
+}
+```
+
+There's an object right there. The function can't possibly return `undefined`.
+
+It does, every time.
+
+---
+
+## The wrong turn: blaming the caller
+
+When a value shows up as `undefined`, the natural instinct is to look upstream. Maybe the import is wrong and you're calling a different `getDefaultSettings`. Maybe something mutates the object after it's returned. Maybe the function is async and someone forgot an `await`.
+
+Log right at the source:
+
+```js
+console.log(getDefaultSettings()); // undefined
+```
+
+No import, no mutation, no promise. The function itself hands back nothing. The bug is somewhere in five lines, and four of them are braces.
+
+---
+
+## The reveal: JavaScript added a semicolon for you
+
+JavaScript lets you leave out most semicolons. To make that work, the parser follows a set of rules called **automatic semicolon insertion**, or ASI. Most of the time ASI is invisible: it adds a semicolon where you clearly meant one.
+
+But a few statements are treated as finished the moment a line ends. `return` is one of them. If nothing follows `return` on the same line, the parser doesn't look at the next line to see if the value is there. It ends the statement on the spot.
+
+<FlowDiagram
+  title="How the parser reads that function"
+  nodes="return ⏎ → insert ; → return undefined → { theme: 'dark' } never runs"
+  notes="The line ends right after return. For return, a line break counts as the end of the statement|ASI turns it into return; — a return with no value|A bare return gives back undefined|The braces become a plain code block with a label called theme and the string 'dark' inside it. It sits after a return, so it's dead code"
+  caption="Nothing errors, because { theme: 'dark' } happens to be valid code on its own. It just isn't an object anymore."
+/>
+
+That last step is the cruel part. With one property, the "object" is legal as a block with a label. Add a second property and the parser finally complains:
+
+```js
+function getDefaultSettings() {
+  return
+  {
+    theme: "dark",
+    fontSize: 14
+  };
+}
+// SyntaxError: Unexpected token ':'
+```
+
+So the bug only stays silent while the object is small, which is exactly when nobody bothers to look at it twice.
+
+`return` isn't alone. The spec calls these **restricted productions**: places where a line break is not allowed. The ones you'll actually hit:
+
+| You write | JavaScript reads |
+|-----------|------------------|
+| `return`⏎`value` | `return; value;` |
+| `throw`⏎`new Error()` | SyntaxError: a line break isn't allowed after `throw` |
+| `break`⏎`label` / `continue`⏎`label` | `break; label;` |
+| `count`⏎`++` | `count; ++…` (the `++` attaches to the next line) |
+| `(a)`⏎`=> a` | SyntaxError: the arrow must be on the same line as its parameters |
+
+---
+
+## The mirror image: where ASI won't help
+
+ASI also fails in the opposite direction. It only inserts a semicolon when the next line can't continue the current one. If the next line starts with `(`, `[` or `` ` ``, it usually can, so no semicolon goes in:
+
+```js
+const greeting = "hi"
+[1, 2].forEach((n) => console.log(n))
+// TypeError: Cannot read properties of undefined (reading 'forEach')
+```
+
+JavaScript reads that as `"hi"[1, 2].forEach(...)`. The comma inside the brackets means "take the last value", so it's `"hi"[2]`, which is `undefined`.
+
+Same story with an IIFE:
+
+```js
+const total = 1
+(function () {})()
+// TypeError: 1 is not a function
+```
+
+That's `1(function () {})()`: calling the number `1` like a function.
+
+> **ASI adds a semicolon where a line can't continue, never where you meant one.**
+
+---
+
+## The fix
+
+Start the value on the same line as `return`. For a multi-line object, open the brace or a parenthesis right after the keyword:
+
+```js
+// before
+return
+{
+  theme: "dark"
+};
+
+// after
+return {
+  theme: "dark"
+};
+
+// also fine, handy for long JSX or expressions
+return (
+  someLongCondition && anotherCondition
+);
+```
+
+And let tools catch the rest:
+
+- **Prettier** reformats `return`⏎`{` into `return;` followed by a block, which makes the bug obvious in the diff.
+- **ESLint**'s `no-unreachable` rule flags the block after the bare `return`.
+- **TypeScript** marks it as "Unreachable code detected" in the editor.
+
+If you write without semicolons, the one habit that matters is the mirror case: put a `;` in front of any line that starts with `(`, `[` or `` ` ``.
+
+---
+
+## The rule
+
+Whatever a `return`, `throw`, `break` or `continue` gives back has to start on the same line as the keyword. The parser doesn't look at the next line.
+
+---
+
+## TL;DR
+
+- Automatic semicolon insertion ends a `return` statement at the line break, so `return` followed by a value on the next line returns `undefined`.
+- A one-property object after a bare `return` is still valid code (a labeled block), so nothing errors. Only larger objects throw a SyntaxError.
+- The same rule applies to `throw`, `break`, `continue`, postfix `++` and arrow functions.
+- In the other direction, ASI doesn't add a semicolon before lines starting with `(`, `[` or `` ` ``, so those lines merge with the line above.
+- Keep the returned value on the `return` line, and let Prettier, ESLint's `no-unreachable` or TypeScript flag the rest.

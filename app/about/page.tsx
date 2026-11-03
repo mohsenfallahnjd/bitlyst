@@ -92,7 +92,7 @@ export default async function AboutPage() {
               "@type": "Person",
               name: "Mohsen Fallahnejad",
               url: "https://themohsen.me",
-              image: "https://bitlyst.vercel.app/mohsen.JPEG",
+              image: "https://bitlyst.blog/mohsen.JPEG",
               jobTitle: "Full-stack developer",
               sameAs: LINKS.map((l) => l.href),
               knowsAbout: topics.map((t) => t.name),

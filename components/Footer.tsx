@@ -7,7 +7,8 @@ const LINKS = [
   { label: "Topics", href: "/tags" },
   { label: "Links", href: "/links" },
   { label: "About", href: "/about" },
-  { label: "RSS", href: "/rss.xml" },
+  // a feed file, not a page: a <Link> would prefetch it as an RSC payload
+  { label: "RSS", href: "/rss.xml", plain: true },
   { label: "GitHub", href: "https://github.com/mohsenfallahnjd/bitlyst", external: true },
   { label: "X", href: "https://x.com/themohsenme", external: true },
 ];
@@ -35,16 +36,29 @@ export default function Footer() {
           <p className="text-xs text-gray-400 dark:text-gray-500">© <CopyrightYear /> Mohsen Fallahnejad</p>
         </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
-          {LINKS.map((l) => (
-            <Link
-              key={l.label}
-              href={l.href}
-              {...("external" in l && l.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-            >
-              {l.label}
-            </Link>
-          ))}
+          {LINKS.map((l) => {
+            const className =
+              "text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors";
+            if ("external" in l && l.external) {
+              return (
+                <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className={className}>
+                  {l.label}
+                </a>
+              );
+            }
+            if ("plain" in l && l.plain) {
+              return (
+                <a key={l.label} href={l.href} className={className}>
+                  {l.label}
+                </a>
+              );
+            }
+            return (
+              <Link key={l.label} href={l.href} className={className}>
+                {l.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </footer>

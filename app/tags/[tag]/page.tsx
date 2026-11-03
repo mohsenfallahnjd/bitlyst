@@ -49,7 +49,7 @@ export default async function TopicPage({ params }: PageProps<"/tags/[tag]">) {
     .filter((t) => t.slug !== tag)
     .slice(0, 8);
 
-  const url = `https://bitlyst.vercel.app/tags/${topic.slug}`;
+  const url = `https://bitlyst.blog/tags/${topic.slug}`;
 
   return (
     <div className="space-y-8">
@@ -66,7 +66,7 @@ export default async function TopicPage({ params }: PageProps<"/tags/[tag]">) {
               itemListElement: posts.map((p, i) => ({
                 "@type": "ListItem",
                 position: i + 1,
-                url: `https://bitlyst.vercel.app/blog/${p.slug}`,
+                url: `https://bitlyst.blog/blog/${p.slug}`,
                 name: p.title,
               })),
             },

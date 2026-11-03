@@ -44,3 +44,6 @@ next-env.d.ts
 VERCEL_KV_SETUP.md
 
 /generated/prisma
+
+# dev.to dry-run output
+.devto/

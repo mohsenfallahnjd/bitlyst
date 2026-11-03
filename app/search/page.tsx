@@ -71,7 +71,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/search">): 
   const description = q
     ? `Search results for "${q}" on Bitlyst. Find posts matching your query.`
     : "Search Bitlyst posts by title, tags and content.";
-  const url = q ? `https://bitlyst.vercel.app/search?q=${encodeURIComponent(q)}` : "https://bitlyst.vercel.app/search";
+  const url = q ? `https://bitlyst.blog/search?q=${encodeURIComponent(q)}` : "https://bitlyst.blog/search";
   return {
     title,
     description,

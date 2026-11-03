@@ -3,7 +3,7 @@ import { loadMarkdownDocs } from "@/lib/mdSource";
 import { getAllSeries } from "@/lib/series";
 import { getAllTopics, getPostsByTopic, MIN_INDEXABLE_POSTS } from "@/lib/tags";
 
-const site = "https://bitlyst.vercel.app";
+const site = "https://bitlyst.blog";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = loadMarkdownDocs();

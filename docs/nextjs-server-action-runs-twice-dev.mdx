@@ -1,0 +1,119 @@
+---
+title: "The Server Action That Ran Twice, but Only on localhost"
+summary: "Why a Next.js Server Action called from useEffect runs twice in development: React Strict Mode mounts every component twice. What that reveals, and where the call belongs."
+publishedTime: "2026-11-03"
+level: "intermediate"
+series: "nextjs-field-notes"
+seriesOrder: 2
+tags: ["nextjs", "react", "server-actions", "strict-mode", "useeffect"]
+---
+
+Picture a "mark as read" feature. Open a notification, and a Server Action flips it to read in the database and bumps a counter. You add a `console.log` to the action to watch it work, open the page in `next dev`, and the terminal prints:
+
+```
+[markAsRead] call #1
+[markAsRead] call #2
+```
+
+One page load, two calls. Every time.
+
+I rebuilt that exact setup on this blog's codebase (Next.js 16.4, React 19) as a ten-line test page, and got the same thing: two `POST` requests with the same `next-action` id in the network tab, two log lines on the server.
+
+---
+
+## The wrong turn: blaming Next.js
+
+Two calls from one load looks like a framework bug. Maybe Next.js retries actions. Maybe the page renders twice on the server and each render fires the action. Maybe HMR left an old copy of the component mounted.
+
+None of those hold up. Here's the whole client component:
+
+```tsx
+"use client";
+
+import { useEffect } from "react";
+import { markAsRead } from "./actions";
+
+export function Notification({ id }: { id: string }) {
+  useEffect(() => {
+    markAsRead(id);
+  }, [id]);
+
+  return <p>…</p>;
+}
+```
+
+Server Actions never run during rendering. They run when the browser calls them, and the only thing calling this one is `useEffect`. So the real question is: why does the effect run twice?
+
+---
+
+## The reveal: React mounts everything twice in development
+
+Next.js turns on React **Strict Mode** by default in the App Router (the `reactStrictMode` docs say so: it's been `true` by default since Next.js 13.5.1). In development, Strict Mode deliberately stress-tests every component when it first appears:
+
+<FlowDiagram
+  title="What Strict Mode does with your effect in development"
+  nodes="Mount → Run effect → Simulated unmount → Run cleanup → Mount again → Run effect again"
+  notes="The component appears on the page|useEffect fires: first call to markAsRead|React pretends the component left the page|Your cleanup function runs, if you returned one|React puts it back, keeping the same state|useEffect fires again: second call to markAsRead"
+  caption="In production the middle steps don't exist, so the effect runs once."
+/>
+
+That's why it only happens on localhost. In a production build there's no simulated remount. I checked this on a production build of the blog too: its view counter, which posts from a `useEffect`, sent one `POST` under `next start` and two under `next dev` (the first one cancelled by its cleanup).
+
+React does this on purpose. A real user can make a component unmount and mount again: navigate away and back, or a parent that hides and shows it. Strict Mode makes that happen immediately, so you find out now whether your effect survives it.
+
+> **Strict Mode isn't calling your action twice. It's showing you that your code would call it twice if the component ever remounted.**
+
+---
+
+## The fix: decide what the call is for
+
+There are two kinds of "call an action when this shows up," and they get different fixes.
+
+**It's caused by something the user did.** Marking as read, liking, saving, buying. These belong in an event handler or a form, not an effect. The click is the cause, so the click should make the call:
+
+```tsx
+// before: fires whenever the component mounts
+useEffect(() => {
+  markAsRead(id);
+}, [id]);
+
+// after: fires once per click
+<button onClick={() => markAsRead(id)}>Open</button>
+
+// or with a form, which also works before JavaScript loads
+<form action={markAsRead.bind(null, id)}>
+  <button>Open</button>
+</form>
+```
+
+**It's caused by the component being shown.** Page views and analytics are the classic case. Here the effect is the right place, so make the server safe to call twice. This blog's view counter does exactly that: the `POST` handler counts one read per visitor per post per day, so a second request changes nothing.
+
+There's also the trick you'll find on Stack Overflow, a ref that remembers it already ran:
+
+```tsx
+const ran = useRef(false);
+
+useEffect(() => {
+  if (ran.current) return;
+  ran.current = true;
+  markAsRead(id);
+}, [id]);
+```
+
+It works: my test page logged one call with it instead of two. But the React docs advise against it, because it silences the warning without fixing the cause. The day the component really remounts, the ref starts over at `false` and you get a second call in production anyway.
+
+---
+
+## The rule
+
+If an action changes data because of something the user did, call it from the event that caused it. If it has to run from an effect, make the server handle it arriving twice.
+
+---
+
+## TL;DR
+
+- Next.js enables React Strict Mode by default in the App Router, and in development Strict Mode mounts, unmounts and remounts every component.
+- So a Server Action called from `useEffect` runs twice in `next dev` and once in production.
+- In a test page on this blog, the action logged two calls in dev; a production build of the view counter sent one request.
+- Move user-caused mutations (read, like, save) into event handlers or `<form action>`.
+- For effects that must call the server, like view tracking, make the endpoint idempotent instead of hiding the second call with a ref.

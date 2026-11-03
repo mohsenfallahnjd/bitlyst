@@ -1,0 +1,101 @@
+---
+title: "Scrolling My Blog Index Prefetched All 51 Posts. One Config Line Cut It to 90 kB."
+summary: "What a long list of Next.js <Link>s really costs in prefetch requests, measured on this blog, and how partialPrefetching shares one App Shell per route instead."
+publishedTime: "2026-11-03"
+level: "intermediate"
+series: "nextjs-field-notes"
+seriesOrder: 3
+tags: ["nextjs", "link", "prefetch", "performance", "app-router"]
+---
+
+The `/blog` page on this site is one long list: 51 posts, 51 `<Link>`s. I opened it in a production build, scrolled from top to bottom without clicking anything, and counted the network requests:
+
+```
+RSC requests:        83
+posts prefetched:    51 of 51
+transferred:         576 kB  (gzip; 2.7 MB once decoded)
+```
+
+Every single post got downloaded in the background because its link scrolled past. Nobody reads 51 posts in a row. That's over half a megabyte spent on pages that, for almost every visitor, will never be opened.
+
+---
+
+## The wrong turn: prefetch={false} everywhere
+
+The standard advice, which [an older post on this blog](/blog/nextjs-link-prefetch) repeats, is to switch prefetching off for big lists:
+
+```tsx
+<Link href={`/blog/${post.slug}`} prefetch={false}>
+  {post.title}
+</Link>
+```
+
+That fixes the bandwidth, but it trades it for something worse. Without a prefetch, the router has nothing for that route when you click. Next.js has to fetch it on click before it can show anything, so the instant navigation that made you pick `<Link>` in the first place is gone.
+
+And it's aimed at the wrong thing. The cost isn't "too many links." It's that each link fetched its own full page.
+
+---
+
+## The reveal: per-link prefetches vs. one shell per route
+
+There are two prefetching models in Next.js 16, and the difference is what gets downloaded per link.
+
+<FlowDiagram
+  title="What each Link prefetches as it scrolls into view"
+  nodes="Link enters viewport → Is prefetching per link, or per route?"
+  notes="Next.js queues a prefetch, putting links in the viewport first|This is what partialPrefetching switches"
+  branch1="[orange] Per link (old default) → Fetch this post's full page → 51 links = 51 full posts"
+  branch2="[green] Per route (partialPrefetching) → Fetch the /blog/[...slug] App Shell once → Every other post link reuses it"
+  caption="All 51 links point at the same route, /blog/[...slug]. With partial prefetching they share one download."
+/>
+
+The old default prefetches each link's page in full. The docs put it plainly: "a page with N links to N routes produced ~N route prefetches."
+
+With `partialPrefetching: true`, a link prefetches the route's **App Shell** instead: the parts of the page that don't depend on which post it is, like the layouts and loading states. Every link to `/blog/[...slug]` shares that one shell, fetched when the first of them shows up. The post itself, the part that depends on the URL, loads after you click.
+
+It needs Cache Components, which this blog already uses, so turning it on was one line:
+
+```js
+// next.config.mjs
+const nextConfig = {
+  cacheComponents: true,
+  partialPrefetching: true,
+};
+```
+
+---
+
+## The fix, measured
+
+Same page, same scroll, same browser, with the only change being that config value:
+
+| Scroll `/blog` top to bottom | Per link (`false`) | Per route (`true`) |
+|------------------------------|-------------------:|-------------------:|
+| RSC requests | 83 | **24** |
+| Post routes prefetched | 51 of 51 | shell + 4 small route-tree requests |
+| Transferred (gzip) | 576 kB | **90 kB** |
+| Decoded size | 2.7 MB | 330 kB |
+
+That's 84% less data, and the number stops growing with the list. With partial prefetching, the count was 23 requests before scrolling and 24 after. Add another hundred posts and it stays about the same, because they're all the same route.
+
+The cost moved to the click, where it belongs. I navigated to the very last post on the list, one that never had its own prefetch. The router made one request for the post itself: 7.7 kB.
+
+How I measured, so you can check it: `next build` then `next start` (Next.js 16.4.3), headless Chromium at 1440×900, a fresh browser per run, scrolling 400 px every 250 ms and waiting 3 seconds at the bottom. I counted every resource with `_rsc=` in its URL, using the Resource Timing API's `transferSize`. Three runs per setting gave identical numbers. It ran on localhost, so I'm not quoting request timings. On a real network, the click-time request adds one round trip before the post text appears.
+
+> **Long lists of links aren't expensive. Prefetching each link's full page is.**
+
+---
+
+## The rule
+
+Before you reach for `prefetch={false}` on a long list, check whether those links share a route. If they do, and you're on Cache Components, turn on `partialPrefetching` and let them share one shell. Save `prefetch={false}` for links that really shouldn't be warmed up at all.
+
+---
+
+## TL;DR
+
+- Without partial prefetching, every `<Link>` that scrolls into view prefetches its own page, so a list of 51 posts downloaded 576 kB of pages nobody clicked.
+- `prefetch={false}` saves the bandwidth but makes every click wait for the server.
+- `partialPrefetching: true` (requires `cacheComponents`) prefetches one App Shell per route, shared by every link to it.
+- On this blog's index that cut the scroll from 83 requests and 576 kB to 24 requests and 90 kB, and the count no longer grows with the list.
+- The URL-specific part loads after the click instead; for one post that was a single 7.7 kB request.

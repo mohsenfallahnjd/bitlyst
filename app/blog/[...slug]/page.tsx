@@ -40,7 +40,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
     notFound();
   }
 
-  const postUrl = `https://bitlyst.vercel.app/blog/${post.slug}`;
+  const postUrl = `https://bitlyst.blog/blog/${post.slug}`;
   const stats = await getPostStats();
   const views = stats.views[post.slug] ?? 0;
   const commentCount = stats.comments[post.slug] ?? 0;
@@ -66,8 +66,8 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
               "@context": "https://schema.org",
               "@type": "BreadcrumbList",
               itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: "https://bitlyst.vercel.app" },
-                { "@type": "ListItem", position: 2, name: "Blog", item: "https://bitlyst.vercel.app/blog" },
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://bitlyst.blog" },
+                { "@type": "ListItem", position: 2, name: "Blog", item: "https://bitlyst.blog/blog" },
                 { "@type": "ListItem", position: 3, name: post.title, item: postUrl },
               ],
             },
@@ -83,9 +83,9 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
               publisher: {
                 "@type": "Organization",
                 name: "Bitlyst",
-                logo: { "@type": "ImageObject", url: "https://bitlyst.vercel.app/logo.svg" },
+                logo: { "@type": "ImageObject", url: "https://bitlyst.blog/logo.svg" },
               },
-              image: [`https://bitlyst.vercel.app/og?slug=${post.slug}`],
+              image: [`https://bitlyst.blog/og?slug=${post.slug}`],
               keywords: (post.tags ?? []).join(", "),
               articleSection: post.tags?.[0],
               wordCount,
@@ -256,19 +256,19 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       publishedTime: page.publishedTime as string,
       modifiedTime: (page.modifiedTime || page.publishedTime) as string,
       tags: ["bitlyst", ...(page.tags || [])],
-      url: `https://bitlyst.vercel.app/blog/${slugPath}`,
+      url: `https://bitlyst.blog/blog/${slugPath}`,
       type: "article",
       authors: page.authors.map((a) => a.name),
       siteName: "Bitlyst",
-      images: [{ url: `https://bitlyst.vercel.app/og?slug=${slugPath}`, width: 1200, height: 630, alt: page.title }],
+      images: [{ url: `https://bitlyst.blog/og?slug=${slugPath}`, width: 1200, height: 630, alt: page.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: page.title,
       description: page.summary,
-      images: [{ url: `https://bitlyst.vercel.app/og?slug=${slugPath}`, alt: page.title }],
+      images: [{ url: `https://bitlyst.blog/og?slug=${slugPath}`, alt: page.title }],
     },
-    alternates: { canonical: `https://bitlyst.vercel.app/blog/${slugPath}` },
+    alternates: { canonical: `https://bitlyst.blog/blog/${slugPath}` },
   };
 }
 

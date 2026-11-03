@@ -1,0 +1,136 @@
+---
+title: "The Leaderboard Arrived Sorted. JavaScript Re-sorted It by User ID."
+summary: "Why JavaScript object key order puts integer-like keys first in ascending order, how that silently reorders JSON from your API, and when to use an array or Map."
+publishedTime: "2026-11-03"
+level: "intermediate"
+series: "js-plot-twists"
+seriesOrder: 5
+tags: ["javascript", "objects", "json", "map", "gotchas"]
+---
+
+Picture a leaderboard API that does the sorting for you. The highest score comes first, so the frontend only has to render rows in order. You open the network tab and the response looks perfect:
+
+```json
+{
+  "105": { "name": "player105", "score": 980 },
+  "42":  { "name": "player42",  "score": 870 },
+  "7":   { "name": "player7",   "score": 640 }
+}
+```
+
+And the page renders this:
+
+| Rank | Player | Score |
+|------|--------|-------|
+| 1 | player7 | 640 |
+| 2 | player42 | 870 |
+| 3 | player105 | 980 |
+
+The lowest score is at the top. The leaderboard is exactly upside down, but only by accident: it's actually sorted by user ID.
+
+---
+
+## The wrong turn: blaming the backend
+
+The obvious suspect is the server. Maybe the sort runs after serialization, or a cache serves an old response. But the network tab shows the raw body, and it's in the right order.
+
+So the order changes somewhere between the response text and the screen. The frontend code is tiny:
+
+```js
+const data = await res.json();
+const rows = Object.values(data);
+```
+
+Log each step:
+
+```js
+const text = await res.text();
+console.log(text);                      // {"105":…,"42":…,"7":…}  ✓ sorted by score
+
+const data = JSON.parse(text);
+console.log(Object.keys(data));         // ["7", "42", "105"]  ← reordered
+```
+
+`JSON.parse` got the keys in one order and gave them back in another. Nothing is shuffling them at random either. They come out in ascending numeric order every time.
+
+---
+
+## The reveal: objects have two kinds of keys
+
+Most people learn that object keys "keep insertion order." That's only half true. When JavaScript lists an object's own keys, the spec defines a fixed order with three groups:
+
+<FlowDiagram
+  title="The order JavaScript lists object keys"
+  nodes="Integer-like keys → String keys → Symbol keys"
+  notes="Keys that look like array indices ('0', '7', '42', '105'), in ascending numeric order, no matter when they were added|Every other string key, in the order it was added|Symbol keys, in the order they were added. Object.keys skips them, but Reflect.ownKeys includes them"
+  caption="Your leaderboard keys are user IDs, so they're all in the first group, which is sorted by number instead of insertion order."
+/>
+
+The reason is arrays. In JavaScript, an array is an object whose keys are `"0"`, `"1"`, `"2"`, and so on. Engines store those index-like keys separately so arrays can be fast, and the spec makes all objects list them first, in numeric order, so arrays always iterate correctly.
+
+The catch is how strict "integer-like" is. A key counts only if it's the exact text of a whole number from `0` up to `2³² − 2`:
+
+```js
+Object.keys({ "10": 1, "2": 2, banana: 3, "1": 4 });
+// ["1", "2", "10", "banana"]
+
+Object.keys({ "3": 1, "-1": 2, "1.5": 3, "01": 4 });
+// ["3", "-1", "1.5", "01"]   ← only "3" counts as an index
+
+Object.keys({ user_105: 1, user_42: 2 });
+// ["user_105", "user_42"]    ← plain strings keep insertion order
+```
+
+So a leaderboard keyed by `"user_105"` would have worked, and one keyed by `"105"` doesn't. Same data, different key shape.
+
+This applies everywhere keys get listed: `Object.keys`, `Object.values`, `Object.entries`, `for...in`, `JSON.stringify`, spreading with `{...obj}`. Since ES2020 the spec pins down `for...in` too, so every modern engine agrees. That's why this bug is so consistent, and why it never shows up while testing with IDs like `"a"` and `"b"`.
+
+> **An object is a lookup table, not a list. If order matters, the data has to be a list.**
+
+---
+
+## The fix
+
+Send an array. Arrays are the only JSON structure with a guaranteed order, and they carry that order through any parser in any language:
+
+```js
+// before: order lives in key positions, and gets lost
+{ "105": { "score": 980 }, "42": { "score": 870 } }
+
+// after: order lives in the array itself
+[
+  { "id": 105, "name": "player105", "score": 980 },
+  { "id": 42,  "name": "player42",  "score": 870 }
+]
+```
+
+If you can't change the API, don't rely on the order you received. Sort on the client using the value that defines the order:
+
+```js
+const rows = Object.values(data).sort((a, b) => b.score - a.score);
+```
+
+And if you need an ordered, keyed collection inside your own code, use a `Map`. A `Map` keeps every key in insertion order, numbers included:
+
+```js
+const board = new Map([["105", "A"], ["42", "B"], ["7", "C"]]);
+[...board.keys()]; // ["105", "42", "7"]  ✓
+```
+
+`Map` doesn't survive `JSON.stringify` (you get `{}`), so it's for state inside your app, not for the network.
+
+---
+
+## The rule
+
+Don't use object key position to carry meaning. Use an array when order matters, and an object or `Map` when you only need to look things up by key.
+
+---
+
+## TL;DR
+
+- JavaScript lists object keys in a fixed order: integer-like keys in ascending order, then string keys in insertion order, then symbols.
+- `JSON.parse` builds a normal object, so a JSON response keyed by numeric IDs comes out sorted by ID, not in the order the server sent.
+- Only exact whole-number strings like `"7"` count as integer keys; `"01"`, `"-1"`, `"1.5"` and `"user_7"` keep insertion order.
+- Send ordered data as an array, or sort on the client by the field that defines the order.
+- Use a `Map` for ordered keyed data inside your app, since it keeps insertion order for every key.

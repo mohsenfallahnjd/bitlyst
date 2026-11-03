@@ -8,7 +8,7 @@ const escape = (s: string) =>
 
 export async function GET() {
   const posts = loadMarkdownDocs();
-  const site = "https://bitlyst.vercel.app";
+  const site = "https://bitlyst.blog";
   const items = posts
     .map(
       (p: DocMeta) => `

@@ -4,7 +4,7 @@
   "private": true,
   "author": "Mohsen Fallahnejad",
   "license": "MIT",
-  "homepage": "https://bitlyst.vercel.app",
+  "homepage": "https://bitlyst.blog",
   "repository": {
     "type": "git",
     "url": "https://github.com/mohsenfallahnjd/bitlyst.git"
@@ -28,6 +28,7 @@
     "format": "biome format . --write",
     "check": "biome check --apply .",
     "typegen": "next typegen && tsc --noEmit",
+    "devto": "bun scripts/devto.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

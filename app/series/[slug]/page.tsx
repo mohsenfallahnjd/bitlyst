@@ -50,14 +50,14 @@ export default async function SeriesPage({ params }: PageProps<"/series/[slug]">
             "@type": "CollectionPage",
             name: series.name,
             description: series.description,
-            url: `https://bitlyst.vercel.app/series/${slug}`,
+            url: `https://bitlyst.blog/series/${slug}`,
             mainEntity: {
               "@type": "ItemList",
               itemListOrder: "https://schema.org/ItemListOrderAscending",
               itemListElement: series.parts.map((p, i) => ({
                 "@type": "ListItem",
                 position: i + 1,
-                url: `https://bitlyst.vercel.app/blog/${p.slug}`,
+                url: `https://bitlyst.blog/blog/${p.slug}`,
                 name: p.title,
               })),
             },

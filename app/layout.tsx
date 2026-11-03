@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://bitlyst.vercel.app/"),
+  metadataBase: new URL("https://bitlyst.blog/"),
   icons: {
     icon: [
       { url: "/icon.svg", sizes: "any", type: "image/svg+xml" },
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
     description:
       "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
-    url: "https://bitlyst.vercel.app/",
+    url: "https://bitlyst.blog/",
     siteName: "Bitlyst",
     type: "website",
     locale: "en_US",

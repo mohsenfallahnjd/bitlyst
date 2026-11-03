@@ -184,7 +184,7 @@ export default async function HomePage() {
                       </span>
                       <span className="text-xs text-gray-400 dark:text-gray-500">
                         {s.parts.length > 0
-                          ? `${s.parts.length} part${s.parts.length > 1 ? "s" : ""} · ${s.upcoming.length} coming`
+                          ? `${s.parts.length} part${s.parts.length > 1 ? "s" : ""}${s.upcoming.length > 0 ? ` · ${s.upcoming.length} coming` : ""}`
                           : "Starting soon"}
                       </span>
                     </span>

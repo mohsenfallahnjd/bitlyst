@@ -3,8 +3,8 @@ export const OrgJsonLd = () => {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Bitlyst",
-    url: "https://bitlyst.vercel.app",
-    logo: "https://bitlyst.vercel.app/logo.svg",
+    url: "https://bitlyst.blog/",
+    logo: "https://bitlyst.blog/logo.svg",
     sameAs: [
       "https://x.com/themohsenme",
       "https://github.com/mohsenfallahnjd",
@@ -20,10 +20,11 @@ export const JsonLd = () => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Bitlyst",
-    url: "https://bitlyst.vercel.app",
+    alternateName: ["Bitlyst Blog", "bitlyst.blog"],
+    url: "https://bitlyst.blog/",
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://bitlyst.vercel.app/search?q={search_term_string}",
+      target: "https://bitlyst.blog/search?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };

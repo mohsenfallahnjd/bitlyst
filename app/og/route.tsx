@@ -76,7 +76,7 @@ export function GET(request: NextRequest) {
             </span>
           ))}
         </div>
-        <span style={{ color: "#a8a29e", fontSize: 18 }}>bitlyst.vercel.app</span>
+        <span style={{ color: "#a8a29e", fontSize: 18 }}>bitlyst.blog</span>
       </div>
     </div>,
     { width: 1200, height: 630 }

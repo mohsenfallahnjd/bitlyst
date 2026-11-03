@@ -1,0 +1,138 @@
+---
+title: "The $4.35 Item That Was Charged $4.34"
+summary: "Why 0.1 + 0.2 !== 0.3 in JavaScript, how floating-point math drops a cent when converting dollars to cents, and why money should be stored as integers."
+publishedTime: "2026-11-03"
+level: "beginner"
+series: "js-plot-twists"
+seriesOrder: 4
+tags: ["javascript", "numbers", "floating-point", "money", "gotchas"]
+---
+
+Picture a shop where the product page says **$4.35**, the cart says **$4.35**, and the card statement says **$4.34**.
+
+Only that one product. A $4.99 item charges $4.99. A $19.99 item charges $19.99. But $4.35 loses a cent every single time.
+
+The payment API wants amounts in cents, so somewhere before checkout there's a conversion:
+
+```js
+const price = 4.35;
+const amountInCents = Math.floor(price * 100);
+
+await charge({ amount: amountInCents }); // amount: 434
+```
+
+`4.35 × 100` is `435`. Primary-school math. Yet `434` is what goes out.
+
+---
+
+## The wrong turn: blaming the rounding
+
+`Math.floor` looks like the suspect, so the reflex is to ask whether the payment provider rounds differently, or whether the price in the database was stored as `4.349` by mistake.
+
+Neither. Take the database and the provider out completely and run the multiplication alone:
+
+```js
+4.35 * 100; // 434.99999999999994  ← there it is
+```
+
+`Math.floor` did its job: it rounded `434.999…` down to `434`. The real question is why `4.35 * 100` isn't `435`.
+
+---
+
+## The reveal: computers can't write 4.35 exactly
+
+Try writing 1/3 as a decimal. You get `0.3333…` and you have to stop somewhere, so what you write down is a tiny bit smaller than 1/3.
+
+Computers have the same problem, but in base 2. JavaScript stores every number as a 64-bit **binary floating-point** value (the IEEE 754 standard). In binary, fractions like 0.1, 0.2 and 0.35 repeat forever, just like 1/3 does in decimal. So the number in memory is the closest value that fits, not the one you typed:
+
+```js
+(0.1).toPrecision(21);  // "0.100000000000000005551"
+(0.2).toPrecision(21);  // "0.200000000000000011102"
+(4.35).toPrecision(21); // "4.34999999999999964473"
+```
+
+`console.log(4.35)` still prints `4.35`, because JavaScript prints the shortest decimal that maps back to the same stored value. The error is real, it's just hidden until arithmetic makes it big enough to show:
+
+<FlowDiagram
+  title="Where the cent goes"
+  nodes="'4.35' → 4.34999999999999964… → × 100 → 434.99999999999994 → Math.floor → 434"
+  notes="The price as text, from a form or JSON|The nearest binary value, slightly under 4.35|Multiplying scales the tiny error up along with the number|Now the error is visible: the result lands just under 435|Rounding down drops everything after the dot"
+  caption="The value was a hair below 4.35 from the start. Multiplying by 100 didn't create the error, it made it big enough for floor to notice."
+/>
+
+That's the same reason behind the famous one:
+
+```js
+0.1 + 0.2;          // 0.30000000000000004
+0.1 + 0.2 === 0.3;  // false
+```
+
+Both inputs are stored slightly too big, the errors add up, and the sum lands on a different binary value than the one `0.3` maps to. This isn't a JavaScript bug. Python, Java, C# and C all give the same answer for `0.1 + 0.2` with their default `double` type.
+
+It also explains why only some prices break. `4.35`, `1.15`, `8.20` and `0.07` all land just under the next cent when multiplied by 100. Many other prices happen to land exactly. You can't tell which by looking:
+
+```js
+1.15 * 100; // 114.99999999999999
+8.2 * 100;  // 819.9999999999999
+0.07 * 100; // 7.000000000000001
+19.99 * 3;  // 59.97  (lucky)
+```
+
+---
+
+## The trap inside the fix: toFixed
+
+The usual next move is `toFixed(2)`, but it rounds the stored value, not the one you typed:
+
+```js
+(1.005).toFixed(2); // "1.00"  ← expected "1.01"
+```
+
+`1.005` is stored as `1.00499999999999989…`, so rounding it to two places correctly gives `1.00`. `toFixed` is fine for display, where it's off by at most a cent on exact halves. It is not a way to make arithmetic correct.
+
+---
+
+## The fix
+
+The minimal fix for the conversion is to round to the nearest whole number instead of always down:
+
+```js
+// before
+Math.floor(4.35 * 100); // 434
+
+// after
+Math.round(4.35 * 100); // 435
+```
+
+That works because the error is far smaller than half a cent, so rounding to the nearest integer always snaps back to the right one.
+
+The real fix is to stop using fractional dollars at all. Whole numbers are exact in JavaScript up to `Number.MAX_SAFE_INTEGER` (about 9 quadrillion), so if every amount is stored in cents, there's nothing to lose:
+
+```js
+const prices = [1999, 1999, 1999];                 // cents
+const total = prices.reduce((a, b) => a + b, 0);   // 5997, exact
+
+// convert only at the edges: for display…
+new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
+  .format(total / 100);                            // "$59.97"
+```
+
+Keep money as integers in the database, in the API, and in your state. Convert to a decimal string only when a human is going to read it. Most payment APIs already work this way, which is the hint.
+
+For things that genuinely need decimals, like tax rates, interest or currency conversion, use a decimal library such as `decimal.js` or `big.js`, or do the math on the server in a type built for it, like Postgres `numeric`.
+
+---
+
+## The rule
+
+> **Never store money as a fraction. Store whole cents, and turn them into dollars only for display.**
+
+---
+
+## TL;DR
+
+- JavaScript numbers are binary floating-point, so decimals like `0.1` and `4.35` are stored as the nearest binary value, not exactly.
+- That tiny error is why `0.1 + 0.2 === 0.3` is `false` and why `4.35 * 100` is `434.99999999999994`.
+- `Math.floor` on a converted price can drop a cent; `Math.round` snaps it back to the right integer.
+- `toFixed(2)` rounds the stored value, so `(1.005).toFixed(2)` is `"1.00"`. Use it for display only.
+- Store money as integer cents and convert at the edges, or use a decimal library when you need fractional math.
