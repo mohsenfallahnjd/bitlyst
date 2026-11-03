@@ -16,14 +16,21 @@ const nextConfig = {
   // old ?tag= filters moved to static topic pages
   async redirects() {
     return [
-      // old Vercel subdomain → custom domain (keeps path and query)
-      { source: "/:path*", has: [{ type: "host", value: "bitlyst.vercel.app" }], destination: "https://bitlyst.blog/:path*", permanent: true },
-      { source: "/:path*", has: [{ type: "host", value: "www.bitlyst.blog" }], destination: "https://bitlyst.blog/:path*", permanent: true },
-      { source: "/blog", has: [{ type: "query", key: "tag", value: "(?<tag>[a-zA-Z0-9-]+)" }], destination: "/tags/:tag", permanent: true },
+      {
+        source: "/blog",
+        has: [{ type: "query", key: "tag", value: "(?<tag>[a-zA-Z0-9-]+)" }],
+        destination: "/tags/:tag",
+        permanent: true,
+      },
       // posts moved from /blog/<slug> to /p/<slug>, the index from /blog to /posts
       { source: "/blog", destination: "/posts", permanent: true },
       { source: "/blog/:slug+", destination: "/p/:slug+", permanent: true },
-      { source: "/", has: [{ type: "query", key: "tag", value: "(?<tag>[a-zA-Z0-9-]+)" }], destination: "/tags/:tag", permanent: true },
+      {
+        source: "/",
+        has: [{ type: "query", key: "tag", value: "(?<tag>[a-zA-Z0-9-]+)" }],
+        destination: "/tags/:tag",
+        permanent: true,
+      },
     ];
   },
   images: {
