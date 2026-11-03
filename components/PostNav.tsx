@@ -20,7 +20,7 @@ export default function PostNav({ current }: { current: string }) {
   return (
     <nav aria-label="More posts" className="mt-10 grid gap-3 sm:grid-cols-2">
       {prev ? (
-        <Link href={`/blog/${prev.slug}`} rel="prev" className={card}>
+        <Link href={`/p/${prev.slug}`} rel="prev" className={card}>
           <span className="text-xs text-gray-400 dark:text-gray-500">← Older</span>
           <span className="text-sm font-medium leading-snug text-gray-800 dark:text-gray-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 line-clamp-2 transition-colors">
             {prev.title}
@@ -30,7 +30,7 @@ export default function PostNav({ current }: { current: string }) {
         <span className="hidden sm:block" />
       )}
       {next && (
-        <Link href={`/blog/${next.slug}`} rel="next" className={`${card} sm:text-right sm:items-end`}>
+        <Link href={`/p/${next.slug}`} rel="next" className={`${card} sm:text-right sm:items-end`}>
           <span className="text-xs text-gray-400 dark:text-gray-500">Newer →</span>
           <span className="text-sm font-medium leading-snug text-gray-800 dark:text-gray-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 line-clamp-2 transition-colors">
             {next.title}

@@ -16,7 +16,7 @@ A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing 
 
 - **File-based content** - Write posts as `.mdx` files in the `docs/` directory
 - **Frontmatter support** - Rich metadata with title, summary, tags, and publish dates
-- **Automatic routing** - Posts automatically become routes at `/blog/[slug]`
+- **Automatic routing** - Posts automatically become routes at `/p/[slug]`
 - **Tag filtering** - Built-in tag system for content organization
 
 ### Developer Experience
@@ -115,7 +115,7 @@ const example = "Hello, world!";
 console.log(example);
 ```
 
-That's it! Your post will automatically appear at `/blog/your-slug`.
+That's it! Your post will automatically appear at `/p/your-slug`.
 
 ```
 
@@ -149,9 +149,8 @@ bun typegen      # Generate Next.js types
 
 ```
 ├── app/                    # Next.js App Router
-│   ├── blog/              # Blog pages
-│   │   ├── [...slug]/     # Dynamic blog post routes
-│   │   └── page.tsx       # Blog listing page
+│   ├── p/[...slug]/       # Blog post pages (/p/<slug>)
+│   ├── posts/page.tsx     # Blog listing page (/posts)
 │   ├── globals.css        # Global styles
 │   ├── layout.tsx         # Root layout
 │   ├── page.tsx           # Home page
@@ -190,7 +189,7 @@ bun typegen      # Generate Next.js types
 
 - Add your own posts to the `docs/` directory
 - Customize the home page in `app/page.tsx`
-- Modify the blog listing in `app/blog/page.tsx`
+- Modify the blog listing in `app/posts/page.tsx`
 
 ### Metadata
 

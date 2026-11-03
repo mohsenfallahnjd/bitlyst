@@ -41,7 +41,7 @@ export default function ReaderPanel({ posts }: { posts: Item[] }) {
           <span className="text-gray-500 dark:text-gray-400">👋 Welcome back — visit tomorrow to start a streak</span>
         )}
         {fresh.length > 0 && (
-          <Link href={`/blog/${fresh[0].slug}`} className="text-[var(--accent)] hover:underline underline-offset-2">
+          <Link href={`/p/${fresh[0].slug}`} className="text-[var(--accent)] hover:underline underline-offset-2">
             {fresh.length} new post{fresh.length > 1 ? "s" : ""} since your last visit →
           </Link>
         )}
@@ -49,7 +49,7 @@ export default function ReaderPanel({ posts }: { posts: Item[] }) {
 
       {resume && (
         <Link
-          href={`/blog/${resume.slug}`}
+          href={`/p/${resume.slug}`}
           className="group flex items-center justify-between gap-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 px-3 py-2.5"
         >
           <span className="min-w-0">

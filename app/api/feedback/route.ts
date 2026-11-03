@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       replyTo: from ?? undefined,
       subject: `Feedback on: ${slug ?? "unknown"}`,
       text: [
-        `Post: /blog/${slug ?? "unknown"}`,
+        `Post: /p/${slug ?? "unknown"}`,
         from ? `From: ${from}` : "From: anonymous",
         "",
         message.trim(),

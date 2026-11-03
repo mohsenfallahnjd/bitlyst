@@ -2,7 +2,7 @@ import { cacheLife } from "next/cache";
 import Link from "next/link";
 
 const LINKS = [
-  { label: "Posts", href: "/blog" },
+  { label: "Posts", href: "/posts" },
   { label: "Series", href: "/series" },
   { label: "Topics", href: "/tags" },
   { label: "Links", href: "/links" },

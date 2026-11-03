@@ -22,10 +22,10 @@ Every single post got downloaded in the background because its link scrolled pas
 
 ## The wrong turn: prefetch={false} everywhere
 
-The standard advice, which [an older post on this blog](/blog/nextjs-link-prefetch) repeats, is to switch prefetching off for big lists:
+The standard advice, which [an older post on this blog](/p/nextjs-link-prefetch) repeats, is to switch prefetching off for big lists:
 
 ```tsx
-<Link href={`/blog/${post.slug}`} prefetch={false}>
+<Link href={`/${post.slug}`} prefetch={false}>
   {post.title}
 </Link>
 ```

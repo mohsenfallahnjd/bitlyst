@@ -94,7 +94,7 @@ export default async function HomePage() {
       {featured && (
         <section>
           <SectionTitle>Newest</SectionTitle>
-          <Link href={`/blog/${featured.slug}`} className="group block py-4">
+          <Link href={`/p/${featured.slug}`} className="group block py-4">
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight leading-snug text-gray-900 dark:text-gray-50 group-hover:text-[var(--accent)] transition-colors">
               {featured.title}
             </h3>
@@ -115,7 +115,7 @@ export default async function HomePage() {
       <div className="grid gap-14 md:grid-cols-[minmax(0,1fr)_16rem] md:gap-10">
         {/* Latest */}
         <section>
-          <SectionTitle href="/blog" more={`All ${all.length} posts`}>
+          <SectionTitle href="/posts" more={`All ${all.length} posts`}>
             Latest
           </SectionTitle>
           {latest.map((p) => (
@@ -126,13 +126,13 @@ export default async function HomePage() {
         <aside className="space-y-10">
           {popular.length > 0 && (
             <section>
-              <SectionTitle href="/blog?sort=popular">
+              <SectionTitle href="/posts?sort=popular">
                 {trending.length >= 3 ? "Trending this week" : "Most read"}
               </SectionTitle>
               <ol className="mt-3 space-y-4">
                 {popular.map(({ post, views }, i) => (
                   <li key={post.slug}>
-                    <Link href={`/blog/${post.slug}`} className="group flex gap-3">
+                    <Link href={`/p/${post.slug}`} className="group flex gap-3">
                       <span className="text-lg font-bold tabular-nums leading-tight text-gray-300 dark:text-gray-700">
                         {String(i + 1).padStart(2, "0")}
                       </span>
@@ -153,7 +153,7 @@ export default async function HomePage() {
             <section>
               <SectionTitle>Today&rsquo;s pick</SectionTitle>
               <Link
-                href={`/blog/${pick.slug}`}
+                href={`/p/${pick.slug}`}
                 className="group mt-3 block rounded-xl border border-gray-200/80 dark:border-gray-800 p-4 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
               >
                 <span className="block text-sm font-semibold leading-snug text-gray-900 dark:text-gray-100 group-hover:text-[var(--accent)] transition-colors">

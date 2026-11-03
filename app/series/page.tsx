@@ -67,7 +67,7 @@ export default function SeriesIndexPage() {
                           {i + 1}.
                         </span>
                         <Link
-                          href={`/blog/${p.slug}`}
+                          href={`/p/${p.slug}`}
                           className="text-gray-700 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400"
                         >
                           {p.title}

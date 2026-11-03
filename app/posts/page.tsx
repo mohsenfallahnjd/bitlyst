@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   title: "All posts — JavaScript, React, and Next.js tips",
   description:
     "Every Bitlyst post: bite-sized tutorials on JavaScript, React, and Next.js. Sort by latest, most read or most discussed.",
-  alternates: { canonical: "/blog" },
+  alternates: { canonical: "/posts" },
   openGraph: {
     title: "Bitlyst Blog — JavaScript, React, and Next.js tips",
     description: "Browse bite-sized tutorials and practical tips on JavaScript, React, and Next.js.",
-    url: "/blog",
+    url: "/posts",
     siteName: "Bitlyst",
     type: "website",
     locale: "en_US",

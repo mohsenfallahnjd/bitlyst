@@ -134,7 +134,7 @@ Access-Control-Allow-Credentials: true
 
 ⚠️ **`Allow-Origin: *` + credentials = blocked.** Browsers reject that combo.
 
-This connects to [HttpOnly cookies](/blog/httpOnly-cookies-guide) — session auth across origins needs careful CORS + cookie config (`SameSite`, `Secure`, correct domain).
+This connects to [HttpOnly cookies](/p/httpOnly-cookies-guide) — session auth across origins needs careful CORS + cookie config (`SameSite`, `Secure`, correct domain).
 
 ---
 
@@ -283,6 +283,6 @@ Learn to read the Network tab, fix headers or proxy through your backend, and th
 ---
 
 ### Suggested follow-ups
-- [HttpOnly Cookies](/blog/httpOnly-cookies-guide) — auth, cookies, and cross-origin pitfalls
-- [CDN Explained in Next.js](/blog/cdn-explained-nextjs) — caching at the edge (different from CORS, often confused)
-- [AbortController](/blog/abortcontroller-practical-guide) — cancel fetch requests cleanly
+- [HttpOnly Cookies](/p/httpOnly-cookies-guide) — auth, cookies, and cross-origin pitfalls
+- [CDN Explained in Next.js](/p/cdn-explained-nextjs) — caching at the edge (different from CORS, often confused)
+- [AbortController](/p/abortcontroller-practical-guide) — cancel fetch requests cleanly

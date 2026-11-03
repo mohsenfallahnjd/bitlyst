@@ -66,7 +66,7 @@ export default function SeriesNav({ post, variant = "full" }: { post: DocMeta; v
                 <span className="pt-0.5 font-semibold text-gray-900 dark:text-gray-50">{p.title} · you are here</span>
               ) : (
                 <Link
-                  href={`/blog/${p.slug}`}
+                  href={`/p/${p.slug}`}
                   className="pt-0.5 text-gray-700 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400"
                 >
                   {p.title}
@@ -89,7 +89,7 @@ export default function SeriesNav({ post, variant = "full" }: { post: DocMeta; v
 
       {next ? (
         <Link
-          href={`/blog/${next.slug}`}
+          href={`/p/${next.slug}`}
           className="mt-4 inline-block text-sm font-medium text-brand-600 dark:text-brand-400 hover:underline underline-offset-2"
         >
           Next part: {next.title} →

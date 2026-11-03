@@ -66,7 +66,7 @@ export default async function TopicPage({ params }: PageProps<"/tags/[tag]">) {
               itemListElement: posts.map((p, i) => ({
                 "@type": "ListItem",
                 position: i + 1,
-                url: `https://bitlyst.blog/blog/${p.slug}`,
+                url: `https://bitlyst.blog/p/${p.slug}`,
                 name: p.title,
               })),
             },

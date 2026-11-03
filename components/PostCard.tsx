@@ -52,7 +52,7 @@ export default function PostCard({
 }) {
   return (
     <article className="post-card group/card border-b border-gray-200/70 dark:border-gray-800/60 last:border-b-0">
-      <Link href={`/blog/${post.slug}`} className="block py-5">
+      <Link href={`/p/${post.slug}`} className="block py-5">
         <h3 className="text-[15px] sm:text-base font-semibold tracking-tight leading-snug text-gray-900 dark:text-gray-100 group-hover/card:text-[var(--accent)] transition-colors">
           {post.title}
         </h3>

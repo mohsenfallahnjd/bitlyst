@@ -36,7 +36,7 @@ export default function BlogList({ posts, stats }: { posts: PostSummary[]; stats
     if (s) { q.set("sort", s); }
     if (l) { q.set("level", l); }
     const qs = q.toString();
-    return qs ? `/blog?${qs}` : "/blog";
+    return qs ? `/posts?${qs}` : "/posts";
   };
 
   const card = (post: PostSummary) => (
@@ -76,7 +76,7 @@ export default function BlogList({ posts, stats }: { posts: PostSummary[]; stats
       {filtered.length === 0 ? (
         <div className="py-16 text-center space-y-3">
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No {level} posts yet.</p>
-          <Link href="/blog" className="text-xs underline underline-offset-2 text-gray-500">
+          <Link href="/posts" className="text-xs underline underline-offset-2 text-gray-500">
             See all posts
           </Link>
         </div>

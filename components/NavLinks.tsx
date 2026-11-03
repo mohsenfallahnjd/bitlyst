@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { label: "Posts", href: "/blog" },
+  { label: "Posts", href: "/posts" },
   { label: "Series", href: "/series" },
   { label: "Topics", href: "/tags" },
   // About is in the footer too — drop it from the header on small phones to keep it on one line

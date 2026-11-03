@@ -55,7 +55,7 @@ export default function TagsFilter({ tags, selectedTag = "" }: TagsFilterProps) 
     <div>
       <div className="flex flex-wrap gap-2">
         {/* All pill */}
-        <Link href="/blog" className={`${pillBase} ${!selectedTag ? pillActive : pillIdle}`}>
+        <Link href="/posts" className={`${pillBase} ${!selectedTag ? pillActive : pillIdle}`}>
           All
           <span
             className={`rounded-full px-1.5 py-px text-[10px] leading-none ${!selectedTag ? "bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300" : "bg-gray-100 dark:bg-gray-800 text-gray-400"}`}
@@ -69,7 +69,7 @@ export default function TagsFilter({ tags, selectedTag = "" }: TagsFilterProps) 
           return (
             <Link
               key={t.key}
-              href={isSelected ? "/blog" : `/tags/${t.key}`}
+              href={isSelected ? "/posts" : `/tags/${t.key}`}
               className={`${pillBase} ${isSelected ? pillActive : pillIdle}`}
               title={`${t.count} post${t.count !== 1 ? "s" : ""}`}
             >

@@ -37,7 +37,7 @@ export default function NotFound() {
           {latest.map((p) => (
             <li key={p.slug}>
               <Link
-                href={`/blog/${p.slug}`}
+                href={`/p/${p.slug}`}
                 className="group block border-b border-gray-200/70 dark:border-gray-800/60 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
               >
                 {p.title}

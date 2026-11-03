@@ -193,7 +193,7 @@ useEffect(() => {
 }, [query]);
 ```
 
-Or use **`AbortController`** (see [AbortController guide](/blog/abortcontroller-practical-guide)).
+Or use **`AbortController`** (see [AbortController guide](/p/abortcontroller-practical-guide)).
 
 **Rule:** If an effect starts async work, **clean it up** on re-run or unmount.
 
@@ -217,7 +217,7 @@ useEffect(() => {
 
 Use `useRef` when you need **latest value** but don't want the effect to **re-subscribe** on every change.
 
-Related: [useRef vs useState](/blog/react-useref-vs-usestate).
+Related: [useRef vs useState](/p/react-useref-vs-usestate).
 
 ---
 
@@ -283,6 +283,6 @@ Write that on a sticky note. Next time a timer logs `0`, a fetch sends an old to
 ---
 
 ### Suggested follow-ups
-- [JavaScript Closures](/blog/javascript-closures) — the underlying mechanism
-- [useRef vs useState](/blog/react-useref-vs-usestate) — when refs beat state in effects
-- [AbortController](/blog/abortcontroller-practical-guide) — cancel fetches on unmount
+- [JavaScript Closures](/p/javascript-closures) — the underlying mechanism
+- [useRef vs useState](/p/react-useref-vs-usestate) — when refs beat state in effects
+- [AbortController](/p/abortcontroller-practical-guide) — cancel fetches on unmount

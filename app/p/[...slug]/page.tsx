@@ -30,7 +30,7 @@ import { getPostStats } from "@/lib/stats";
 import { useMDXComponents } from "@/mdx-components";
 
 
-export default async function Page(props: PageProps<"/blog/[...slug]">) {
+export default async function Page(props: PageProps<"/p/[...slug]">) {
   const params = await props.params;
   const slugParam = params.slug as string | string[] | undefined;
   const slugPath = Array.isArray(slugParam) ? slugParam.join("/") : (slugParam ?? "");
@@ -40,7 +40,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
     notFound();
   }
 
-  const postUrl = `https://bitlyst.blog/blog/${post.slug}`;
+  const postUrl = `https://bitlyst.blog/p/${post.slug}`;
   const stats = await getPostStats();
   const views = stats.views[post.slug] ?? 0;
   const commentCount = stats.comments[post.slug] ?? 0;
@@ -53,7 +53,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
   const actionProps = { title: post.title, url: postUrl, readingTime, comments: commentCount };
 
   return (
-    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_12rem] xl:gap-12">
+    <div data-post className="xl:grid xl:grid-cols-[minmax(0,1fr)_12rem] xl:gap-12">
       <ReadingProgress />
       <ReadTracker slug={post.slug} />
 
@@ -67,7 +67,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
               "@type": "BreadcrumbList",
               itemListElement: [
                 { "@type": "ListItem", position: 1, name: "Home", item: "https://bitlyst.blog" },
-                { "@type": "ListItem", position: 2, name: "Blog", item: "https://bitlyst.blog/blog" },
+                { "@type": "ListItem", position: 2, name: "Posts", item: "https://bitlyst.blog/posts" },
                 { "@type": "ListItem", position: 3, name: post.title, item: postUrl },
               ],
             },
@@ -105,8 +105,8 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
         {/* Header */}
         <header className="pb-8 mb-10 border-b border-gray-200/70 dark:border-gray-800/60">
           <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
-            <Link href="/blog" className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-              Blog
+            <Link href="/posts" className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+              Posts
             </Link>
             {primaryTopic && (
               <>
@@ -238,7 +238,7 @@ export default async function Page(props: PageProps<"/blog/[...slug]">) {
   );
 }
 
-export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/p/[...slug]">): Promise<Metadata> {
   const params = await props.params;
   const slugParam = params.slug as string | string[] | undefined;
   const slugPath = Array.isArray(slugParam) ? slugParam.join("/") : (slugParam ?? "");
@@ -256,7 +256,7 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       publishedTime: page.publishedTime as string,
       modifiedTime: (page.modifiedTime || page.publishedTime) as string,
       tags: ["bitlyst", ...(page.tags || [])],
-      url: `https://bitlyst.blog/blog/${slugPath}`,
+      url: `https://bitlyst.blog/p/${slugPath}`,
       type: "article",
       authors: page.authors.map((a) => a.name),
       siteName: "Bitlyst",
@@ -268,7 +268,7 @@ export async function generateMetadata(props: PageProps<"/blog/[...slug]">): Pro
       description: page.summary,
       images: [{ url: `https://bitlyst.blog/og?slug=${slugPath}`, alt: page.title }],
     },
-    alternates: { canonical: `https://bitlyst.blog/blog/${slugPath}` },
+    alternates: { canonical: `https://bitlyst.blog/p/${slugPath}` },
   };
 }
 

@@ -100,7 +100,7 @@ const devtoTags = (tags: string[] = []) =>
   [...new Set(tags.map((t) => t.toLowerCase().replace(/[^a-z0-9]/g, "")).filter(Boolean))].slice(0, 4);
 
 function buildArticle(post: DocMeta) {
-  const url = `${SITE}/blog/${post.slug}`;
+  const url = `${SITE}/p/${post.slug}`;
   const body = `${toDevtoMarkdown(post.content)}\n\n---\n\n*Originally published on [Bitlyst](${url}).*\n`;
   return {
     title: post.title,
@@ -120,6 +120,7 @@ const normUrl = (u?: string | null) =>
   (u ?? "")
     .replace(/^https?:\/\/(www\.)?/, "")
     .replace(/^bitlyst\.vercel\.app(?=\/|$)/, "bitlyst.blog") // pre-move canonical URLs
+    .replace(/^bitlyst\.blog\/blog\/(?=.)/, "bitlyst.blog/p/") // posts used to live under /blog/
     .replace(/[?#].*$/, "")
     .replace(/\/+$/, "");
 const normTitle = (t: string) =>

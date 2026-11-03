@@ -22,7 +22,7 @@ export default function LevelFilter() {
         return (
           <Link
             key={l.key}
-            href={isActive ? "/blog" : `/blog?level=${l.key}`}
+            href={isActive ? "/posts" : `/posts?level=${l.key}`}
             className={`text-xs rounded-full px-3 py-1 border font-medium transition-colors ${isActive ? l.active : idle}`}
           >
             {l.label}

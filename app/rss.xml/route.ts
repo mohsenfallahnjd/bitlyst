@@ -14,8 +14,8 @@ export async function GET() {
       (p: DocMeta) => `
     <item>
       <title><![CDATA[${p.title}]]></title>
-      <link>${site}/blog/${p.slug}</link>
-      <guid isPermaLink="true">${site}/blog/${p.slug}</guid>
+      <link>${site}/p/${p.slug}</link>
+      <guid isPermaLink="true">${site}/p/${p.slug}</guid>
       <description><![CDATA[${p.summary || ""}]]></description>
       <pubDate>${p.publishedTime ? new Date(p.publishedTime).toUTCString() : ""}</pubDate>
       ${p.authors?.map((a) => `<dc:creator><![CDATA[${a.name}]]></dc:creator>`).join("\n      ") ?? ""}

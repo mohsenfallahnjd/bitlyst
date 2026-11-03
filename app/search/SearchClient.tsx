@@ -266,7 +266,7 @@ export default function SearchClient({ docs, initialQuery, popular }: Props) {
             {popular.map((p) => (
               <li key={p.slug}>
                 <Link
-                  href={`/blog/${p.slug}`}
+                  href={`/p/${p.slug}`}
                   className="group flex items-baseline justify-between gap-3 border-b border-gray-200/70 dark:border-gray-800/60 py-3"
                 >
                   <span className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
@@ -310,7 +310,7 @@ export default function SearchClient({ docs, initialQuery, popular }: Props) {
           {results.map(({ doc, excerpt }) => (
             <li key={doc.slug}>
               <Link
-                href={`/blog/${doc.slug}`}
+                href={`/p/${doc.slug}`}
                 className="group block -mx-3 rounded-xl px-3 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-900/60 border border-transparent hover:border-gray-100 dark:hover:border-gray-800/60 transition-all"
               >
                 {doc.tags.length > 0 && (

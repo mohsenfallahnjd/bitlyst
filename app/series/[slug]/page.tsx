@@ -57,7 +57,7 @@ export default async function SeriesPage({ params }: PageProps<"/series/[slug]">
               itemListElement: series.parts.map((p, i) => ({
                 "@type": "ListItem",
                 position: i + 1,
-                url: `https://bitlyst.blog/blog/${p.slug}`,
+                url: `https://bitlyst.blog/p/${p.slug}`,
                 name: p.title,
               })),
             },
@@ -104,7 +104,7 @@ export default async function SeriesPage({ params }: PageProps<"/series/[slug]">
         {series.parts.map((p, i) => (
           <li key={p.slug}>
             <Link
-              href={`/blog/${p.slug}`}
+              href={`/p/${p.slug}`}
               className="group flex gap-4 rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-surface-light dark:bg-surface-dark p-5 hover:border-brand-300 dark:hover:border-brand-800 transition-colors"
             >
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">

@@ -109,7 +109,7 @@ export default function AdminClient({
               key={r.slug}
               className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/60"
             >
-              <span className="text-sm text-gray-700 dark:text-gray-300">/blog/{r.slug}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">/p/{r.slug}</span>
               <span className="text-sm font-medium text-brand-600 dark:text-brand-400">{r.total} reactions</span>
             </div>
           ))}
@@ -136,7 +136,7 @@ function CommentRow({
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{comment.name}</span>
             {comment.email && <span className="text-xs text-gray-400">{comment.email}</span>}
             <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
-            <span className="text-xs text-gray-400 dark:text-gray-500">/blog/{comment.slug}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">/p/{comment.slug}</span>
             <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
             <span className="text-xs text-gray-400 dark:text-gray-500">
               {new Date(comment.createdAt).toLocaleDateString("en-US", {

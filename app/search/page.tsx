@@ -54,7 +54,7 @@ async function SearchResults({ searchParams }: Pick<PageProps<"/search">, "searc
           <ul>
             {serverResults.map((r) => (
               <li key={r.slug}>
-                <a href={`/blog/${r.slug}`}>{r.title}</a>
+                <a href={`/p/${r.slug}`}>{r.title}</a>
               </li>
             ))}
           </ul>

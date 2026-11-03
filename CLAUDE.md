@@ -20,4 +20,4 @@ Series are registered in `lib/series.ts` and joined via `series` + `seriesOrder`
 - Read `cookies()`, `headers()` or `searchParams` only inside a component wrapped in `<Suspense>` (see `app/search/page.tsx`, `app/admin/page.tsx`).
 - Don't read the clock (`new Date()`, `Date.now()`) or `Math.random()` in server components outside a `"use cache"` scope — it fails the prerender.
 - Unknown dynamic params: call `notFound()` in the page.
-- Pages that read `params`/`searchParams` need a Suspense boundary above the read — a `loading.tsx` next to the page does it (see `app/blog/[...slug]`, `app/tags/[tag]`, `app/series/[slug]`). Otherwise dev logs an "URL data outside of Suspense" insight.
+- Pages that read `params`/`searchParams` need a Suspense boundary above the read — a `loading.tsx` next to the page does it (see `app/p/[...slug]`, `app/tags/[tag]`, `app/series/[slug]`). Otherwise dev logs an "URL data outside of Suspense" insight.

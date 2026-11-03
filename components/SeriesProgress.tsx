@@ -43,7 +43,7 @@ export default function SeriesProgress({
       {bar}
       {nextPart ? (
         <Link
-          href={`/blog/${nextPart.slug}`}
+          href={`/p/${nextPart.slug}`}
           className="inline-flex items-center gap-2 rounded-lg bg-gray-900 dark:bg-gray-100 px-4 py-2 text-sm font-medium text-white dark:text-gray-900 hover:opacity-90 transition-opacity"
         >
           {started ? "Continue" : "Start reading"}: Part {parts.indexOf(nextPart) + 1} →
