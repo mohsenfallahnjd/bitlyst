@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-
+import { rateLimit, readJsonBody } from "@/lib/requestGuards";
 
 const AUDIENCE_ID = process.env.RESEND_AUDIENCE_ID ?? "";
 
 export async function POST(req: Request) {
-  const { email, topicIds, interests } = await req.json();
+  const limited = await rateLimit(req, "newsletter", 5, 60 * 60);
+  if (limited) {
+    return limited;
+  }
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  const { email, topicIds, interests } = await readJsonBody(req);
+
+  if (typeof email !== "string" || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
@@ -20,9 +25,7 @@ export async function POST(req: Request) {
     audienceId: AUDIENCE_ID,
     unsubscribed: false,
     // stored as contact property — use in Resend Segments to filter by interest
-    ...(Array.isArray(interests) && interests.length > 0
-      ? { data: { interests: interests.join(",") } }
-      : {}),
+    ...(Array.isArray(interests) && interests.length > 0 ? { data: { interests: interests.join(",") } } : {}),
     ...(Array.isArray(topicIds) && topicIds.length > 0
       ? {
           topicSubscriptions: topicIds.map((id: string) => ({

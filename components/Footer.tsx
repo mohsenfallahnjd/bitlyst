@@ -33,7 +33,9 @@ export default function Footer() {
             </a>{" "}
             or the newsletter.
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">© <CopyrightYear /> Mohsen Fallahnejad</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            © <CopyrightYear /> Mohsen Fallahnejad
+          </p>
         </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
           {LINKS.map((l) => {

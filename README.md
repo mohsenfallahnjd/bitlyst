@@ -1,12 +1,12 @@
 # Bitlyst Blog
 
-A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing bite-sized tech tips and insights. Perfect for developers who want to quickly publish short, focused content.
+A minimal, fast, and beautiful blog built with Next.js 16, designed for sharing bite-sized tech tips and insights. Perfect for developers who want to quickly publish short, focused content.
 
 ## ✨ Features
 
 ### Core Technology Stack
 
-- **Next.js 15** with App Router for optimal performance
+- **Next.js 16** with App Router and Cache Components
 - **React 19** with the latest features
 - **TypeScript** for type safety
 - **Tailwind CSS** for styling
@@ -23,7 +23,7 @@ A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing 
 
 - **Fast refresh** with Next.js development server
 - **Type safety** throughout the application
-- **ESLint & Biome** for code quality and formatting
+- **Biome** for code quality and formatting
 - **Hot reload** for instant development feedback
 
 ### User Experience
@@ -39,8 +39,9 @@ A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing 
 
 ### Prerequisites
 
-- Node.js 18+ or Bun (recommended)
+- Node.js 20.9+ and Bun (recommended)
 - Git
+- Optional: Postgres (comments and admin), Redis (views, reactions, rate limiting), and a Resend account (feedback and newsletter). The blog runs and builds without them.
 
 ### Installation
 
@@ -64,7 +65,15 @@ A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing 
    yarn install
    ```
 
-3. **Start the development server**
+3. **Configure the environment (optional)**
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   Each variable is described in [.env.example](.env.example). If you set `DATABASE_URL`, create the tables with `bunx prisma migrate deploy`. `/admin` stays locked until `ADMIN_SECRET` is set.
+
+4. **Start the development server**
 
    ```bash
    # Using Bun
@@ -77,7 +86,7 @@ A minimal, fast, and beautiful blog built with Next.js 15, designed for sharing 
    yarn dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 📝 Writing Posts
@@ -135,13 +144,13 @@ That's it! Your post will automatically appear at `/p/your-slug`.
 bun dev          # Start development server
 
 # Building
-bun build        # Build for production
+bun run build    # Build for production
 bun start        # Start production server
 
 # Code Quality
 bun format       # Format code with Biome
 bun lint:fix     # Fix linting issues
-bun check        # Run all checks (format + lint)
+bun run check    # Format, lint and organize imports, applying fixes
 bun typegen      # Generate Next.js types
 ```
 
@@ -160,7 +169,6 @@ bun typegen      # Generate Next.js types
 │   ├── Header.tsx         # Site header
 │   ├── Footer.tsx         # Site footer
 │   ├── PostCard.tsx       # Blog post preview
-│   ├── PostMeta.tsx       # Post metadata
 │   └── ThemeToggle.tsx    # Dark/light theme toggle
 ├── docs/                  # MDX blog posts
 │   ├── docker-in-2-minutes.mdx
@@ -217,7 +225,7 @@ The project can be deployed to any platform that supports Next.js:
 ### Build Command
 
 ```bash
-bun build
+bun run build
 ```
 
 ## 🤝 Contributing
@@ -230,14 +238,13 @@ bun build
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The code is licensed under the [MIT License](LICENSE). Posts, diagrams and the author photo have different terms: see [LICENSE-CONTENT.md](LICENSE-CONTENT.md).
 
 ## 🙏 Acknowledgments
 
 - Built with [Next.js](https://nextjs.org/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
 - Content powered by [MDX](https://mdxjs.com/)
-- Icons from [Heroicons](https://heroicons.com/)
 
 ---
 

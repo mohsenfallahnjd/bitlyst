@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
+import { isPost } from "@/lib/requestGuards";
 
 async function connectRedis() {
   const client = await getRedis();
@@ -13,6 +14,9 @@ async function connectRedis() {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string; userId: string }> }) {
   try {
     const { slug, userId } = await params;
+    if (!isPost(slug)) {
+      return NextResponse.json({ error: "Unknown post" }, { status: 404 });
+    }
     const client = await connectRedis();
 
     const userReactionKey = `user-reactions:${userId}:${slug}`;

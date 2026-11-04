@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { DocMeta } from "@/lib/mdSource";
 import { loadMarkdownDocs } from "@/lib/mdSource";
 
-
 const escape = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -20,7 +19,7 @@ export async function GET() {
       <pubDate>${p.publishedTime ? new Date(p.publishedTime).toUTCString() : ""}</pubDate>
       ${p.authors?.map((a) => `<dc:creator><![CDATA[${a.name}]]></dc:creator>`).join("\n      ") ?? ""}
       ${p.tags?.map((t) => `<category>${escape(t)}</category>`).join("\n      ") ?? ""}
-    </item>`,
+    </item>`
     )
     .join("\n");
 

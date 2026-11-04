@@ -53,7 +53,16 @@ const SPRITES = {
   },
   // Next.js Field Notes — a white explorer in a ranger hat with a blue field notebook
   scout: {
-    palette: { K: OUTLINE, P: "#16181e", W: "#f6f7f9", g: "#cfd3dc", T: "#c9a066", d: "#8b6a3c", B: "#3a52ee", w: "#e2e9ff" },
+    palette: {
+      K: OUTLINE,
+      P: "#16181e",
+      W: "#f6f7f9",
+      g: "#cfd3dc",
+      T: "#c9a066",
+      d: "#8b6a3c",
+      B: "#3a52ee",
+      w: "#e2e9ff",
+    },
     body: [
       "................",
       ".....TTTTTT.....",
@@ -89,7 +98,17 @@ const SPRITES = {
 
 export type SpriteName = keyof typeof SPRITES;
 
-function Pixels({ grid, palette, dx = 0, dy = 0 }: { grid: Grid; palette: Record<string, string>; dx?: number; dy?: number }) {
+function Pixels({
+  grid,
+  palette,
+  dx = 0,
+  dy = 0,
+}: {
+  grid: Grid;
+  palette: Record<string, string>;
+  dx?: number;
+  dy?: number;
+}) {
   const rects: React.ReactNode[] = [];
   grid.forEach((row, y) => {
     // merge horizontal runs of the same color into one rect (fewer nodes, no hairline seams)
@@ -102,7 +121,9 @@ function Pixels({ grid, palette, dx = 0, dy = 0 }: { grid: Grid; palette: Record
       }
       if (ch !== "." && palette[ch]) {
         // style (not the fill attribute) so CSS variables resolve in every browser
-        rects.push(<rect key={`${x}-${y}`} x={x + dx} y={y + dy} width={run} height={1} style={{ fill: palette[ch] }} />);
+        rects.push(
+          <rect key={`${x}-${y}`} x={x + dx} y={y + dy} width={run} height={1} style={{ fill: palette[ch] }} />
+        );
       }
       x += run;
     }

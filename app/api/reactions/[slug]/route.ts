@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
+import { isPost, rateLimit, readJsonBody } from "@/lib/requestGuards";
 
 type ReactionType = "like" | "love" | "fire" | "think" | "wow";
 
@@ -12,6 +13,7 @@ interface ReactionData {
 }
 
 const REACTION_TYPES: ReactionType[] = ["like", "love", "fire", "think", "wow"];
+const USER_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
 
 async function connectRedis() {
   const client = await getRedis();
@@ -25,6 +27,9 @@ async function connectRedis() {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
+    if (!isPost(slug)) {
+      return NextResponse.json({ error: "Unknown post" }, { status: 404 });
+    }
     const client = await connectRedis();
 
     // Get reaction counts from Redis
@@ -50,22 +55,31 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
-    const body = await request.json();
-    const { reactionType, userId, action } = body;
-    const client = await connectRedis();
-
-    if (!REACTION_TYPES.includes(reactionType)) {
-      return NextResponse.json({ error: "Invalid reaction type" }, { status: 400 });
+    if (!isPost(slug)) {
+      return NextResponse.json({ error: "Unknown post" }, { status: 404 });
     }
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    const limited = await rateLimit(request, "reaction", 30, 60);
+    if (limited) {
+      return limited;
+    }
+
+    const { reactionType: rawReactionType, userId, action } = await readJsonBody(request);
+
+    if (!REACTION_TYPES.includes(rawReactionType as ReactionType)) {
+      return NextResponse.json({ error: "Invalid reaction type" }, { status: 400 });
+    }
+    const reactionType = rawReactionType as ReactionType;
+
+    if (typeof userId !== "string" || !USER_ID_RE.test(userId)) {
+      return NextResponse.json({ error: "Valid user ID is required" }, { status: 400 });
     }
 
     if (action !== "add" && action !== "remove") {
       return NextResponse.json({ error: 'Action must be "add" or "remove"' }, { status: 400 });
     }
 
+    const client = await connectRedis();
     const userReactionKey = `user-reactions:${userId}:${slug}`;
     const reactionsKey = `reactions:${slug}`;
 

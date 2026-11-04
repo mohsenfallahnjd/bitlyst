@@ -68,7 +68,16 @@ function parseBranch(str: string) {
   return { color, label: label ?? "", path };
 }
 
-export default function FlowDiagram({ nodes, notes, branch1, branch2, branch3, branch4, title, caption }: FlowDiagramProps) {
+export default function FlowDiagram({
+  nodes,
+  notes,
+  branch1,
+  branch2,
+  branch3,
+  branch4,
+  title,
+  caption,
+}: FlowDiagramProps) {
   const steps = nodes ? splitSteps(nodes) : [];
   const stepNotes = notes ? notes.split("|").map((n) => n.trim()) : [];
   const branches = [branch1, branch2, branch3, branch4].filter((b): b is string => !!b).map(parseBranch);
@@ -134,7 +143,9 @@ export default function FlowDiagram({ nodes, notes, branch1, branch2, branch3, b
                 className={`relative flex gap-3 pb-4 transition-opacity duration-300 ${s === "todo" ? "opacity-30" : ""}`}
               >
                 {/* connector line to the next step */}
-                {!last && <span className="absolute left-[13px] top-7 bottom-0 w-px bg-gray-200 dark:bg-gray-700" aria-hidden />}
+                {!last && (
+                  <span className="absolute left-[13px] top-7 bottom-0 w-px bg-gray-200 dark:bg-gray-700" aria-hidden />
+                )}
                 <span
                   className={`relative z-10 flex size-[27px] shrink-0 items-center justify-center rounded-full border text-[11px] font-bold tabular-nums transition-all ${
                     s === "current"
@@ -151,7 +162,9 @@ export default function FlowDiagram({ nodes, notes, branch1, branch2, branch3, b
                     {step}
                   </p>
                   {stepNotes[i] && (
-                    <p className="mt-0.5 text-[13px] leading-relaxed text-gray-500 dark:text-gray-400">{stepNotes[i]}</p>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-gray-500 dark:text-gray-400">
+                      {stepNotes[i]}
+                    </p>
                   )}
                 </div>
               </li>
@@ -182,14 +195,19 @@ export default function FlowDiagram({ nodes, notes, branch1, branch2, branch3, b
                     s === "todo" ? "opacity-30" : ""
                   } ${s === "current" ? `ring-2 ${c.ring}` : ""}`}
                 >
-                  <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold ${c.chip}`}>
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold ${c.chip}`}
+                  >
                     <span className={`size-1.5 rounded-full ${c.dot}`} aria-hidden />
                     {b.label}
                   </span>
                   {b.path.length > 0 && (
                     <ol className="mt-2.5 space-y-1.5">
                       {b.path.map((p, pi) => (
-                        <li key={`${p}-${pi}`} className="flex items-start gap-2 text-[13px] text-gray-700 dark:text-gray-300">
+                        <li
+                          key={`${p}-${pi}`}
+                          className="flex items-start gap-2 text-[13px] text-gray-700 dark:text-gray-300"
+                        >
                           <span className="mt-[1px] text-gray-400 dark:text-gray-600" aria-hidden>
                             {pi === 0 ? "↳" : "→"}
                           </span>

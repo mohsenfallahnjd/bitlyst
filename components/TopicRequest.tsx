@@ -37,9 +37,7 @@ export default function TopicRequest({
   return (
     <div className="min-w-0 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 px-4 py-5 sm:px-6 sm:py-6">
       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">{title}</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-        {description}
-      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{description}</p>
       {status === "done" ? (
         <p className="text-sm text-emerald-600 dark:text-emerald-400">Got it — thanks! 🙌 I read every one.</p>
       ) : (

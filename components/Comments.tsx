@@ -1,6 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
-import CommentForm from "./CommentForm";
 import { prisma } from "@/lib/prisma";
+import CommentForm from "./CommentForm";
 
 /** Approved comments for a post — cached, and invalidated when a comment is approved or deleted. */
 async function getApprovedComments(slug: string) {
@@ -38,7 +38,11 @@ export default async function Comments({ slug }: { slug: string }) {
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{c.name}</span>
                 <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                  {new Date(c.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  {new Date(c.createdAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{c.body}</p>

@@ -29,7 +29,6 @@ import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { useMDXComponents } from "@/mdx-components";
 
-
 export default async function Page(props: PageProps<"/p/[...slug]">) {
   const params = await props.params;
   const slugParam = params.slug as string | string[] | undefined;
@@ -93,8 +92,16 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
               inLanguage: "en",
               commentCount,
               interactionStatistic: [
-                { "@type": "InteractionCounter", interactionType: "https://schema.org/ReadAction", userInteractionCount: views },
-                { "@type": "InteractionCounter", interactionType: "https://schema.org/CommentAction", userInteractionCount: commentCount },
+                {
+                  "@type": "InteractionCounter",
+                  interactionType: "https://schema.org/ReadAction",
+                  userInteractionCount: views,
+                },
+                {
+                  "@type": "InteractionCounter",
+                  interactionType: "https://schema.org/CommentAction",
+                  userInteractionCount: commentCount,
+                },
               ],
             },
           ]),
@@ -104,7 +111,10 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
       <div className="mx-auto w-full min-w-0 max-w-[42rem] xl:mx-0">
         {/* Header */}
         <header className="pb-8 mb-10 border-b border-gray-200/70 dark:border-gray-800/60">
-          <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500">
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-6 flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500"
+          >
             <Link href="/posts" className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
               Posts
             </Link>
@@ -243,7 +253,9 @@ export async function generateMetadata(props: PageProps<"/p/[...slug]">): Promis
   const slugParam = params.slug as string | string[] | undefined;
   const slugPath = Array.isArray(slugParam) ? slugParam.join("/") : (slugParam ?? "");
   const page = loadMarkdownBySlug(slugPath);
-  if (!page) { notFound(); }
+  if (!page) {
+    notFound();
+  }
 
   return {
     title: page.title,

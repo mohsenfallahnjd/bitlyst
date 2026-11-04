@@ -7,7 +7,6 @@ import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { getAllTopics } from "@/lib/tags";
 
-
 export const metadata: Metadata = {
   title: "All posts — JavaScript, React, and Next.js tips",
   description:

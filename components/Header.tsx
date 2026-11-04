@@ -11,7 +11,9 @@ export default function Header() {
       <div className="container flex items-center justify-between gap-3 py-3">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <SniplyRoundedMark size={28} />
-          <span className="hidden min-[360px]:inline text-sm font-semibold tracking-tight text-foreground-light dark:text-foreground-dark">Bitlyst</span>
+          <span className="hidden min-[360px]:inline text-sm font-semibold tracking-tight text-foreground-light dark:text-foreground-dark">
+            Bitlyst
+          </span>
         </Link>
 
         <nav className="flex items-center gap-3.5 sm:gap-6" aria-label="Main">

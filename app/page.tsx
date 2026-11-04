@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cacheLife } from "next/cache";
 import Link from "next/link";
 import NewsletterForm from "@/components/NewsletterForm";
 import PixelSprite from "@/components/PixelSprite";
@@ -6,12 +7,10 @@ import PostCard, { PostStatsLine } from "@/components/PostCard";
 import ReaderPanel from "@/components/ReaderPanel";
 import TopicRequest from "@/components/TopicRequest";
 import { formatCount } from "@/lib/format";
-import { cacheLife } from "next/cache";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
-import { getPostStats, getTrending } from "@/lib/stats";
 import { getAllSeries } from "@/lib/series";
+import { getPostStats, getTrending } from "@/lib/stats";
 import { getAllTopics } from "@/lib/tags";
-
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },

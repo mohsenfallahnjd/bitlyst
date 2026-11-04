@@ -39,7 +39,9 @@ export default function ParallelFlow({ tracks, merge, color = "cyan", label, dur
   return (
     <figure className="not-prose my-8 rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-surface-light dark:bg-surface-dark p-5 sm:p-6 text-sm">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        {label && <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{label}</p>}
+        {label && (
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">{label}</p>
+        )}
         {!label && (
           <p className={`text-xs font-medium ${c.text}`}>
             {parallel ? "all start together" : "each waits for the previous"}
@@ -49,7 +51,10 @@ export default function ParallelFlow({ tracks, merge, color = "cyan", label, dur
 
       <div className="space-y-2.5">
         {items.map((item, i) => (
-          <div key={`${item}-${i}`} className="grid grid-cols-1 gap-1 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-center sm:gap-3">
+          <div
+            key={`${item}-${i}`}
+            className="grid grid-cols-1 gap-1 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-center sm:gap-3"
+          >
             <span className="truncate font-mono text-[12px] text-gray-600 dark:text-gray-300" title={item}>
               {item}
             </span>

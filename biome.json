@@ -1,15 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "vcs": {
-    "enabled": false,
+    "enabled": true,
     "clientKind": "git",
-    "useIgnoreFile": false
+    "useIgnoreFile": true
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": [
-      "**"
-    ],
+    "includes": ["**", "!**/*.md", "!**/*.mdx"],
     "maxSize": 2000000
   },
   "formatter": {
@@ -98,6 +96,11 @@
       "!**/jsconfig.json",
       "!**/src/api/generated/**/*"
     ]
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   },
   "javascript": {
     "formatter": {

@@ -53,7 +53,9 @@ export default function ReaderPanel({ posts }: { posts: Item[] }) {
           className="group flex items-center justify-between gap-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 px-3 py-2.5"
         >
           <span className="min-w-0">
-            <span className="block text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Continue reading</span>
+            <span className="block text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Continue reading
+            </span>
             <span className="block truncate text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-[var(--accent)]">
               {resume.title}
             </span>
