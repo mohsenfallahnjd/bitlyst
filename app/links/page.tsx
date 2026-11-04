@@ -33,7 +33,10 @@ export default function UsefulLinksPage() {
             <a href={item.url} target="_blank" rel="noopener noreferrer" className="group block py-5">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="font-semibold leading-snug text-gray-900 dark:text-gray-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                  {item.title} <span className="text-gray-400 dark:text-gray-600" aria-hidden>↗</span>
+                  {item.title}{" "}
+                  <span className="text-gray-400 dark:text-gray-600" aria-hidden>
+                    ↗
+                  </span>
                 </span>
                 <span className="shrink-0 text-xs text-gray-400 dark:text-gray-500">{extractDomain(item.url)}</span>
               </div>
@@ -44,7 +47,6 @@ export default function UsefulLinksPage() {
                 {item.tags?.map((t) => (
                   <span key={t}>#{t}</span>
                 ))}
-                {/* name only — contributor emails stay out of the public HTML */}
                 {item.sharedBy && <span>· shared by {item.sharedBy.name}</span>}
               </div>
             </a>

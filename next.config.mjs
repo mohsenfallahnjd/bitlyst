@@ -12,6 +12,9 @@ const nextConfig = {
   // API routes read post slugs from disk at runtime
   outputFileTracingIncludes: {
     "/api/views/[slug]": ["./docs/**/*"],
+    "/api/comments/[slug]": ["./docs/**/*"],
+    "/api/reactions/[slug]": ["./docs/**/*"],
+    "/api/reactions/[slug]/user/[userId]": ["./docs/**/*"],
   },
   // old ?tag= filters moved to static topic pages
   async redirects() {

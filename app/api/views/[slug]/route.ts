@@ -1,15 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { loadMarkdownDocs } from "@/lib/mdSource";
-import { getViews, recordView, SLUG_RE } from "@/lib/stats";
-
-let knownSlugs: Set<string> | undefined;
-function isPost(slug: string) {
-  if (!SLUG_RE.test(slug)) {
-    return false;
-  }
-  knownSlugs ??= new Set(loadMarkdownDocs().map((p) => p.slug));
-  return knownSlugs.has(slug);
-}
+import { clientIp, isPost } from "@/lib/requestGuards";
+import { getViews, recordView } from "@/lib/stats";
 
 // GET /api/views/[slug] - Current read count
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -28,8 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   }
 
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
-    const views = await recordView(slug, ip, req.headers.get("user-agent") ?? "");
+    const views = await recordView(slug, clientIp(req), req.headers.get("user-agent") ?? "");
     return NextResponse.json({ views });
   } catch (error) {
     console.error("Error recording view:", error);

@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { Suspense } from "react";
-import { getRedis } from "@/lib/redis";
+import { ADMIN_COOKIE, isAdminSession } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
+import { getRedis } from "@/lib/redis";
 import AdminClient from "./AdminClient";
 
 async function getReactionTotals() {
@@ -23,7 +24,7 @@ async function getReactionTotals() {
   }
 }
 
-export default function AdminPage(props: { searchParams: Promise<{ secret?: string }> }) {
+export default function AdminPage(props: { searchParams: Promise<{ error?: string }> }) {
   // reads cookies + searchParams, so it renders per request inside Suspense
   return (
     <Suspense>
@@ -32,23 +33,21 @@ export default function AdminPage(props: { searchParams: Promise<{ secret?: stri
   );
 }
 
-async function AdminContent({ searchParams }: { searchParams: Promise<{ secret?: string }> }) {
+async function AdminContent({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const sp = await searchParams;
   const cookieStore = await cookies();
-  const sessionSecret = cookieStore.get("admin_secret")?.value;
-  const querySecret = sp.secret;
 
-  const validSecret = process.env.ADMIN_SECRET;
-  const authed = sessionSecret === validSecret || querySecret === validSecret;
-
-  if (!authed) {
+  if (!isAdminSession(cookieStore.get(ADMIN_COOKIE)?.value)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <form action="/admin" method="GET" className="space-y-3 w-full max-w-xs">
+        <form action="/api/admin/session" method="POST" className="space-y-3 w-full max-w-xs">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Admin access</p>
+          {sp.error && <p className="text-xs text-red-500 text-center">Wrong secret.</p>}
           <input
+            required
             name="secret"
             type="password"
+            autoComplete="current-password"
             placeholder="Secret"
             className="w-full text-sm border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 bg-transparent text-gray-900 dark:text-gray-100 focus:outline-none focus:border-brand-500"
           />
@@ -69,12 +68,5 @@ async function AdminContent({ searchParams }: { searchParams: Promise<{ secret?:
     getReactionTotals(),
   ]);
 
-  return (
-    <AdminClient
-      pending={pending}
-      approved={approved}
-      reactions={reactions}
-      secret={querySecret ?? sessionSecret ?? ""}
-    />
-  );
+  return <AdminClient pending={pending} approved={approved} reactions={reactions} />;
 }

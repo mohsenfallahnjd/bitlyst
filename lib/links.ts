@@ -6,7 +6,6 @@ export type UsefulLink = {
 
   sharedBy?: {
     name: string;
-    email?: string;
   };
 };
 
@@ -37,7 +36,6 @@ export const usefulLinks: UsefulLink[] = [
     tags: ["networking", "reverse-proxy", "self-hosted"],
     sharedBy: {
       name: "Pouria Khakpour",
-      email: "pouriakhakpour3@gmail.com",
     },
   },
   {
@@ -47,7 +45,6 @@ export const usefulLinks: UsefulLink[] = [
     tags: ["bun", "package-manager", "performance"],
     sharedBy: {
       name: "Pouria Khakpour",
-      email: "pouriakhakpour3@gmail.com",
     },
   },
   {

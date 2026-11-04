@@ -17,22 +17,17 @@ export default function AdminClient({
   pending,
   approved,
   reactions,
-  secret,
 }: {
   pending: Comment[];
   approved: Comment[];
   reactions: Reaction[];
-  secret: string;
 }) {
   const [pendingList, setPendingList] = useState(pending);
   const [approvedList, setApprovedList] = useState(approved);
   const [tab, setTab] = useState<"pending" | "approved" | "reactions">("pending");
 
   async function approve(id: string) {
-    const res = await fetch(`/api/comment/${id}`, {
-      method: "PATCH",
-      headers: { "x-admin-secret": secret },
-    });
+    const res = await fetch(`/api/comment/${id}`, { method: "PATCH" });
     if (res.ok) {
       const comment = pendingList.find((c) => c.id === id)!;
       setPendingList((p) => p.filter((c) => c.id !== id));
@@ -41,10 +36,7 @@ export default function AdminClient({
   }
 
   async function remove(id: string, fromApproved = false) {
-    const res = await fetch(`/api/comment/${id}`, {
-      method: "DELETE",
-      headers: { "x-admin-secret": secret },
-    });
+    const res = await fetch(`/api/comment/${id}`, { method: "DELETE" });
     if (res.ok) {
       if (fromApproved) {
         setApprovedList((a) => a.filter((c) => c.id !== id));
@@ -54,7 +46,12 @@ export default function AdminClient({
     }
   }
 
-  const tabCls = (t: typeof tab) =>
+  async function signOut() {
+    await fetch("/api/admin/session", { method: "DELETE" });
+    window.location.assign("/admin");
+  }
+
+  const tabCls = (t: typeof tab | "sign-out") =>
     `text-xs px-3 py-1.5 rounded-md transition-colors ${
       tab === t
         ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium"
@@ -77,6 +74,9 @@ export default function AdminClient({
           </button>
           <button className={tabCls("reactions")} onClick={() => setTab("reactions")}>
             Reactions
+          </button>
+          <button className={tabCls("sign-out")} onClick={signOut}>
+            Sign out
           </button>
         </div>
       </div>
