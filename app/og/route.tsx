@@ -1,84 +1,16 @@
-import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
 import { loadMarkdownBySlug } from "@/lib/mdSource";
-
+import { renderOgImage } from "@/lib/og";
 
 export function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("slug");
 
   const post = slug ? loadMarkdownBySlug(slug) : null;
-  const title = post?.title ?? "Bitlyst";
-  const summary = post?.summary ?? "Bite-sized JavaScript, React, and Next.js tips";
-  const tags = post?.tags?.slice(0, 3) ?? [];
 
-  return new ImageResponse(
-    <div
-      style={{
-        width: 1200,
-        height: 630,
-        background: "#faf8f5",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        padding: "64px",
-        fontFamily: "ui-sans-serif, system-ui, sans-serif",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <span style={{ color: "#0e36e9", fontSize: 28, fontWeight: 700 }}>Bitlyst</span>
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-        <div
-          style={{
-            fontSize: title.length > 60 ? 44 : 56,
-            fontWeight: 800,
-            color: "#1c1917",
-            lineHeight: 1.15,
-            letterSpacing: "-0.02em",
-            maxWidth: 950,
-          }}
-        >
-          {title}
-        </div>
-
-        {summary && (
-          <div
-            style={{
-              fontSize: 22,
-              color: "#78716c",
-              maxWidth: 850,
-              lineHeight: 1.4,
-            }}
-          >
-            {summary.length > 120 ? summary.slice(0, 120) + "…" : summary}
-          </div>
-        )}
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", gap: "10px" }}>
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              style={{
-                background: "#ffffff",
-                border: "1px solid #e8e2d9",
-                color: "#0e36e9",
-                padding: "6px 16px",
-                borderRadius: "999px",
-                fontSize: 18,
-                fontWeight: 500,
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        <span style={{ color: "#a8a29e", fontSize: 18 }}>bitlyst.blog</span>
-      </div>
-    </div>,
-    { width: 1200, height: 630 }
-  );
+  return renderOgImage({
+    title: post?.title ?? "Bite-sized JavaScript, React, and Next.js tips",
+    tags: post?.tags,
+    readingTime: post?.readingTime,
+  });
 }
