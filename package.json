@@ -12,6 +12,9 @@
   "bugs": {
     "url": "https://github.com/mohsenfallahnjd/bitlyst/issues"
   },
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "keywords": [
     "blog",
     "bitlyst",
@@ -26,7 +29,7 @@
     "format-lint": "bun run format && bun run lint:fix",
     "lint:fix": "biome lint --write .",
     "format": "biome format . --write",
-    "check": "biome check --apply .",
+    "check": "biome check --write .",
     "typegen": "next typegen && tsc --noEmit",
     "devto": "bun scripts/devto.ts",
     "postinstall": "prisma generate"
@@ -40,6 +43,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "clsx": "2.1.1",
+    "dotenv": "^17.4.2",
     "fast-glob": "^3.3.3",
     "gray-matter": "^4.0.3",
     "next": "^16.4.3",
@@ -67,8 +71,6 @@
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "eslint": "10.14.0",
-    "eslint-config-next": "16.4.3",
     "postcss": "8.5.32",
     "remark-frontmatter": "5.0.0",
     "remark-mdx-frontmatter": "^6.0.0",
