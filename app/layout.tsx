@@ -25,6 +25,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://bitlyst.blog/"),
+  verification: { google: "eMGNCr40R28Cyd2wGo5npFeZg7W10ElVR0vTfd9CXfQ" },
   icons: {
     icon: [
       { url: "/icon.svg", sizes: "any", type: "image/svg+xml" },
