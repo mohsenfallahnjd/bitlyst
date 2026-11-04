@@ -23,9 +23,7 @@ export default function CodeBlock({ children, ...props }: any) {
     <div className="relative my-6 rounded-xl overflow-hidden border border-black/5 dark:border-white/[0.06] shadow-sm">
       {/* Header bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-[var(--code-head)] border-b border-white/[0.06]">
-        <span className="text-[11px] font-mono text-gray-500 uppercase tracking-wider">
-          {lang || "code"}
-        </span>
+        <span className="text-[11px] font-mono text-gray-500 uppercase tracking-wider">{lang || "code"}</span>
         <button
           type="button"
           onClick={handleCopy}

@@ -7,7 +7,9 @@ import type { PostSummary } from "@/lib/mdSource";
 import type { PostStats } from "@/lib/stats";
 
 function getYear(publishedTime?: string) {
-  if (!publishedTime) { return "Unknown"; }
+  if (!publishedTime) {
+    return "Unknown";
+  }
   return new Date(publishedTime).getFullYear().toString();
 }
 
@@ -33,8 +35,12 @@ export default function BlogList({ posts, stats }: { posts: PostSummary[]; stats
     const q = new URLSearchParams();
     const s = next.sort ?? sort;
     const l = next.level ?? level;
-    if (s) { q.set("sort", s); }
-    if (l) { q.set("level", l); }
+    if (s) {
+      q.set("sort", s);
+    }
+    if (l) {
+      q.set("level", l);
+    }
     const qs = q.toString();
     return qs ? `/posts?${qs}` : "/posts";
   };
@@ -87,7 +93,9 @@ export default function BlogList({ posts, stats }: { posts: PostSummary[]; stats
           {years.map((year) => (
             <section key={year}>
               <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{year}</h2>
+                <h2 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  {year}
+                </h2>
                 <div className="flex-1 h-px bg-gray-200/70 dark:bg-gray-800/60" />
                 <span className="text-xs text-gray-400 dark:text-gray-600">{grouped[year].length}</span>
               </div>

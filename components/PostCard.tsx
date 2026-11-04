@@ -8,18 +8,15 @@ export function shortDate(iso?: string) {
   if (!iso) {
     return "";
   }
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
-export function PostStatsLine({
-  post,
-  views,
-  comments,
-}: {
-  post: PostSummary;
-  views?: number;
-  comments?: number;
-}) {
+export function PostStatsLine({ post, views, comments }: { post: PostSummary; views?: number; comments?: number }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-gray-500">
       {post.publishedTime && <time dateTime={post.publishedTime}>{shortDate(post.publishedTime)}</time>}
@@ -41,15 +38,7 @@ export function PostStatsLine({
   );
 }
 
-export default function PostCard({
-  post,
-  views,
-  comments,
-}: {
-  post: PostSummary;
-  views?: number;
-  comments?: number;
-}) {
+export default function PostCard({ post, views, comments }: { post: PostSummary; views?: number; comments?: number }) {
   return (
     <article className="post-card group/card border-b border-gray-200/70 dark:border-gray-800/60 last:border-b-0">
       <Link href={`/p/${post.slug}`} className="block py-5">

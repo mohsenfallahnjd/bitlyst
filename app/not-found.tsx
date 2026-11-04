@@ -45,7 +45,10 @@ export default function NotFound() {
             </li>
           ))}
         </ul>
-        <Link href="/" className="mt-4 inline-block text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+        <Link
+          href="/"
+          className="mt-4 inline-block text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+        >
           ← Back home
         </Link>
       </div>

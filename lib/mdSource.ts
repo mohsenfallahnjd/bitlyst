@@ -74,7 +74,7 @@ export function loadMarkdownBySlug(slug: string): DocMeta | null {
     return null;
   }
 
-  const file =["md", "mdx"].map((ext) => path.join(BLOG_DIR, `${slug}.${ext}`)).find((f) => fs.existsSync(f));
+  const file = ["md", "mdx"].map((ext) => path.join(BLOG_DIR, `${slug}.${ext}`)).find((f) => fs.existsSync(f));
   if (!file) {
     return null;
   }

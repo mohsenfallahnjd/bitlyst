@@ -6,7 +6,6 @@ import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { getAllTopics, getPostsByTopic, MIN_INDEXABLE_POSTS } from "@/lib/tags";
 
-
 export function generateStaticParams() {
   return getAllTopics().map((t) => ({ tag: t.slug }));
 }
@@ -75,7 +74,10 @@ export default async function TopicPage({ params }: PageProps<"/tags/[tag]">) {
       />
 
       <div className="space-y-2">
-        <Link href="/tags" className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+        <Link
+          href="/tags"
+          className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+        >
           ← All topics
         </Link>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">#{topic.name}</h1>

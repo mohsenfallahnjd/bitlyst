@@ -54,14 +54,13 @@ const components: MDXComponents = {
     </div>
   ),
   th: (props) => (
-    <th {...props} className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-4 py-2.5 text-left font-semibold text-gray-900 dark:text-gray-100" />
+    <th
+      {...props}
+      className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-4 py-2.5 text-left font-semibold text-gray-900 dark:text-gray-100"
+    />
   ),
-  tr: (props) => (
-    <tr {...props} className="border-b border-gray-100 dark:border-gray-800/60 last:border-b-0" />
-  ),
-  td: (props) => (
-    <td {...props} className="px-4 py-2.5" />
-  ),
+  tr: (props) => <tr {...props} className="border-b border-gray-100 dark:border-gray-800/60 last:border-b-0" />,
+  td: (props) => <td {...props} className="px-4 py-2.5" />,
   hr: () => <hr className="my-12 border-gray-200 dark:border-gray-800" />,
   img: ({ src, alt, width, height, ...props }) => (
     <span className="my-8 flex flex-col gap-2 rounded-xl border border-gray-200/70 dark:border-gray-800 bg-surface-light dark:bg-surface-dark p-3">

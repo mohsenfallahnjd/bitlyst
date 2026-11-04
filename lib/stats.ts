@@ -81,7 +81,7 @@ export async function getTrending(days = 7, limit = 5): Promise<{ slug: string; 
       return [];
     }
     const perDay = await Promise.all(
-      Array.from({ length: days }, (_, i) => redis.zRangeWithScores(DAY_KEY(today(i)), 0, -1)),
+      Array.from({ length: days }, (_, i) => redis.zRangeWithScores(DAY_KEY(today(i)), 0, -1))
     );
     const totals: Record<string, number> = {};
     for (const day of perDay) {

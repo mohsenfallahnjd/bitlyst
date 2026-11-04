@@ -10,7 +10,6 @@ import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { getAllTopics } from "@/lib/tags";
 
-
 export const metadata: Metadata = {
   title: "About",
   description:
@@ -120,8 +119,8 @@ export default async function AboutPage() {
 
         <div className="space-y-4 text-[1.0625rem] leading-relaxed text-gray-700 dark:text-gray-300">
           <p>
-            I build web products for a living and keep running into the same questions: <em>why</em> does the event
-            loop do that, <em>when</em> does React re-render, <em>what</em> is Next.js actually caching?
+            I build web products for a living and keep running into the same questions: <em>why</em> does the event loop
+            do that, <em>when</em> does React re-render, <em>what</em> is Next.js actually caching?
           </p>
           <p>
             Bitlyst is where I write down the answers — one concept per post, with diagrams and code you can paste

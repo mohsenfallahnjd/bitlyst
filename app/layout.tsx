@@ -33,7 +33,11 @@ export const metadata: Metadata = {
     ],
   },
   title: { default: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips", template: "%s · Bitlyst" },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
   description:
     "Bite-sized tutorials and practical tips on JavaScript, React, and Next.js. Clear explanations, diagrams, and code examples you can read in minutes to level up your frontend and web development skills.",
   authors: [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me" }],

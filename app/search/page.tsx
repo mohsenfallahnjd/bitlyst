@@ -10,7 +10,9 @@ export default function SearchPage({ searchParams }: PageProps<"/search">) {
     <div className="mx-auto max-w-[42rem] space-y-6">
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Search</h1>
       {/* the query is only known at request time — everything above prerenders */}
-      <Suspense fallback={<div className="h-12 rounded-xl border border-gray-200 dark:border-gray-700 animate-pulse" />}>
+      <Suspense
+        fallback={<div className="h-12 rounded-xl border border-gray-200 dark:border-gray-700 animate-pulse" />}
+      >
         <SearchResults searchParams={searchParams} />
       </Suspense>
     </div>

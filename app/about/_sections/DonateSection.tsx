@@ -90,7 +90,9 @@ export const DonateSection: FC = () => {
               />
             </svg>
             <div>
-              <p className="text-sm text-brand-800 dark:text-brand-200 font-medium mb-1">Recommended cryptocurrencies</p>
+              <p className="text-sm text-brand-800 dark:text-brand-200 font-medium mb-1">
+                Recommended cryptocurrencies
+              </p>
               <p className="text-sm text-brand-700 dark:text-brand-300">
                 BTC, ETH, and USDC are recommended for broad support and stable value. All donations are greatly
                 appreciated, regardless of the cryptocurrency used.
