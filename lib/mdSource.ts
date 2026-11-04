@@ -11,7 +11,6 @@ export type DocMeta = {
   tags?: string[];
   content: string;
   authors: { name: string; url: string; avatar?: string }[];
-  pinned?: boolean;
   draft?: boolean;
   readingTime?: number;
   level?: "beginner" | "intermediate" | "advanced";
@@ -40,13 +39,13 @@ function calcReadingTime(content: string): number {
 }
 
 /** Read all Markdown posts (already provided) */
-export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
-  const entries = fs.readdirSync(dir);
+export function loadMarkdownDocs(): DocMeta[] {
+  const entries = fs.readdirSync(BLOG_DIR);
   return entries
     .filter((f) => f.endsWith(".md") || f.endsWith(".mdx"))
     .map((file) => {
       const slug = file.replace(/\.(md|mdx)$/, "");
-      const src = fs.readFileSync(path.join(dir, file), "utf8");
+      const src = fs.readFileSync(path.join(BLOG_DIR, file), "utf8");
       const { data, content } = matter(src);
       return {
         slug,
@@ -56,7 +55,6 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
         modifiedTime: data.modifiedTime ?? data.publishedTime ?? "",
         tags: (data.tags as string[] | undefined) ?? [],
         authors: (data.authors as { name: string; url: string; avatar?: string }[] | undefined) ?? DEFAULT_AUTHORS,
-        pinned: data.pinned ?? false,
         draft: data.draft ?? false,
         content,
         readingTime: calcReadingTime(content),
@@ -66,13 +64,17 @@ export function loadMarkdownDocs(dir: string = BLOG_DIR): DocMeta[] {
       };
     })
     .filter((p) => !p.draft)
-    .sort((a, b) => (a.pinned ? -1 : 1))
     .sort((a, b) => new Date(b.publishedTime).getTime() - new Date(a.publishedTime).getTime());
 }
 
 /** ✅ Load a single post by its slug */
-export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMeta | null {
-  const file = ["md", "mdx"].map((ext) => path.join(dir, `${slug}.${ext}`)).find((f) => fs.existsSync(f));
+export function loadMarkdownBySlug(slug: string): DocMeta | null {
+  // only top-level files in docs/ are published; rejects "_archive/x" and "../x"
+  if (path.basename(slug) !== slug) {
+    return null;
+  }
+
+  const file =["md", "mdx"].map((ext) => path.join(BLOG_DIR, `${slug}.${ext}`)).find((f) => fs.existsSync(f));
   if (!file) {
     return null;
   }
@@ -92,7 +94,6 @@ export function loadMarkdownBySlug(slug: string, dir: string = BLOG_DIR): DocMet
     modifiedTime: data.modifiedTime ?? data.publishedTime ?? "",
     tags: (data.tags as string[] | undefined) ?? [],
     authors: (data.authors as { name: string; url: string; avatar?: string }[] | undefined) ?? DEFAULT_AUTHORS,
-    pinned: data.pinned ?? false,
     draft: data.draft ?? false,
     content,
     readingTime: calcReadingTime(content),
