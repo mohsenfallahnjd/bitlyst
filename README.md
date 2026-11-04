@@ -238,7 +238,7 @@ bun run build
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The code is licensed under the [MIT License](LICENSE). Posts, diagrams and the author photo have different terms: see [LICENSE-CONTENT.md](LICENSE-CONTENT.md).
 
 ## 🙏 Acknowledgments
 
