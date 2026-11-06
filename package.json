@@ -33,6 +33,7 @@
     "typegen": "next typegen && tsc --noEmit",
     "devto": "bun scripts/devto.ts",
     "medium": "bun scripts/medium.ts",
+    "hackernoon": "bun scripts/hackernoon.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

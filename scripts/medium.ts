@@ -60,18 +60,36 @@ export function toMediumMarkdown(content: string): string {
     .join("");
 }
 
+const postUrl = (post: DocMeta) => `${SITE}/p/${post.slug}`;
+
 function buildPage(post: DocMeta): string {
-  const url = `${SITE}/p/${post.slug}`;
+  return buildPastePage(post, {
+    platform: "Medium",
+    footer: `*Originally published on [Bitlyst](${postUrl(post)}).*`,
+    fields: [
+      ["Canonical link (story settings)", postUrl(post)],
+      ["Subtitle", post.summary ?? ""],
+      ["Tags (Medium allows 5)", (post.tags ?? []).slice(0, 5).join(", ")],
+    ],
+  });
+}
+
+/** A standalone page with a Copy button, for platforms that only accept pasted stories. */
+export function buildPastePage(
+  post: DocMeta,
+  target: { platform: string; fields: [label: string, value: string][]; footer?: string }
+): string {
   const content = post.content.replace(/^\s*# .*\n/, ""); // some posts open with their own H1; the title is added below
-  const markdown = `# ${post.title}\n\n${toMediumMarkdown(content)}\n\n---\n\n*Originally published on [Bitlyst](${url}).*\n`;
+  const footer = target.footer ? `\n\n---\n\n${target.footer}\n` : "\n";
+  const markdown = `# ${post.title}\n\n${toMediumMarkdown(content)}${footer}`;
   const body = renderToStaticMarkup(createElement(Markdown, { remarkPlugins: [remarkGfm] }, markdown));
-  const tags = (post.tags ?? []).slice(0, 5).join(", ");
+  const fields = target.fields.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`);
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${escapeHtml(post.title)}: Medium copy</title>
+<title>${escapeHtml(post.title)}: ${escapeHtml(target.platform)} copy</title>
 <style>
 body { max-width: 720px; margin: 2rem auto; padding: 0 1rem; font: 16px/1.6 system-ui, sans-serif; }
 aside { padding: 1rem; margin-bottom: 2rem; border: 1px solid #8884; border-radius: 8px; }
@@ -83,9 +101,7 @@ button { padding: .5rem 1rem; font: inherit; cursor: pointer; }
 <body>
 <aside>
 <dl>
-<dt>Canonical link (story settings)</dt><dd>${escapeHtml(url)}</dd>
-<dt>Subtitle</dt><dd>${escapeHtml(post.summary ?? "")}</dd>
-<dt>Tags (Medium allows 5)</dt><dd>${escapeHtml(tags)}</dd>
+${fields.join("\n")}
 </dl>
 <button id="copy" type="button">Copy story</button>
 </aside>
