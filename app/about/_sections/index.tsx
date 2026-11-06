@@ -61,8 +61,8 @@ export const AboutPage: FC = () => {
           <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100">About the Author</h3>
           <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
             Hi! I'm Mohsen Fallahnejad, a passionate developer who believes in the power of concise, practical knowledge
-            sharing. With experience across full-stack development and DevOps, I create these bite-sized guides to help
-            fellow developers learn faster and build better software.
+            sharing. As a frontend developer with some backend and server experience, I create these bite-sized guides
+            to help fellow developers learn faster and build better software.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <a

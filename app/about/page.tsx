@@ -13,7 +13,7 @@ import { getAllTopics } from "@/lib/tags";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Mohsen Fallahnejad — full-stack developer behind Bitlyst. Short, diagram-first posts on JavaScript, React & Next.js.",
+    "Mohsen Fallahnejad — frontend developer behind Bitlyst. Short, diagram-first posts on JavaScript, React & Next.js.",
   alternates: { canonical: "/about" },
   openGraph: { type: "profile", url: "/about", title: "About Mohsen Fallahnejad · Bitlyst" },
 };
@@ -92,7 +92,7 @@ export default async function AboutPage() {
               name: "Mohsen Fallahnejad",
               url: "https://themohsen.me",
               image: "https://bitlyst.blog/mohsen.JPEG",
-              jobTitle: "Full-stack developer",
+              jobTitle: "Frontend developer",
               sameAs: LINKS.map((l) => l.href),
               knowsAbout: topics.map((t) => t.name),
             },
@@ -113,7 +113,7 @@ export default async function AboutPage() {
           />
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Hi, I&apos;m Mohsen 👋</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Full-stack developer · writing Bitlyst</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Frontend developer · writing Bitlyst</p>
           </div>
         </div>
 
