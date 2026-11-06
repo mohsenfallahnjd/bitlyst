@@ -1,5 +1,8 @@
 "use client";
 import { useState } from "react";
+import type { AdminReport } from "@/lib/adminReport";
+import Overview from "./Overview";
+import PostsTable from "./PostsTable";
 
 type Comment = {
   id: string;
@@ -11,20 +14,18 @@ type Comment = {
   createdAt: Date;
 };
 
-type Reaction = { slug: string; total: number };
-
 export default function AdminClient({
   pending,
   approved,
-  reactions,
+  report,
 }: {
   pending: Comment[];
   approved: Comment[];
-  reactions: Reaction[];
+  report: AdminReport;
 }) {
   const [pendingList, setPendingList] = useState(pending);
   const [approvedList, setApprovedList] = useState(approved);
-  const [tab, setTab] = useState<"pending" | "approved" | "reactions">("pending");
+  const [tab, setTab] = useState<"overview" | "posts" | "pending" | "approved">("overview");
 
   async function approve(id: string) {
     const res = await fetch(`/api/comment/${id}`, { method: "PATCH" });
@@ -60,9 +61,15 @@ export default function AdminClient({
 
   return (
     <div className="container py-12">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-50">Admin</h1>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
+          <button className={tabCls("overview")} onClick={() => setTab("overview")}>
+            Overview
+          </button>
+          <button className={tabCls("posts")} onClick={() => setTab("posts")}>
+            Posts
+          </button>
           <button className={tabCls("pending")} onClick={() => setTab("pending")}>
             Pending{" "}
             {pendingList.length > 0 && (
@@ -71,9 +78,6 @@ export default function AdminClient({
           </button>
           <button className={tabCls("approved")} onClick={() => setTab("approved")}>
             Approved
-          </button>
-          <button className={tabCls("reactions")} onClick={() => setTab("reactions")}>
-            Reactions
           </button>
           <button className={tabCls("sign-out")} onClick={signOut}>
             Sign out
@@ -101,20 +105,8 @@ export default function AdminClient({
         </div>
       )}
 
-      {tab === "reactions" && (
-        <div className="space-y-2">
-          {reactions.length === 0 && <p className="text-sm text-gray-400 dark:text-gray-500">No reactions yet.</p>}
-          {reactions.map((r) => (
-            <div
-              key={r.slug}
-              className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/60"
-            >
-              <span className="text-sm text-gray-700 dark:text-gray-300">/p/{r.slug}</span>
-              <span className="text-sm font-medium text-brand-600 dark:text-brand-400">{r.total} reactions</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {tab === "overview" && <Overview report={report} pendingCount={pendingList.length} />}
+      {tab === "posts" && <PostsTable rows={report.rows} />}
     </div>
   );
 }

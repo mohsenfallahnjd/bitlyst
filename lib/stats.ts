@@ -99,6 +99,30 @@ export async function getTrending(days = 7, limit = 5): Promise<{ slug: string; 
   }
 }
 
+/** Per-slug reads for each of the last `days` days, newest first. Uncached, for /admin. Day keys expire after 60 days. */
+export async function getDailyViews(days: number): Promise<{ day: string; bySlug: Record<string, number> }[]> {
+  const redis = await getRedis();
+  if (!redis) {
+    return [];
+  }
+  const dates = Array.from({ length: days }, (_, i) => today(i));
+  const perDay = await Promise.all(dates.map((d) => redis.zRangeWithScores(DAY_KEY(d), 0, -1)));
+  return dates.map((day, i) => ({
+    day,
+    bySlug: Object.fromEntries(perDay[i].map(({ value, score }) => [value, score])),
+  }));
+}
+
+/** Uncached all-time counts for /admin, which shouldn't lag behind the public 5 minute cache. */
+export async function getAllViewsFresh(): Promise<Record<string, number>> {
+  const redis = await getRedis();
+  if (!redis) {
+    return {};
+  }
+  const raw = await redis.hGetAll(VIEWS_KEY);
+  return Object.fromEntries(Object.entries(raw).map(([slug, n]) => [slug, Number(n) || 0]));
+}
+
 /**
  * Count one read per visitor per post per day. The visitor id is a salted daily
  * hash of IP + user agent, so nothing identifying is stored and no cookie is set.

@@ -47,6 +47,8 @@ Every post follows the same five beats. The headings change; the beats don't.
   [10, 9, 1].sort(); // [1, 10, 9]  ← surprise
   ```
 - **Diagrams:** use `<FlowDiagram>` for "what happens, in order" and `<ParallelFlow>` for "what happens over time". Every diagram gets a `title`, and `notes` when a step isn't obvious. A diagram must explain something the text can't do as quickly — don't decorate.
+- **Images:** posts should include images. Long posts usually need 2–3, placed where the reader needs a visual break. Use photos from free-to-use sites (check the license) or AI-generated art, and never pass off an illustration as a real screenshot. Save them in `public/assets/` as `<post-topic>-<name>.jpg`, about 1200px wide, and add them with `![Photo: name on Pexels](/assets/file.jpg)`.
+- **Image captions:** alt text shows on the page as the caption. Use it for the credit, or for a point the reader can't get from the image. Don't describe what's in the image.
 - **End with** a `## TL;DR` of 3–5 bullets, each a full sentence.
 
 ---
@@ -90,6 +92,7 @@ When a part is published, remove its title from `upcoming` in `lib/series.ts`.
 - [ ] No emoji in headings; ≤2 emoji total.
 - [ ] Code snippets are minimal and show the surprising output.
 - [ ] Diagrams have a `title` (and `notes` where needed).
+- [ ] Post has images, with licenses checked and captions that don't only describe the image.
 - [ ] Title is the surprise/outcome; summary contains the search term.
 - [ ] Ends with a one-line rule + TL;DR.
-- [ ] Frontmatter: `title`, `summary`, `publishedTime`, `level`, `tags` (+ `series`, `seriesOrder` if part of one).
+- [ ] Frontmatter: `title`, `summary`, `publishedTime`, `level`, `tags` (+ `series`, `seriesOrder` if part of one, + `publishOrder` if another post has the same date: higher number shows first, and the newest written post gets the highest number).

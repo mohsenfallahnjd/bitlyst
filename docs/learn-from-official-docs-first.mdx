@@ -1,0 +1,175 @@
+---
+title: "Start Learning From the Docs. Then Find Your Own Way."
+summary: "Why official technology docs should be your first step when learning, how to choose videos, books, podcasts or courses next, and how to keep up with changes."
+publishedTime: "2026-11-06"
+publishOrder: 7
+level: "beginner"
+tags: ["learning", "documentation", "career", "nextjs", "best-practices"]
+---
+
+```ts
+// 31 October: I added this to my blog's homepage
+export const revalidate = 600;
+
+// 1 November: I deleted it and wrote this instead
+"use cache";
+cacheLife("hours");
+```
+
+That's real, and it's in this blog's git history. On 31 October, I added `revalidate` to pages across the site. The next day, I turned on Next.js Cache Components and removed every one of them.
+
+`revalidate` wasn't a bad line. It's a normal way to cache a Next.js page, and countless tutorials teach it. But the docs for the version I run say this about the switch I made:
+
+> After enabling the flag, route segments that still export `dynamic`, `revalidate`, or `fetchCache` will error.
+
+So the same line can be correct in one project and an error in another, depending on the version and the setup. A tutorial can't know which one you have. The docs can.
+
+---
+
+## The wrong turn: start with the best course you can find
+
+When you want to learn something new, the natural first step is to search for "best React course" or "learn Next.js tutorial." You pick the one with good reviews and start at lesson one. The docs feel like something for later: dry, long, and made for people who already know the subject.
+
+It seems reasonable because a good course is friendly and has a clear order. But every course, video and article is a snapshot. It shows the technology on the day it was made, and the technology keeps moving.
+
+![Photo: Vo Thuy Tien on Pexels](/assets/learn-docs-old-tech.jpg)
+
+You can see this in React. When [the new docs launched in 2023](https://react.dev/blog/2023/03/16/introducing-react-dev), the team moved the old site to an archive and said it "will not get many more updates." The new docs "teach React with Hooks from the beginning." Class components still work, but someone starting from an older class-based tutorial would be learning a style the React team no longer teaches first.
+
+Community answers age the same way. [A study of obsolete Stack Overflow answers](https://arxiv.org/abs/1903.12282) found that 58.4% of them were probably already out of date when they were first posted. When readers noticed an obsolete answer, only 20.5% of those answers were ever updated. That study is from 2019, but the problem hasn't gone away: an answer stays online long after the technology has changed.
+
+AI has its own version of this. Next.js now adds a note for AI tools to projects like mine, warning that the APIs "may all differ from your training data," and tells them to read the docs that ship with the package. Even the AI gets told to read the docs first. I wrote more about working with AI in [this post](/p/ai-is-your-junior-developer).
+
+---
+
+## The reveal: docs are the only source that moves with the technology
+
+Docs are written or approved by the people building the technology, and a change in the technology is supposed to come with a change in the docs. That's the difference. Everything else about the technology is someone's report on it, from some point in time.
+
+The best part is that good docs also record what changed. Many Next.js docs pages end with a version history table. Here's part of the one for `proxy`:
+
+```
+v16.0.0   Middleware is deprecated and renamed to Proxy. Proxy defaults to the Node.js runtime
+v15.5.0   Middleware can now use the Node.js runtime (stable)
+v15.2.0   Middleware can now use the Node.js runtime (experimental)
+```
+
+Three lines tell you why an older tutorial talks about `middleware.ts`, and what the name is today.
+
+To see how fast this moves, I counted those tables in the docs bundled with Next.js 16.4.3, the version this blog runs. 112 pages have one. They list 83 entries for version 16 alone, and 54 of those came after 16.0:
+
+| Version | Entries in the docs |
+|---|---|
+| 16.0 | 29 |
+| 16.1 | 5 |
+| 16.2 | 15 |
+| 16.3 | 19 |
+| 16.4 | 15 |
+
+*Counted with `grep` on `node_modules/next/dist/docs`. Some entries describe the same change on more than one page, so this isn't an exact count of features. It's a sign of how much moves between releases.*
+
+No course could keep up with that. It doesn't need to, as long as you know where the current truth lives.
+
+> **A course teaches you how a technology worked when it was recorded. The docs tell you how it works now.**
+
+---
+
+## The fix: docs first, then your own way
+
+Docs first doesn't mean reading every page before you do anything. It means making the docs your starting point and your reference, then learning the rest however suits you.
+
+<FlowDiagram
+  title="A learning path that doesn't go out of date"
+  nodes="Start with the docs → Learn your own way → Build something small → Back to the docs → Follow the changes"
+  notes="Learn the words, the main ideas and what exists|Video, book, podcast, course, or a mix|This is where you find out what you really understood|Use them to check what a tutorial told you|Read release notes and upgrade guides"
+  caption="The docs are both the first step and the place you keep coming back to."
+/>
+
+### Step 1: Read the docs for a map, not for mastery
+
+Here's what to look at on the first visit:
+
+1. **The version.** Check which version you're using and make sure the docs match it. Next.js even ships its docs inside the package, in `node_modules/next/dist/docs`, so they always match what you installed.
+2. **The introduction and getting started guide.** Follow it and run the example. Now you've seen the official way to do things.
+3. **The main concepts.** Read them to learn the vocabulary. Every video and book afterward will be easier because you know the words.
+4. **The sidebar.** Skim the whole thing without reading every page. It's a map of what the technology can do, and you can't look something up later if you don't know it exists.
+
+You don't need to understand it all. You only need to know what's there and where to come back to.
+
+### Step 2: Find your own way of learning
+
+![Photo: Alex Qian on Pexels](/assets/learn-docs-books.jpg)
+
+Docs tell you what's true, but they often aren't the best teacher. They rarely explain the mistakes people make, or why one approach beats another in a real project. That's what everything else is for, and developers clearly use a mix. Here's what people reported using to learn in [Stack Overflow's 2025 survey](https://survey.stackoverflow.co/2025/developers), across all respondents:
+
+| Way of learning | Used in the past year | Good for | Watch out for |
+|---|---|---|---|
+| **Technical docs** | 67.8% | What's true right now | Rarely teaches in the best order |
+| **Videos** | 50% | Watching someone work | It's easy to watch and not practice |
+| **AI tools** | 44% | Questions about your own code | Can be out of date and sound sure |
+| **Blogs and podcasts** | 34.8% | Real stories, context, the "why" | One person's experience, and podcasts can't teach syntax |
+| **Courses** | 32.7% | A clear path with exercises | May be recorded on an older version |
+| **Books** | 30.4% | Deep fundamentals | Framework details age quickly |
+
+So which one should you pick? You've probably heard "I'm a visual learner" or "I learn by listening." Be careful with that idea. [A well-known 2008 review](https://pubmed.ncbi.nlm.nih.gov/26162104/) found almost no good evidence that teaching people in their preferred style improves how much they learn.
+
+That doesn't make your preference useless. It only changes the reason for choosing:
+
+- **Choose what you'll actually finish.** The best course you quit in week two teaches less than a simple book you complete. If you only have time on your commute, a podcast beats the video you never start.
+- **Choose what fits the subject.** Use a video to see a tool being used, a book for how databases work inside, and a podcast to hear how a team made a decision.
+- **Mix them.** You don't have one fixed style. Try something for a week, and change it if it isn't working.
+
+![Photo: cottonbro on Pexels](/assets/learn-docs-podcast.jpg)
+
+Two habits matter whichever you choose. Check the date and the version before you start, and compare them with the docs. And build something small, because you only find out what you really understood when nobody is telling you the next step.
+
+### Step 3: Keep following the docs
+
+Learning a technology doesn't end, because the technology doesn't stop changing. New features show up in the docs before most tutorials exist. Here are a few real entries from Next.js 16.4, which you can find with one command:
+
+```bash
+grep -rhE '^\| *`?v?16\.4\.' node_modules/next/dist/docs
+```
+
+```
+| `v16.4.0` | `ensureStatic` introduced. |
+| `v16.4.0` | Add the `next analyze export` command. |
+| `v16.4.0` | `next-bundle-optimizer` skill added. |
+```
+
+You don't need a big system for keeping up:
+
+- **Read the release notes** for the tools you use most when a new version comes out.
+- **Read the upgrade guide before upgrading,** not after something breaks.
+- **Check the version history** on a page when an old answer doesn't match what you see.
+- **Reread the docs for your main tool sometimes.** Pages you read a year ago may have changed, and you'll understand more of them now.
+
+---
+
+## The honest stakes
+
+I can't show you a study proving that docs-first learning is faster. The survey shows docs are popular, not that they're better. This is my recommendation, based on how often these tools change, and the evidence above is about content going out of date.
+
+There are real limits, too:
+
+- **Complete beginners may feel lost.** Docs usually assume you know the basics. If you're new to programming, start with a guided course on the language, then come to the docs for each framework.
+- **Not all docs are good.** Small libraries may have only a thin README, and docs can have gaps and mistakes. Then the source code and the issue tracker become your docs.
+- **Old doesn't always mean wrong.** Fundamentals age slowly. A good book on networking or databases can stay useful for years, and `revalidate` from my opening example is still documented for projects that don't use Cache Components.
+
+The point isn't that courses and tutorials are bad. Use them, and enjoy them, but don't let them be your only source of truth.
+
+---
+
+## The rule
+
+Start with the docs to learn what's true, use whatever way you'll stick with to understand it, and come back to the docs to see what changed.
+
+---
+
+## TL;DR
+
+- Courses, videos and articles are snapshots, while official docs are meant to change along with the technology.
+- Use your first visit to the docs as a map: check the version, run the getting started guide, learn the main concepts and skim the sidebar.
+- After that, choose videos, books, podcasts or courses based on what you'll finish and what fits the subject, since there's little evidence for fixed learning styles.
+- Always check a resource's date and version against the docs, and build something small to test what you learned.
+- Keep following release notes, upgrade guides and version history, because that's where new features and changes show up first.

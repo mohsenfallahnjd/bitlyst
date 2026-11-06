@@ -265,4 +265,7 @@ async function main() {
   }
 }
 
-main();
+// medium.ts imports the converter from this file
+if (import.meta.main) {
+  main();
+}

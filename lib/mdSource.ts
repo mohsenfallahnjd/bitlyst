@@ -18,6 +18,8 @@ export type DocMeta = {
   series?: string;
   /** part number inside the series */
   seriesOrder?: number;
+  /** position among posts with the same publish date; higher shows first (default 0) */
+  publishOrder?: number;
 };
 
 /** DocMeta without the body — what list UIs (and client components) need. */
@@ -61,10 +63,16 @@ export function loadMarkdownDocs(): DocMeta[] {
         level: (data.level as DocMeta["level"]) ?? undefined,
         series: (data.series as string | undefined) ?? undefined,
         seriesOrder: (data.seriesOrder as number | undefined) ?? undefined,
+        publishOrder: (data.publishOrder as number | undefined) ?? undefined,
       };
     })
     .filter((p) => !p.draft)
-    .sort((a, b) => new Date(b.publishedTime).getTime() - new Date(a.publishedTime).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.publishedTime).getTime() - new Date(a.publishedTime).getTime() ||
+        (b.publishOrder ?? 0) - (a.publishOrder ?? 0) ||
+        a.slug.localeCompare(b.slug)
+    );
 }
 
 /** ✅ Load a single post by its slug */

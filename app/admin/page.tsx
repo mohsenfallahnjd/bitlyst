@@ -1,28 +1,10 @@
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { ADMIN_COOKIE, isAdminSession } from "@/lib/adminAuth";
+import { getAdminReport } from "@/lib/adminReport";
 import { prisma } from "@/lib/prisma";
-import { getRedis } from "@/lib/redis";
 import AdminClient from "./AdminClient";
-
-async function getReactionTotals() {
-  try {
-    const redis = await getRedis();
-    if (!redis) {
-      return [];
-    }
-    const keys = await redis.keys("reactions:*");
-    const totals: { slug: string; total: number }[] = [];
-    for (const key of keys) {
-      const data = await redis.hGetAll(key);
-      const total = Object.values(data).reduce((sum, v) => sum + parseInt(v || "0"), 0);
-      totals.push({ slug: key.replace("reactions:", ""), total });
-    }
-    return totals.sort((a, b) => b.total - a.total).slice(0, 20);
-  } catch {
-    return [];
-  }
-}
 
 export default function AdminPage(props: { searchParams: Promise<{ error?: string }> }) {
   // reads cookies + searchParams, so it renders per request inside Suspense
@@ -62,11 +44,14 @@ async function AdminContent({ searchParams }: { searchParams: Promise<{ error?: 
     );
   }
 
-  const [pending, approved, reactions] = await Promise.all([
+  // the report reads the clock, which must happen at request time
+  await connection();
+
+  const [pending, approved, report] = await Promise.all([
     prisma.comment.findMany({ where: { approved: false }, orderBy: { createdAt: "desc" } }),
     prisma.comment.findMany({ where: { approved: true }, orderBy: { createdAt: "desc" }, take: 50 }),
-    getReactionTotals(),
+    getAdminReport(),
   ]);
 
-  return <AdminClient pending={pending} approved={approved} reactions={reactions} />;
+  return <AdminClient pending={pending} approved={approved} report={report} />;
 }

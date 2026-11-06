@@ -15,6 +15,7 @@ const nextConfig = {
     "/api/comments/[slug]": ["./docs/**/*"],
     "/api/reactions/[slug]": ["./docs/**/*"],
     "/api/reactions/[slug]/user/[userId]": ["./docs/**/*"],
+    "/admin": ["./docs/**/*"],
   },
   // old ?tag= filters moved to static topic pages
   async redirects() {

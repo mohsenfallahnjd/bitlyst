@@ -1,0 +1,315 @@
+---
+title: "AI Is Your Junior Developer. Your Product Still Needs a Senior."
+summary: "AI coding tools are assistants, not owners. Why every product needs a senior engineer to review, observe and maintain what AI builds."
+publishedTime: "2026-11-06"
+publishOrder: 6
+level: "intermediate"
+tags: ["ai", "ai-coding", "code-review", "observability", "software-engineering", "best-practices"]
+---
+
+```
+Add CSV export to the orders page.
+```
+
+That's the whole ticket. Picture typing it into your AI tool and going to lunch.
+
+You come back to a finished feature. The button works, the file downloads, the tests are green. You feel like you hired an extra developer for the price of a subscription.
+
+Then you open the diff. There's a new package nobody on your team has heard of. There's a new date formatter sitting next to the one you already have. The export loads every order into memory, and the route never checks whether this user is allowed to see those orders.
+
+![Photo: nemuel on Pexels](/assets/ai-junior-diff.jpg)
+
+Nothing here looks broken in a demo. All of it is a problem in production, and none of it is really the AI's fault.
+
+Now replace "AI" with "the junior who joined on Monday." Would you give them one sentence on their first day, no docs, no design, no acceptance criteria, then disappear until they said "done"? If that went badly, whose mistake would it be?
+
+Then ask a bigger question. Once that feature is live, who watches it? Who notices it getting slower, keeps it maintained, and answers when it breaks next year?
+
+> **Every product people depend on needs a senior engineer who owns it. AI can assist with almost all of that work, but it can't be the owner.**
+
+---
+
+## The wrong turn: a faster developer needs less managing
+
+The tempting belief goes like this: AI writes code quickly, so my job is to ask for features and check that they work. Less typing, less thinking, more output.
+
+It feels right because the speed is real and you can see it. The problem is that the feeling isn't a reliable measuring tool.
+
+In 2025, METR ran [a randomized trial](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) with 16 experienced open source developers working on 246 tasks in their own repositories. Each task was randomly allowed or not allowed to use AI. They expected AI to make them 24% faster. They took 19% longer. And after doing the work, they still believed AI had made them 20% faster.
+
+That result needs an honest footnote, because it's easy to misuse. It's a small study of early-2025 tools, and METR itself marks it as out of date. [Its 2026 follow-up](https://metr.org/blog/2026-02-24-uplift-update/) points toward developers now being faster, but METR calls that data unreliable, partly because many developers refused to work on tasks without AI. So this study doesn't prove AI makes you slower.
+
+It proves something more useful: experienced developers can be wrong about their own speed by a wide margin, in the direction that feels good.
+
+The large surveys show a similar gap between how AI feels and what it delivers:
+
+| Source | What it found |
+|---|---|
+| [DORA 2025](https://cloud.google.com/blog/products/ai-machine-learning/announcing-the-2025-dora-report), nearly 5,000 professionals | More than 80% believe AI raised their productivity. AI adoption is linked to more throughput and also to less stable delivery. |
+| [Stack Overflow 2025](https://survey.stackoverflow.co/2025/ai) | 84% use or plan to use AI. 46% distrust its accuracy and 33% trust it. The top frustration, at 66%, is answers that are "almost right, but not quite." |
+
+"Almost right" is exactly how you'd describe a junior's first merge request. Developers already know how to handle that. They review it.
+
+---
+
+## The reveal: it is a junior, with a few dangerous differences
+
+Most of what goes wrong with AI code is familiar. It solves the ticket without knowing the codebase. It writes something new because it doesn't know the old thing exists. It handles the happy path and misses the rule nobody wrote down. Those are junior mistakes, and the research lines up with them:
+
+- **It doesn't protect your project's consistency.** GitClear looked at [211 million changed lines](https://www.gitclear.com/ai_assistant_code_quality_2025_research) from 2020 to 2024. Lines tied to refactoring fell from 25% of changes in 2021 to under 10% in 2024, while copy-pasted lines rose from 8.3% to 12.3%. That's a trend during the years AI tools spread, not proof that AI caused all of it, and GitClear sells code analytics. It still matches what you see in that CSV diff: a second date formatter.
+- **It doesn't think about security unless you make it.** [Veracode's 2025 test](https://www.veracode.com/press-release/ai-generated-code-poses-major-security-risks-in-nearly-half-of-all-development-tasks-veracode-research-reveals/) gave more than 100 models 80 coding tasks. They introduced a known type of vulnerability in 45% of cases, and failed to prevent cross-site scripting in 86% of the relevant cases. Veracode sells security tools and models keep changing, so treat the exact number with care. The lesson is that code can work perfectly and still be unsafe.
+- **It can pick a package that doesn't exist.** [A USENIX Security study](https://www.usenix.org/publications/loginonline/we-have-package-you-comprehensive-analysis-package-hallucinations-code) generated 576,000 code samples and found invented package names in [at least 5.2% of samples from commercial models and 21.7% from open source ones](https://arxiv.org/abs/2406.10279). About 45% of those invented names came back every time the same prompt was repeated. A name that repeats is a name an attacker can register and fill with malware.
+
+So far, this is only a junior with a good memory for syntax. But four differences make it riskier than the person who joined on Monday:
+
+| | Human junior | AI |
+|---|---|---|
+| **When unsure** | Often looks unsure, or asks you | Can sound equally confident when right and when wrong |
+| **When the brief has a gap** | May come to your desk | Often fills the gap with a guess and keeps going |
+| **After your review** | Remembers it next month | Forgets it, unless it's written somewhere it can read |
+| **Speed** | A merge request every few days | Can produce more than you can carefully read |
+
+The third row changes the job. A human junior improves because of your reviews. An AI tool improves because of your documents. If your feedback stays in a chat window, you'll give the same feedback forever.
+
+The fourth row explains the DORA result. Their summary is that [AI is an amplifier](https://dora.dev/research/2025/dora-report/), "magnifying an organization's existing strengths and weaknesses." In their words, without "strong automated testing, mature version control practices, and fast feedback loops, an increase in change volume leads to instability." More code goes into the same pipe, and if your review is weak, it now fails faster.
+
+> **AI doesn't remove the senior's work. It moves your time from typing code to directing and checking it.**
+
+---
+
+## The fix: run it the way you'd run a new junior
+
+Here's the same CSV feature, handled the way a good senior handles a new teammate. Every step below would have caught something in that first diff.
+
+<FlowDiagram
+  title="The working loop with an AI developer"
+  nodes="Write the brief → Read its plan → Build one small slice → Review it like a merge request"
+  notes="Context, design, acceptance criteria, what's out of scope|Catch a wrong approach before any code exists|Small enough to read properly|Ask the same questions you'd ask a person"
+  branch1="[green] Good → Merge → Next slice"
+  branch2="[orange] Wrong this time → Give specific feedback → Fix the slice"
+  branch3="[red] Same mistake again → Add a rule or a check → It stops coming back"
+  caption="The last branch is the one most people skip, and it's the only one that makes the next task better."
+/>
+
+### Onboard it before you assign it anything
+
+A new teammate gets the architecture, the conventions, and a tour of where things live. AI needs the same, written down. Most tools read a project file for this, such as `AGENTS.md` or `CLAUDE.md`.
+
+Keep it short and make it about your project, not good practice in general:
+
+```md
+## Structure
+- Database access lives in lib/db. Components never query directly.
+- Use lib/format.ts for dates and money. Don't write new formatters.
+
+## Dependencies
+- Ask before adding a package. Explain why existing code can't do the job.
+
+## How to work
+- Plan first, then code. If the plan stops fitting, stop and ask.
+- Keep diffs small. No unrelated refactors.
+
+## Done means
+- Typecheck, lint and tests all pass.
+```
+
+This idea has reached the frameworks too. When I run `next dev` on this blog, Next.js adds a note to the repo's `AGENTS.md` that speaks directly to the AI: "This version has breaking changes — APIs, conventions, and file structure may all differ from your training data." It then tells the agent to read the docs that ship with the installed package. The framework's own authors expect AI to be confidently out of date, so they onboard it.
+
+### Give it a brief, not a wish
+
+Compare the one-liner from the start of this post with this:
+
+```md
+Task: CSV export on the orders page.
+
+Read first: docs/orders.md, lib/format.ts, and the design at <link>.
+
+Acceptance criteria:
+- Exports all rows matching the current filters, not only the visible page
+- Users without orders:read get a 403
+- Uses formatDate and formatMoney from lib/format.ts
+- Streams the file, so a large export doesn't load everything into memory
+- Tests cover the filters and the 403
+
+Out of scope: scheduled exports, Excel format.
+
+Don't write code yet. Show me your plan first.
+```
+
+Writing that takes a few minutes, and it's the same thinking you'd do for a person. Look at what it closes: the formatter, the memory problem and the permission check are now requirements instead of luck. If you can't write the acceptance criteria, you aren't ready to delegate the task, to anyone.
+
+### Read its plan before it writes code
+
+This is the cheapest review you'll ever do. A wrong direction costs one sentence to fix at the plan stage and a whole diff to fix later.
+
+Ask it what it read and what it plans to change. Look for the things a junior wouldn't know to worry about: is it rebuilding something that exists? Is it changing a shared module for one small feature? Did it actually look at the code, or is it assuming?
+
+### Guard the door: packages and tools
+
+A new dependency is a long-term decision that takes the AI one line to make. Treat it the way you'd treat a junior's `package.json` change: it needs a reason.
+
+Before accepting one, check that it's real and alive, because of the invented-name problem above:
+
+```bash
+npm view some-package repository.url time.modified maintainers
+```
+
+The same goes for new patterns and tools. If the project uses one state library and the diff quietly adds a second, that's a review comment even if the code works. Every tool works in isolation. Consistency is the thing the AI can't see unless you hold it.
+
+### Stay in the room
+
+This is the part I feel strongest about: you can't announce "we need feature A" and come back when it's over. You wouldn't do it with a junior, and the AI won't come to your desk when it gets lost.
+
+![Photo: mizunokozuki on Pexels](/assets/ai-junior-review.jpg)
+
+Watch how it works, especially early on. If it's reading the wrong files, or has tried the same failing fix three times, or starts editing things outside the task, stop it. Correcting course halfway costs far less than unpicking the result.
+
+Work in slices, too. Build the export endpoint, review it, then add the button. A diff small enough to read gets a real review, and a huge one gets a skim and a thumbs up.
+
+### Review it like a junior's merge request
+
+Green tests aren't the finish line, especially when the same author wrote the code and the tests. A test can pass because it checks the wrong thing. Read the diff, and ask what you'd ask a person:
+
+- Does it meet each acceptance criterion, and can you show where?
+- Does it reuse what exists, or did it add a second version?
+- Who is allowed to call this, and where is that checked?
+- What happens with empty input, huge input, or a failure halfway?
+- Could you explain this code if it broke at 2 AM?
+
+That last one matters most. When you merge it, it's your code. "The AI wrote it" won't mean anything in the incident review.
+
+### Turn each repeated mistake into a rule
+
+This is where most of the long-term value is, and it's the same habit as a good mentor's: don't only fix the mistake, fix why it happened.
+
+You can see this in the history of this blog. On 31 October, `CLAUDE.md` told whoever was writing posts to use "first person." That rule had a hole in it: a made-up example could read like something that really happened. By the next day it said "first person only for real experiences," with made-up scenarios written as "picture…" and "you." It's the reason this post opens with "picture" and not with a story about a developer who doesn't exist.
+
+The same commit added a section on caching, with rules like this one:
+
+```md
+Don't read the clock (new Date(), Date.now()) or Math.random() in server
+components outside a "use cache" scope — it fails the prerender.
+```
+
+It's specific, and it says why. That's what a useful rule looks like.
+
+When a mistake can be caught by a machine, go further than a rule. A lint rule, a type or a failing test works every time, whether or not anyone remembered to read the docs. And maintain these files like code: rules go stale when the project changes, and a stale rule will mislead the AI as confidently as a wrong comment misleads a person.
+
+---
+
+## Delegation is something it earns
+
+You probably do want the end state: hand over a task and get back something you'd happily merge. That's how good juniors grow too. You don't get there by deciding to trust them. You get there by watching them handle bigger jobs without surprises.
+
+| Stage | What you hand over | How you work | Move up when |
+|---|---|---|---|
+| **1. Pairing** | One function or fix | You watch and read every line | Your rules are stopping the common mistakes |
+| **2. Supervised** | One slice of a feature | You approve the plan, then review the diff | Plans rarely need big corrections |
+| **3. Trusted** | A full ticket of a familiar type | You write the brief, then review the merge request | Your reviews mostly find small things |
+| **4. Delegated** | A repeated type of task | It works alone, and CI and a final review guard it | You keep checking, and move it back down if quality slips |
+
+Three things about this table are easy to miss.
+
+First, trust is per type of task, not per tool. You might fully delegate writing tests for pure functions and never get past stage 2 on payment code. A good senior gives out work the same way: based on what the task can break.
+
+Second, it's slow. I can't give you an honest number for how long it takes, because it depends on your codebase and how much is already written down. But the time isn't wasted, because everything you put in stays in the repo. Better docs and stricter checks also help your human teammates.
+
+Third, there's no stage 5 where the senior leaves. Delegating a task isn't the same as giving away responsibility for the product. A good tech lead delegates nearly everything and still answers for the result.
+
+---
+
+## Merging is the start of the long-term problems
+
+So far, everything has happened before the merge. But a product spends its life after the merge, and that's where AI left alone does the most lasting damage.
+
+Go back to the CSV export, and picture it passing every review. A year later, the orders table is far bigger. Exports that took seconds now time out. They hold database connections for so long that unrelated pages slow down. Customers complain before anyone on the team knows.
+
+No test failed, and nobody changed that code. The AI said nothing, because nobody asked it anything.
+
+That's the gap. A coding tool works on the task in front of it. Nobody hands it the job of caring about this product next year, and it can't be held to account for what happens then.
+
+The long-term cost is starting to show up in research. [A Carnegie Mellon study](https://arxiv.org/abs/2511.04427), published at MSR 2026, compared 806 GitHub projects that adopted Cursor with 1,380 similar projects that didn't:
+
+| What they measured | Result after adopting Cursor |
+|---|---|
+| Lines of code added | 3–5x increase in the first month, with the gains gone after two months |
+| Static analysis warnings | Up 30%, and it lasted |
+| Code complexity | Up 41%, and it lasted |
+
+The authors also found that those warnings and that complexity were major factors in the later slowdown. The speed was real, and so was the bill that came after it.
+
+This is one tool, in open source projects, during early adoption up to March 2025, and teams with strong review may do far better. That's the point, though: speed without an owner turns into debt.
+
+So here's the work that needs a senior, and where AI fits into it:
+
+| Area | AI can assist by | The senior stays responsible for |
+|---|---|---|
+| **Observability** | Adding logs and traces, drafting dashboards | Deciding what must be watched and what should wake someone up |
+| **Performance** | Finding slow queries, writing load tests, proposing fixes | Setting targets, reviewing trends, judging the trade-offs |
+| **Maintenance** | Drafting dependency upgrades and migrations | Choosing what to upgrade and when, with a rollback plan |
+| **Incidents** | Reading logs, suggesting likely causes | Deciding to roll back, telling users, making sure it doesn't repeat |
+| **Architecture** | Laying out options and their costs | Choosing the one the team will live with for years |
+
+For a starting point on what to watch, Google's SRE book names [four golden signals](https://sre.google/sre-book/monitoring-distributed-systems/): "latency, traffic, errors, and saturation." On the CSV export, that's how long exports take, how many people run them, how many fail, and how close the database is to its limit. The book's reason for monitoring is the same as this post's: it lets a system "tell us when it's broken, or perhaps to tell us what's about to break."
+
+Reviewing those numbers on a schedule is a real part of the job, and connecting AI to them is a good idea. It can spot the climbing line and summarize a hundred log entries in seconds. But judgment stays with you. Ask for a fix to that timeout with no context, and one valid-looking answer is a longer timeout. A senior asks why it's slow, whether the design still fits the data, and what else this will hurt.
+
+If your team has no senior engineer, bring one in, even part-time, before real users arrive and not after the first outage.
+
+### The honest stakes
+
+All of this has a cost, and sometimes it isn't worth paying. For a throwaway script or a weekend prototype nobody will maintain, go ahead and ask for the feature and see what comes back. The risk is small, so light supervision is fine.
+
+The junior comparison also has limits. A junior is a person whose growth is part of the point, and this tool has no career to invest in. You can also throw away an AI's attempt and start again without hurting anyone's feelings, which you should do more often than you would with a colleague. The comparison is a guide for how to supervise the work, not a claim about what the tool is.
+
+And the evidence is moving. Most of the studies here are from 2025, and models have changed since. Newer tools will likely make fewer of these mistakes. They won't know your product's unwritten rules unless someone writes them down, and they won't be accountable for what ships.
+
+---
+
+## "I built it with no technical knowledge, so it'll be easy for you"
+
+That weekend prototype leads to the most expensive version of this problem: the one with no senior in the loop at all.
+
+Picture a meeting. Someone from sales or product, with no engineering background, opens a laptop and shows a working app they built with AI. It has a login, a dashboard and real customer data. It's impressive, and they know it. Then comes the sentence:
+
+"I built this without any technical knowledge. You're much better at this than I am, so maintaining it will be easy for you."
+
+It sounds logical, and it's wrong.
+
+![Photo: goumbik on Pexels](/assets/ai-junior-solo.jpg)
+
+Being easy to build says nothing about being easy to maintain. It was easy because the AI made hundreds of decisions and nobody had to look at them: how permissions work, where the secrets live, what the data model assumes, what happens when two people edit the same record. Those decisions didn't go away. Nobody has reviewed them yet.
+
+A better engineer doesn't make those problems smaller. They only see more of them. And the team isn't inheriting code from a colleague they can ask, because the author can't explain why any of it is the way it is. Every question gets the same answer: "I don't know, the AI did that." The team now owns production software with no history, no reasoning, and often no tests.
+
+Even the person who named this way of working didn't claim otherwise. When Andrej Karpathy coined "vibe coding" in 2025, [he wrote](https://simonwillison.net/2025/Mar/19/vibe-coding/) "I 'Accept All' always, I don't read the diffs anymore," and described it as "not too bad for throwaway weekend projects." The limit was in the original description.
+
+Two public cases show what's at stake once real users arrive:
+
+- **Data left open.** In 2025, researcher Matt Palmer [scanned 1,645 projects](https://mattpalmer.io/posts/statement-on-CVE-2025-48757/) from the showcase of Lovable, an AI app builder. He reports that 170 of them, about 10%, had database access rules weak enough to expose data such as names, phone numbers, API keys and payment details. These apps can look finished on the surface, which is the point. Palmer works at Replit, a competitor, so read it with that in mind, and Lovable has since added a security scan.
+- **Production deleted.** Also in 2025, SaaStr founder Jason Lemkin [reported](https://fortune.com/2025/07/23/ai-coding-tool-replit-wiped-database-called-it-a-catastrophic-failure/) that a Replit agent deleted their production database during a declared code freeze, wiping records for more than 1,200 executives. The account comes from Lemkin's own posts, and [the data was later recovered](https://www.theregister.com/2025/07/21/replit_saastr_vibe_coding_incident/). Replit's CEO called it unacceptable, and the company began separating development and production databases. That's a basic safeguard an experienced engineer would ask about first.
+
+None of this means non-technical people shouldn't build with AI. They should. A working prototype beats a long requirements document, because everyone can click it and argue about something real. The mistake is what happens next, so change the handover:
+
+- **Call it a prototype.** Bring it early, before it has real users or real data, and say "this shows what I want," not "this is what you'll maintain."
+- **Let the team choose.** Adopt, rework or rebuild is an engineering decision, made after reading the code and estimating the cost. It can't be assumed because the demo works.
+- **Name an owner first.** Someone has to be able to explain the code and answer the phone when it breaks at 2 AM. If nobody can, it isn't ready for production.
+- **Review it before real data goes in.** At minimum, check permissions, secrets, backups, separate environments, and tests for what matters most.
+
+This isn't really about job titles. A senior developer who merges every AI diff unread is in the same position as the person in that meeting, with a better vocabulary. What matters is whether anyone understands the thing they're asking others to run.
+
+---
+
+## The rule
+
+Give every product a senior engineer who owns it, from the first brief to production and beyond. Use AI as a fast junior: brief it, watch it, review it, write down what it got wrong, and give it more as it earns trust. Let it assist with everything, and let it own nothing.
+
+---
+
+## TL;DR
+
+- Every product people depend on needs a senior engineer who owns its maintenance, observability and performance, because AI can assist with that work but can't be accountable for it.
+- AI behaves like a very fast junior, so give it project rules, a brief and a required plan, review its diffs like a merge request, and turn repeated mistakes into rules or automated checks.
+- Feeling faster isn't evidence: in METR's 2025 trial, developers took 19% longer with AI and still believed it had made them 20% faster, although METR now considers that result out of date.
+- Unsupervised speed can become long-term debt: in a Carnegie Mellon study of Cursor adoption, the speed gains faded after two months while warnings rose 30% and code complexity 41%.
+- An app built without technical knowledge is a valuable prototype, not a handover, because being easy to build says nothing about being easy to maintain.

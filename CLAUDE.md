@@ -6,11 +6,13 @@ Personal tech blog (Next.js App Router + MDX). Posts live in `docs/*.mdx` — on
 
 ## Writing posts
 
-When writing, rewriting or editing any post, follow **[WRITING_GUIDE.md](WRITING_GUIDE.md)**: story-first voice (hook → wrong turn → reveal → fix → takeaway), first person only for real experiences (made-up scenarios use "picture…" / "you", no invented people), no emoji in headings, measured numbers only, one concept per post, TL;DR at the end.
+When writing, rewriting or editing any post, follow **[WRITING_GUIDE.md](WRITING_GUIDE.md)**: story-first voice (hook → wrong turn → reveal → fix → takeaway), first person only for real experiences (made-up scenarios use "picture…" / "you", no invented people), no emoji in headings, measured numbers only, one concept per post, images in every post (licensed photos or AI art, captions never just describe the image), TL;DR at the end.
 
 Diagrams in MDX: `<FlowDiagram>` (ordered steps that can fork into outcomes; supports `title`, `notes`, `caption`) and `<ParallelFlow>` (waterfall timeline of sequential vs concurrent work). Usage is documented at the top of each component in `components/`.
 
 Series are registered in `lib/series.ts` and joined via `series` + `seriesOrder` frontmatter.
+
+Posts sharing a `publishedTime` date are ordered by `publishOrder` frontmatter (higher shows first, default 0), then by slug. Newest written goes on top: when a post shares its date with another, give it the next number above the highest one that day.
 
 ## Caching (Cache Components is on)
 
