@@ -1,0 +1,120 @@
+---
+title: "Shuffling an Array Made the Same Loop Seven Times Slower"
+summary: "How memory locality and CPU cache misses affect JavaScript: why array order changes loop speed for large arrays of objects, and when typed arrays help."
+publishedTime: "2026-11-06"
+level: "advanced"
+series: "under-the-benchmark"
+seriesOrder: 4
+tags: ["javascript", "v8", "performance", "cpu-cache", "memory", "typed-arrays"]
+---
+
+```
+in allocation order: 1.04 ns per element
+shuffled:            7.51 ns per element
+```
+
+Same million objects. Same loop. Same result, down to the last digit. The only difference is the order of the items in the array.
+
+Picture a Node process holding a million rows in memory. It sums a field every few seconds, and that takes about a millisecond. Then you sort the rows by score once at startup, because a different feature wants them that way. The sum now takes more than seven times as long, in code you never touched.
+
+---
+
+## The wrong turn: blaming the sort
+
+The sort is new, so it's the first suspect. But the sort runs once, at startup, and the slowdown shows up on every later pass.
+
+So is it the objects? Maybe sorting changed something about them. Hidden classes are unchanged, and nothing was added to them. The loop is as simple as a loop gets:
+
+```js
+function sum(rows) {
+  let total = 0;
+  for (let i = 0; i < rows.length; i++) total += rows[i].value;
+  return total;
+}
+```
+
+From JavaScript's point of view, the two runs do identical work. The difference isn't in JavaScript at all. It's in where those objects sit in physical memory.
+
+---
+
+## The reveal: an array of objects is a list of addresses
+
+The array doesn't contain your objects. It contains pointers to them, and the objects live elsewhere on the heap. When you create them one after another, V8 places them one after another, and in this test each took about 40 bytes.
+
+So a first pass walks forward through memory in small steps. That's the easiest pattern a CPU ever sees, for two reasons. Memory arrives in the cache in blocks, 128 bytes at a time on this chip, which here means roughly three neighboring objects come along for free. And the hardware notices the steady direction and starts fetching ahead of you.
+
+Sorting moves only the pointers. The objects stay exactly where they were:
+
+<FlowDiagram
+  title="The same read, depending on where the next object is"
+  nodes="Read rows[i] pointer → Follow it to the object"
+  notes="The array of pointers is itself sequential, so this part stays cheap either way|This is the part that changes"
+  branch1="[green] Next object is right beside the last → Already in cache, or already being fetched → A nanosecond"
+  branch2="[red] Next object is somewhere random → Likely not in cache, no pattern to predict → Wait on slower memory"
+  caption="The loop's code is the same in both paths. The hardware makes one path far cheaper than the other."
+/>
+
+If this is really about the CPU cache, then a small array should show no difference, because everything fits in cache regardless of order. That's a testable prediction:
+
+| Objects | Approx. memory | In order | Shuffled | Slowdown |
+|---|---|---|---|---|
+| 1,000 | 40 KB | 0.77 ns | 0.77 ns | none |
+| 100,000 | 4 MB | 0.75 ns | 1.21 ns | 1.6× |
+| 1,000,000 | 40 MB | 1.04 ns | 7.51 ns | 7.2× |
+| 5,000,000 | 200 MB | 1.08 ns | 9.41 ns | 8.7× |
+
+*Node 26.13 (V8 14.6), Apple M3 Pro, median of 5 fresh processes. The objects are settled by two forced GCs, then Fisher-Yates shuffled.*
+
+The prediction holds. On this chip, `sysctl` reports a 16 MB L2 cache for the performance cores. 4 MB fits inside it and takes only a small hit, while 40 MB doesn't and takes the big one.
+
+That lines up well, but it's still an inference. This test has no hardware counter readings, and address translation misses probably contribute too. The numbers below 100,000 objects are also too close to call: at 10,000 objects, the shuffled run came out faster in one set of runs, which is noise and nothing to build on.
+
+A real sort behaves the same. Sorting by an unrelated key measured 7.66 ns, in line with the shuffle. And you might hope the garbage collector tidies this up as it moves objects around. Shuffling while the objects were still young and then forcing a collection only got it to 6.75 ns.
+
+> **Sorting an array of objects reorders the addresses, not the objects. The CPU only cares about the objects.**
+
+The stakes, honestly: 7.5 ms instead of 1 ms per pass over a million objects. A loop that runs once per request won't care. A loop that runs constantly over big in-memory data will, and so will the bill.
+
+---
+
+## The fix
+
+Make memory order match the order you read in. All of these were measured on the same million items:
+
+```js
+// 1. copy objects after sorting, so they're allocated in read order
+rows = rows.map((r) => ({ id: r.id, value: r.value }));
+
+// 2. or store the hot field in a typed array, with no pointers to follow
+const values = new Float64Array(rows.length);
+for (let i = 0; i < rows.length; i++) values[i] = rows[i].value;
+```
+
+| Layout | Time per element |
+|---|---|
+| Shuffled objects | 7.48 ns |
+| Original allocation order | 1.03 ns |
+| Shuffled, then copied in read order | 0.91 ns |
+| `Float64Array` of the field | 0.65 ns |
+
+Copying is the small change, and it brings back nearly all of the speed. The cost is a one-time pass and a temporary doubling of that memory until the old objects are collected.
+
+The typed array is the fastest, because the numbers themselves sit side by side instead of behind pointers. It's also the bigger change, since you now keep a column separately from your objects. Reach for it when one or two numeric fields dominate the hot loop.
+
+If most of your reads are in one order and only some need another, you can also keep the objects as they are and hold a sorted array of indexes for the rarer read.
+
+---
+
+## The rule
+
+For large in-memory data read in hot loops, order matters. Keep objects allocated in the order you traverse them, or move the hot numbers into a typed array.
+
+---
+
+## TL;DR
+
+- A JavaScript array of objects holds pointers, so its order and the objects' order in memory can be two different things.
+- Sorting or shuffling reorders only the pointers, turning a steady walk through memory into a series of random jumps the CPU cache can't help with.
+- In this test, the slowdown was none at 1,000 objects, 1.6× at 100,000 and 7.2× at a million, lining up with a 16 MB L2 cache.
+- Forcing garbage collection didn't restore the order, but copying the objects after sorting brought a pass back from 7.48 ns to 0.91 ns per element.
+- A `Float64Array` of the hot field was fastest at 0.65 ns per element, and it's worth the extra structure only for big data in hot loops.

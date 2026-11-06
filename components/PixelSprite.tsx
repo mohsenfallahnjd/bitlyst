@@ -94,6 +94,40 @@ const SPRITES = {
       grid: [".GGG.", "GgggG", "GgggG", ".GGG.", "...H.", "....H"],
     },
   },
+  // Under the Benchmark — a wide-eyed stopwatch, mid-measurement, with a speed bolt
+  tick: {
+    palette: { K: OUTLINE, P: "#16181e", C: "#2dd4a7", W: "#f6f7f9" },
+    body: [
+      "......KKKK......",
+      ".......KK.......",
+      "....KKKKKKKK....",
+      "...KCCCCCCCCK...",
+      "..KCWWWWWWWWCK..",
+      "..KCWPPWWPPWCK..",
+      "..KCWPPWWPPWCK..",
+      "..KCWWWWWWWWCK..",
+      "..KCWWWPPWWWCK..",
+      "..KCWWWPPWWWCK..",
+      "..KCWWWWWWWWCK..",
+      "...KCCCCCCCCK...",
+      "....KKKKKKKK....",
+      "....KK....KK....",
+      "...KKK....KKK...",
+      "................",
+    ],
+    lids: [
+      [5, 5, 2, 2],
+      [9, 5, 2, 2],
+    ],
+    lidColor: "#f6f7f9",
+    // speed bolt
+    prop: {
+      palette: { Z: "#f5b82e" },
+      x: 16,
+      y: 0,
+      grid: ["..ZZ.", ".ZZ..", "ZZZZ.", "..ZZ.", ".ZZ..", ".Z..."],
+    },
+  },
 } satisfies Record<string, Sprite>;
 
 export type SpriteName = keyof typeof SPRITES;

@@ -1,0 +1,152 @@
+---
+title: "A Fifth Object Shape Made the Same Loop Twice as Slow"
+summary: "How V8 hidden classes and inline caches work, why property reads jump in cost past four object shapes, and how to keep hot code monomorphic."
+publishedTime: "2026-11-06"
+level: "advanced"
+series: "under-the-benchmark"
+seriesOrder: 2
+tags: ["javascript", "v8", "performance", "hidden-classes", "inline-cache"]
+---
+
+Same loop, same array length, same field. One line changes between these two runs: how many kinds of object are in the array.
+
+```
+4 shapes: 1.51 ns per read
+5 shapes: 3.31 ns per read
+```
+
+The loop is one property read:
+
+```js
+function sum(items) {
+  let total = 0;
+  for (let i = 0; i < items.length; i++) total += items[i].value;
+  return total;
+}
+```
+
+Picture this code running fine for a year, until a fifth product type joins the array. Nothing in `sum` changed, and each of the objects still has a `value`. Yet the read costs more than twice as much.
+
+---
+
+## The wrong turn: reading it as Big O
+
+The natural first check is complexity. The loop is O(n) before and after, and n didn't change. So you look elsewhere: maybe the new type has a slow getter, or the array grew, or the benchmark is noisy.
+
+None of those apply here. There's no getter, the array holds a million items in every run, and the gap between the slowest 4-shape run and the fastest 5-shape run is wide.
+
+Big O counts how many reads happen. It says nothing about what one read costs, and in JavaScript that cost isn't fixed.
+
+---
+
+## The reveal: a property read is a guess
+
+JavaScript objects look like hash maps, but looking up a string on every read would be slow. So V8 gives objects a hidden description of their layout, called a **hidden class** (V8's source calls it a Map). Objects with the same properties, added in the same order, share one. The hidden class records where `value` lives, so the object itself only stores values.
+
+Order counts, and so does anything that adds a field on only some paths. You can ask V8 directly by running this with `node --allow-natives-syntax`:
+
+```js
+const a = { x: 1, y: 2 }, b = { x: 3, y: 4 }, c = { y: 2, x: 1 };
+%HaveSameMap(a, b); // true
+%HaveSameMap(a, c); // false  ← same keys, different order
+
+class P {
+  constructor(x, opt) {
+    this.x = x;
+    if (opt) this.opt = opt;
+    this.y = 1;
+  }
+}
+%HaveSameMap(new P(1), new P(1, 2)); // false  ← one class, two shapes
+
+const d = { x: 1, y: 2 };
+delete d.y;
+%HasFastProperties(d); // false  ← now a slower dictionary-style object
+```
+
+Each read site in your code then keeps a small memo of the shapes it has seen, an **inline cache**. Next time, it checks "is this a shape I know?" and jumps straight to the slot.
+
+That memo has a size limit, and it's the whole story behind the numbers at the top:
+
+<FlowDiagram
+  title="What one property read site remembers"
+  nodes="Read items[i].value"
+  notes="This memo belongs to this line of code, not to the object"
+  branch1="[green] 1 shape seen → Monomorphic: one check, then read the slot"
+  branch2="[cyan] 2 to 4 shapes seen → Polymorphic: a short list of checks"
+  branch3="[orange] 5 or more shapes seen → Megamorphic: stop remembering, use a shared lookup table"
+  caption="Past four shapes, the read site gives up on its own memo. The limit of four is V8's current behavior, not a language rule."
+/>
+
+Here's the same loop across shape counts. The objects differ only by the name of one other field:
+
+```js
+const makers = Array.from({ length: n }, (_, i) =>
+  new Function("v", `return { k${i}: 0, value: v };`));
+
+const items = new Array(1_000_000);
+for (let i = 0; i < items.length; i++) items[i] = makers[i % n](i & 7);
+```
+
+| Shapes at the read site | Time per read | Compared to one shape |
+|---|---|---|
+| 1 | 1.04 ns | 1× |
+| 2 | 1.14 ns | 1.1× |
+| 3 | 1.43 ns | 1.4× |
+| 4 | 1.51 ns | 1.5× |
+| 5 | 3.31 ns | 3.2× |
+| 16 | 3.29 ns | 3.2× |
+| 64 | 3.39 ns | 3.3× |
+| 1,024 | 4.36 ns | 4.2× |
+| 4,096 | 41.59 ns | 40× |
+
+*Node 26.13 (V8 14.6), Apple M3 Pro. Each row is the median of 7 fresh processes, 60 passes over a million objects after a warm-up.*
+
+Two things stand out. The cost climbs gently through four shapes, then jumps at exactly five and sits flat. That's the step from checking a list to using the shared table.
+
+Then there's the cliff at 4,096. The shared table has a fixed size, so the likely cause is shapes evicting each other until reads fall back to a slow full lookup. This benchmark doesn't isolate that, so treat the explanation as a good guess rather than a proven one.
+
+> **Big O counts the reads. The hidden class decides what each read costs.**
+
+Be honest about the stakes, too. Going from one shape to five adds about 2.3 ns per read, which is roughly 2 ms per million reads. Almost no UI handler will ever notice. This matters in loops that run constantly: parsers, renderers, simulations, serialization, anything a profiler already points at.
+
+---
+
+## The fix
+
+Make every object at a hot read site the same shape. In practice that means creating them all in one place, with every field set, in the same order:
+
+```js
+// before: five shapes, depending on the type
+const book = { title, price, pages };
+const song = { title, price, seconds };
+
+// after: one shape, unused fields are explicit
+function makeProduct({ title, price, pages = null, seconds = null }) {
+  return { title, price, pages, seconds };
+}
+```
+
+The same applies to the class above. Assign `this.opt = opt` every time rather than behind an `if`, and set a field to `null` rather than calling `delete` on it.
+
+One more trap survives this fix: V8 tracks the kind of value in a field, too. Two `makeProduct` results compared as the same shape with whole-number prices, but not when a later one had `price: 3.5`. The older object keeps its old hidden class at least until V8 migrates it, so keep a hot numeric field all integers or all decimals if you can.
+
+If the shapes really must differ, split the read site so each variant gets its own loop, and each line stays monomorphic. Either way, do this only after a profile points at the loop. A cleaner data model is a fine reason on its own, but 2 ms per million reads usually isn't.
+
+---
+
+## The rule
+
+In hot code, keep each property read seeing as few object shapes as possible, and treat four as the line you don't want to cross.
+
+---
+
+## TL;DR
+
+- V8 gives objects with the same properties in the same order a shared hidden class, which tells it where each field lives.
+- Each property read in your code caches the shapes it has seen: one is monomorphic, up to four is polymorphic, and five or more is megamorphic.
+- In this benchmark, a read went from 1.04 ns at one shape to 1.51 ns at four and 3.31 ns at five, then 41.59 ns at 4,096 shapes.
+- Key order, fields added conditionally, and `delete` all create extra shapes or slower objects without any visible change in your code.
+- Only hot loops feel this, so create objects in one place with all fields set, and profile before contorting anything else.
+
+Further reading: [Shapes and Inline Caches](https://mathiasbynens.be/notes/shapes-ics) by Mathias Bynens, and [What's up with monomorphism?](https://mrale.ph/blog/2015/01/11/whats-up-with-monomorphism.html) by Vyacheslav Egorov.

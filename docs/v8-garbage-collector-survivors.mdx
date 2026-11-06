@@ -1,0 +1,149 @@
+---
+title: "Keeping Ten Times More Objects Made Garbage Collection Four Times Cheaper"
+summary: "How V8's generational garbage collector really charges you: scavenges cost per survivor, and allocation site pretenuring can make long-lived objects cheaper."
+publishedTime: "2026-11-06"
+level: "advanced"
+series: "under-the-benchmark"
+seriesOrder: 5
+tags: ["javascript", "v8", "nodejs", "performance", "garbage-collection", "memory"]
+---
+
+```
+keep 1,000,000 objects alive: 38 ms in GC
+keep   100,000 objects alive: 155 ms in GC
+```
+
+Both runs allocate the same 100 million objects. The second keeps a tenth as many alive at a time, and it spends four times as long collecting garbage.
+
+Picture a Node service that buffers its last million events in memory. GC looks like something worth reducing, and the obvious lever is holding less, so you shrink the buffer to 100,000. By the logic most of us carry around, this has to help. It makes things worse.
+
+---
+
+## The wrong turn: GC cost follows memory held
+
+The mental model is simple: more objects means more work for the collector, so fewer objects means less. Many performance tips grow out of this. "Avoid allocating." "Reduce GC pressure." "Hold less in memory."
+
+So here's the test, with one knob. A loop allocates small objects, and a ring buffer decides how many stay alive by overwriting the oldest:
+
+```js
+const ring = new Array(keep);
+for (let i = 0; i < 100_000_000; i++) {
+  ring[i % keep] = { a: i, b: i };
+}
+```
+
+If cost followed memory held, the results would climb steadily with `keep`. They don't:
+
+| Objects kept alive | Total time | Time in GC | Scavenges | Major GCs |
+|---|---|---|---|---|
+| 1 | 443 ms | 72 ms | 2,470 | 0 |
+| 1,000 | 415 ms | 20 ms | 483 | 0 |
+| 10,000 | 424 ms | 26 ms | 179 | 0 |
+| 100,000 | 572 ms | 155 ms | 148 | 1 |
+| 300,000 | 441 ms | 54 ms | 8 | 46 |
+| 1,000,000 | 463 ms | 38 ms | 7 | 17 |
+| 3,000,000 | 539 ms | 127 ms | 7 | 8 |
+
+*Node 26.13 (V8 14.6), Apple M3 Pro. Each row is the median of 3 fresh processes. GC time comes from `perf_hooks` `gc` entries. The real test yields to the event loop every million objects so those entries can be delivered, and reads a field from each object so V8 can't optimize the allocation away.*
+
+Start with the top rows. Those runs create 100 million objects and, at 1,000 kept, spend 20 ms on all of them. That's the first clue that allocating isn't where the bill comes from.
+
+---
+
+## The reveal: V8 charges for survivors, not garbage
+
+V8 splits the heap by age, because most objects die young. New objects go in a small young space. When it fills, a fast collection called a **scavenge** copies the live objects out and throws away everything else in one go.
+
+A dead object costs a scavenge nothing, because it's never touched. A survivor has to be found and copied. So the price of a scavenge depends on how many objects are still alive at that moment, not on how many you created.
+
+That explains the first four rows. At 1,000 kept, each scavenge copies almost nothing. At 100,000, each one copies 100,000 objects, and it costs about a millisecond every time. You've built the worst case: objects that live long enough to get copied, then die anyway.
+
+Then why does keeping a million get cheaper? By this logic, it should be far worse, and without one specific optimization, it is. This flag switches it off:
+
+```bash
+node --no-allocation-site-pretenuring test.mjs
+```
+
+| Objects kept alive | GC time, default | GC time, flag off |
+|---|---|---|
+| 100,000 | 155 ms | 144 ms |
+| 300,000 | 54 ms | 568 ms |
+| 1,000,000 | 38 ms | 1,471 ms |
+| 3,000,000 | 127 ms | 1,871 ms |
+
+There it is: 38 ms against 1,471 ms for the same work. With the flag off, a million kept objects cause 183 scavenges, and each one copies a heavy load of survivors. With it on, there are only 7.
+
+V8 tracks the place in your code where objects are created, called an allocation site. When most objects from a site keep surviving, V8 stops pretending they're short-lived. Optimized code starts allocating them directly in old space, skipping the young space and all that copying. This is **pretenuring**, and it means V8 learned something about your program while it ran.
+
+<FlowDiagram
+  title="What a new object costs, by how long it lives"
+  nodes="Allocate in young space"
+  notes="Allocation itself is cheap either way"
+  branch1="[green] Dies before the next scavenge → Never touched → Close to free"
+  branch2="[orange] Survives a scavenge, then dies → Copied, then wasted → The expensive middle"
+  branch3="[cyan] Most from this site keep surviving → V8 allocates them in old space directly → No more copying"
+  caption="Objects that die young are cheap, objects V8 can identify as long-lived are cheap, and the ones in between pay in full."
+/>
+
+At 100,000 kept, the flag makes almost no difference, so V8 isn't pretenuring there. A rough calculation shows why that's plausible: 148 scavenges across 100 million objects means about 675,000 allocated between each one, so only around 15% of them survive. That's apparently too few for V8 to call the whole site long-lived. You pay for copying without getting the escape hatch.
+
+> **The objects that hurt aren't the ones you keep or the ones you drop. They're the ones you keep for a little while.**
+
+There are a few honest caveats here. Pretenuring is a heuristic, not a guarantee: on Node 22, one of three runs at 300,000 took 2,319 ms instead of about 470 ms, close to the flag-off figure, though that one run doesn't prove why. Lower total GC time also isn't lower pause time. The longest single pause was 1.2 ms at 100,000 kept and 35.9 ms at 3 million, from a major GC. If you care about tail latency, the bigger heap can still lose.
+
+And this is a synthetic loop with a 110 ms swing on a 100-million-object run. Most services won't feel this until allocation rates are high.
+
+---
+
+## The fix
+
+Don't start by shrinking things. Measure GC first, since it takes only a few lines:
+
+```js
+import { PerformanceObserver } from "node:perf_hooks";
+
+new PerformanceObserver((list) => {
+  for (const e of list.getEntries()) {
+    console.log(e.detail.kind, e.duration.toFixed(1) + " ms");
+  }
+}).observe({ entryTypes: ["gc"] });
+```
+
+If scavenges dominate, you have objects dying at middle age, and the best fix is to stop allocating them. Applied to the 100,000-object ring, here's what the options did:
+
+```js
+// before: a new object per event, each one survives a scavenge, then dies
+ring[i % keep] = { a: i, b: i };
+
+// after: reuse fixed slots, overwrite the fields
+const slot = ring[i % keep];
+slot.a = i;
+slot.b = i;
+```
+
+| Option, at 100,000 kept | Total time | Time in GC |
+|---|---|---|
+| New object per event | 562 ms | 152 ms |
+| `--max-semi-space-size=64` | 505 ms | 86 ms |
+| `--max-semi-space-size=128` | 518 ms | 68 ms |
+| Reuse slots | 171 ms | 2 ms |
+
+A bigger young space helps a bit by running scavenges less often, without any code change. Reusing slots removes the problem entirely. The cost is that nothing else may hold on to a slot, because the data under it will change. Keep it private to the buffer and copy on the way out.
+
+`--no-allocation-site-pretenuring` is a diagnostic tool, not a setting to leave on. It's useful for one thing here: proving what's going on.
+
+---
+
+## The rule
+
+Don't guess at GC from how much you allocate or hold. Measure it, and go after objects that live long enough to be copied and then die.
+
+---
+
+## TL;DR
+
+- A V8 scavenge costs per surviving object, so dead objects are close to free and 100 million allocations can take only 20 ms of GC.
+- Objects that survive a scavenge and then die are the worst case, which is why a 100,000-object buffer cost 155 ms of GC here and a million-object buffer only 38 ms.
+- Allocation site pretenuring is the reason: V8 moves consistently surviving sites straight to old space, and disabling it pushed the million-object case to 1,471 ms.
+- Total GC time isn't pause time, since the largest kept set also had the longest single pause, at 35.9 ms.
+- Measure with `perf_hooks` `gc` entries before changing anything, and reuse fixed slots where objects die at middle age, which took GC from 152 ms to 2 ms here.

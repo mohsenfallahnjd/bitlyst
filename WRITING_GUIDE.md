@@ -74,6 +74,7 @@ seriesOrder: 1
 
 - **JavaScript Plot Twists** — real bugs caused by JS doing exactly what the spec says. Each part: one surprising behavior, one real-world bug it caused, the rule that prevents it.
 - **Next.js Field Notes** — tricks and traps from production App Router apps.
+- **Under the Benchmark** — same code, wildly different speed. Each part: one measured surprise, what the engine or hardware is really doing, and the honest stakes.
 
 When a part is published, remove its title from `upcoming` in `lib/series.ts`.
 

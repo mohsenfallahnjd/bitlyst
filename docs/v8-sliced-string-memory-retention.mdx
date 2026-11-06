@@ -1,0 +1,130 @@
+---
+title: "4 KB of Text Was Holding 200 MB of Memory"
+summary: "Why slice() in V8 can keep a huge parent string alive, how sliced strings cause memory leaks in Node.js, and how to copy a string to release it."
+publishedTime: "2026-11-06"
+level: "advanced"
+series: "under-the-benchmark"
+seriesOrder: 3
+tags: ["javascript", "v8", "nodejs", "performance", "memory-leak", "strings"]
+---
+
+```
+kept: 200 strings, 3.9 KB of text
+heap: +200.0 MB
+```
+
+That's the output of a small test, and the two lines should not be able to coexist. An array holds 200 short IDs, about 4 KB of characters. Forcing a full garbage collection doesn't help. The heap stays 200 MB bigger.
+
+Picture the same thing in a Node service. Each request carries a large JSON body, and you keep only its ID in a `Map` for later. The body goes out of scope immediately, so it should be gone. Instead, memory climbs by the size of a request body, every request, until the process dies.
+
+---
+
+## The wrong turn: hunting for the reference
+
+Every memory leak guide says the same thing: something still references your object. So you look for it. A closure capturing the body? A logger buffering requests? A forgotten listener?
+
+Here's the entire test, and none of those exist in it:
+
+```js
+function build() {
+  const kept = [];
+  for (let i = 0; i < 200; i++) {
+    const big = JSON.stringify({
+      id: `req-${i}`,
+      body: String(i).padEnd(1024 * 1024, "x"),
+    });
+    kept.push(big.slice(7, 27)); // 20 characters
+  }
+  return kept;
+}
+```
+
+`big` is local to the loop. Nothing else touches it. The only thing that leaves is the result of `slice`, and `slice` returns a new string.
+
+Except that a new string, in JavaScript's eyes, doesn't have to be new memory.
+
+---
+
+## The reveal: slice() doesn't copy
+
+Strings in JavaScript can't change. That gives V8 a shortcut: when you slice a long string, it doesn't need to copy any characters, because the originals will never move or change. It creates a small object that says "start at offset 7 in that string, length 20". V8 calls this a **sliced string**.
+
+Fast and memory-friendly, right up until the slice outlives its parent:
+
+<FlowDiagram
+  title="What the kept string actually is"
+  nodes="kept[0] → Sliced string → Parent string"
+  notes="What your code sees: a 20-character ID|Small header: a pointer to the parent, an offset, a length|The whole 1 MB body, kept alive by that pointer"
+  caption="The garbage collector sees a live pointer to the parent, so it can't free it. Your code has no way to see that pointer."
+/>
+
+The language gives you no signal at all. `kept[0].length` says 20, and comparing or printing it behaves normally. The only place this shows up is a heap snapshot, which has a node type literally named `sliced string`. A snapshot of a smaller version of this test, keeping 5 short strings, also showed all 5 of their 1 MB parents still alive.
+
+It also has a threshold. Below a certain length, V8 copies, because a pointer-and-offset header wouldn't save anything:
+
+| Kept length | Heap growth for 200 strings |
+|---|---|
+| 12 characters | none (the parent is freed) |
+| 13 characters | 200 MB (the parent is retained) |
+
+*Node 26.13 (V8 14.6), measured with `process.memoryUsage().heapUsed` after two `gc()` calls under `--expose-gc`.*
+
+One extra character decides whether you keep a megabyte, which is why this bug can sit quiet for months. Short IDs are fine. Then the ID format changes to UUIDs.
+
+> **A short string in your array can be a window onto a huge string you thought was gone.**
+
+And `slice` isn't the only way in. Anything that hands back a piece of an existing string can do it:
+
+| How the short string was made | Keeps the parent alive? |
+|---|---|
+| `big.slice(a, b)` | yes |
+| `big.substring(a, b)` | yes |
+| `big.split('"')[3]` | yes |
+| `/"id":"([^"]+)"/.exec(big)[1]` | yes |
+| `JSON.parse(big).id` | no |
+| Used as an object key, then read from `Object.keys` | no |
+
+*Same test setup: 200 parents of 1 MB, with a 24-character piece kept from each.*
+
+The `JSON.parse` row is the good news. The parser builds fresh strings, so the common case of parsing a body and keeping one field is safe. The trap is pulling a value out of raw text with string methods or a regex, then storing it.
+
+This is V8 behavior. It's not in the JavaScript spec, and other engines make their own choices.
+
+---
+
+## The fix
+
+Copy the characters into a new string before storing it. JavaScript has no official "copy this string" method, so you go through something that has to rebuild it:
+
+```js
+// before: keeps the 1 MB parent alive
+cache.set(key, big.slice(7, 27));
+
+// after, in Node
+cache.set(key, Buffer.from(big.slice(7, 27)).toString());
+
+// after, anywhere
+cache.set(key, JSON.parse(JSON.stringify(big.slice(7, 27))));
+```
+
+Both released the parents in the same test. Heap growth for the 200 IDs went from 200.0 MB to 0.03 MB using a `Buffer` copy.
+
+Do this only where a piece of a big string gets stored for longer than the big string would otherwise live: caches, maps, session state, anything module-level. For the normal case of slicing something and using it right away, the shortcut is doing you a favor and a copy is wasted work.
+
+To find it in a real process, take a heap snapshot in DevTools, sort by retained size, and look for huge strings. The retainers panel will show a `sliced string` holding them.
+
+---
+
+## The rule
+
+If you store a piece of a large string long-term, copy it first, because the piece may be holding the whole string in memory.
+
+---
+
+## TL;DR
+
+- In V8, `slice`, `substring`, `split` and regex captures can return a small object that points into the original string instead of copying characters.
+- That pointer keeps the whole parent alive, so 200 kept IDs of 20 characters held 200 MB here even after forced garbage collection.
+- The behavior starts at 13 characters; a 12-character piece is copied and the parent is freed, which is why these leaks can appear after an ID format change.
+- `JSON.parse` builds fresh strings, so keeping a parsed field is safe, while pulling the same value out of raw text isn't.
+- Copy before you store long-term with `Buffer.from(s).toString()` or a JSON round trip, and use a heap snapshot to confirm the diagnosis.

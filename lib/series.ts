@@ -36,6 +36,13 @@ export const SERIES: Record<string, Series> = {
       "The useSearchParams call that blanked half the page in the HTML",
     ],
   },
+  "under-the-benchmark": {
+    name: "Under the Benchmark",
+    description:
+      "Same code, wildly different speed. Measured explanations of what the engine and hardware are really doing.",
+    mascot: { sprite: "tick", name: "Tick", bio: "Doesn't believe a number until it has run seven times." },
+    upcoming: [],
+  },
 };
 
 export type SeriesWithParts = Series & { slug: string; parts: DocMeta[] };
