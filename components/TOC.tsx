@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getPostBody } from "@/lib/postBody";
 
 type Item = { id: string; text: string; level: 1 | 2 };
 
@@ -11,6 +12,15 @@ function cleanHeadingText(text: string) {
       .replace(/\s+/g, " ")
       .trim() || text
   );
+}
+
+// scoped to the post on screen: hidden, previously visited posts stay in the DOM with the same heading ids
+function visibleHeadings() {
+  return Array.from(getPostBody()?.querySelectorAll<HTMLElement>("h2, h3") ?? []);
+}
+
+function findHeading(id: string) {
+  return visibleHeadings().find((el) => el.id === id);
 }
 
 function resolveActiveSectionId(activeId: string, allItems: Item[]) {
@@ -74,7 +84,7 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
   const activeSectionId = useMemo(() => resolveActiveSectionId(activeId, allItems), [activeId, allItems]);
 
   useEffect(() => {
-    const headings = Array.from(document.querySelectorAll("#post-body h2, #post-body h3")) as HTMLElement[];
+    const headings = visibleHeadings();
     const parsed: Item[] = headings.map((el) => ({
       id: el.id || "",
       text: cleanHeadingText(el.innerText),
@@ -103,7 +113,7 @@ export default function TOC({ collapsible = false }: { collapsible?: boolean }) 
 
   const scrollTo = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
-    const el = document.getElementById(id);
+    const el = findHeading(id);
     if (!el) {
       return;
     }

@@ -5,6 +5,7 @@ import CoverArt from "@/components/CoverArt";
 import NewsletterForm from "@/components/NewsletterForm";
 import PixelSprite from "@/components/PixelSprite";
 import PostCard, { PostStatsLine } from "@/components/PostCard";
+import PostTransition from "@/components/PostTransition";
 import { formatCount } from "@/lib/format";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getAllSeries } from "@/lib/series";
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const FEATURED_COVER = "aspect-[1200/630] h-full w-full object-cover";
+// Covers are 1200×630 with the left half empty and the scene on the right. On mobile the cover keeps its own
+// ratio; side by side it fills the column height, cropped from the left so only empty background is lost.
+const FEATURED_COVER = "aspect-[1200/630] w-full object-cover object-right md:aspect-auto md:h-full";
 
 function SectionTitle({ children, href, more }: { children: React.ReactNode; href?: string; more?: string }) {
   return (
@@ -60,36 +63,45 @@ export default async function HomePage() {
         <section aria-labelledby="newest-title">
           <Link
             href={`/p/${featured.slug}`}
-            className="group grid overflow-hidden rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md transition md:grid-cols-[1.2fr_1fr]"
+            // prefetch the post itself, not just the shared route shell, so the header renders in the same
+            // commit as the click and the cover/title/summary morph instead of passing through loading.tsx
+            prefetch={true}
+            className="group grid overflow-hidden rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md transition md:grid-cols-[1.15fr_1fr]"
           >
-            {featured.cover ? (
-              <Image
-                src={featured.cover}
-                alt=""
-                width={1200}
-                height={630}
-                priority
-                sizes="(min-width: 960px) 31rem, 100vw"
-                className={FEATURED_COVER}
-              />
-            ) : (
-              <CoverArt tags={featured.tags} variant="hero" className={FEATURED_COVER} />
-            )}
+            <PostTransition slug={featured.slug} part="cover">
+              {featured.cover ? (
+                <Image
+                  src={featured.cover}
+                  alt=""
+                  width={1200}
+                  height={630}
+                  priority
+                  sizes="(min-width: 768px) 40rem, 100vw"
+                  className={FEATURED_COVER}
+                />
+              ) : (
+                <CoverArt tags={featured.tags} variant="hero" className={FEATURED_COVER} />
+              )}
+            </PostTransition>
             <div className="flex flex-col justify-center p-5 sm:p-7">
               <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--accent)]">
                 <span className="size-1.5 rounded-full bg-[var(--accent)]" aria-hidden />
                 Newest post
               </span>
-              <h2
-                id="newest-title"
-                className="mt-4 text-2xl sm:text-[1.75rem] font-bold tracking-tight leading-tight text-balance text-gray-900 dark:text-gray-50 group-hover:text-[var(--accent)] transition-colors"
-              >
-                {featured.title}
-              </h2>
+              <PostTransition slug={featured.slug} part="title">
+                <h2
+                  id="newest-title"
+                  className="mt-4 text-2xl sm:text-[1.75rem] font-bold tracking-tight leading-tight text-balance text-gray-900 dark:text-gray-50 group-hover:text-[var(--accent)] transition-colors"
+                >
+                  {featured.title}
+                </h2>
+              </PostTransition>
               {featured.summary && (
-                <p className="mt-3 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
-                  {featured.summary}
-                </p>
+                <PostTransition slug={featured.slug} part="summary">
+                  <p className="mt-3 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
+                    {featured.summary}
+                  </p>
+                </PostTransition>
               )}
               <div className="mt-4">
                 <PostStatsLine

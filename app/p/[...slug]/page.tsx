@@ -17,6 +17,7 @@ import { PostActionBar, PostRailActions } from "@/components/PostActions";
 import { shortDate } from "@/components/PostCard";
 import PostEngagement from "@/components/PostEngagement";
 import PostNav from "@/components/PostNav";
+import PostTransition from "@/components/PostTransition";
 import ReadingProgress from "@/components/ReadingProgress";
 import ReadTracker from "@/components/ReadTracker";
 import RelatedPosts from "@/components/RelatedPosts";
@@ -135,19 +136,21 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
           </nav>
 
           <figure className="mb-8">
-            {post.cover ? (
-              <Image
-                src={post.cover}
-                alt=""
-                width={1200}
-                height={630}
-                priority
-                sizes="(min-width: 768px) 42rem, 100vw"
-                className={COVER}
-              />
-            ) : (
-              <CoverArt tags={post.tags} variant="hero" className={COVER} />
-            )}
+            <PostTransition slug={post.slug} part="cover">
+              {post.cover ? (
+                <Image
+                  src={post.cover}
+                  alt=""
+                  width={1200}
+                  height={630}
+                  priority
+                  sizes="(min-width: 768px) 42rem, 100vw"
+                  className={COVER}
+                />
+              ) : (
+                <CoverArt tags={post.tags} variant="hero" className={COVER} />
+              )}
+            </PostTransition>
             {post.cover && post.coverAlt && (
               <figcaption className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
                 {post.coverAlt}
@@ -168,14 +171,18 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
             </div>
           )}
 
-          <h1 className="text-[2rem] sm:text-[2.6rem] font-extrabold tracking-[-0.025em] leading-[1.12] text-balance text-gray-900 dark:text-gray-50">
-            {post.title}
-          </h1>
+          <PostTransition slug={post.slug} part="title">
+            <h1 className="text-[2rem] sm:text-[2.6rem] font-extrabold tracking-[-0.025em] leading-[1.12] text-balance text-gray-900 dark:text-gray-50">
+              {post.title}
+            </h1>
+          </PostTransition>
 
           {post.summary && (
-            <p className="mt-4 text-lg sm:text-xl leading-relaxed text-pretty text-gray-500 dark:text-gray-400">
-              {post.summary}
-            </p>
+            <PostTransition slug={post.slug} part="summary">
+              <p className="mt-4 text-lg sm:text-xl leading-relaxed text-pretty text-gray-500 dark:text-gray-400">
+                {post.summary}
+              </p>
+            </PostTransition>
           )}
 
           <div className="mt-7 flex items-center justify-between gap-4">

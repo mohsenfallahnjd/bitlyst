@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatCount } from "@/lib/format";
+import { getPostBody } from "@/lib/postBody";
 import ShareButton from "./ShareButton";
 import { CommentIcon } from "./StatIcons";
 
@@ -12,7 +13,7 @@ export function useArticleProgress() {
     let frame = 0;
     const measure = () => {
       frame = 0;
-      const body = document.getElementById("post-body");
+      const body = getPostBody();
       if (!body) {
         return;
       }

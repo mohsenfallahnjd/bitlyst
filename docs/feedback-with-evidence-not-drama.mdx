@@ -1,0 +1,126 @@
+---
+title: "\"Your Code Is Sloppy\" Isn't Feedback. A Link to Line 42 Is."
+summary: "How to give feedback and run review meetings with a team member using technical evidence (PRs, CI runs, incidents) instead of opinions and drama."
+publishedTime: "2026-11-07"
+level: "beginner"
+cover: "/assets/evidence-feedback-cover.jpg"
+coverAlt: "AI-generated illustration. Point at the line, not the person; the evidence does the arguing."
+tags: ["career", "feedback", "code-review", "teamwork", "best-practices"]
+---
+
+> "Honestly, your last few PRs have been sloppy. You need to be more careful."
+
+Picture saying that in a one-on-one. You mean well. You've noticed a real problem, and you think being direct is the respectful thing to do.
+
+Now watch what happens on the other side of the table. Your teammate hears "sloppy" and starts building a defense. Which PRs? Sloppy how? Everyone ships bugs. The last one was rushed because the deadline moved. Within two minutes you're not talking about code anymore. You're talking about whether they're a careful person.
+
+Nobody wins that conversation. They leave hurt, you leave frustrated, and the next PR looks exactly like the last one, because neither of you ever said what was actually wrong with it.
+
+---
+
+## The wrong turn: feedback is about being honest
+
+The usual advice for hard feedback is "be honest" or "be direct." It sounds right. Vague, soft feedback is useless, so the cure must be saying what you really think.
+
+The trouble is that "what you really think" is usually a judgment, not a fact. "Sloppy," "not careful," "lacks ownership," "too slow." These are conclusions you reached from things you saw. When you share only the conclusion, you're asking the other person to accept your verdict without seeing the case.
+
+So they do what any engineer does with an unproven claim. They argue with it.
+
+The opposite move fails too. Picture softening it into a "feedback sandwich": a compliment, a vague "maybe a bit more care on PRs," another compliment. Your teammate leaves feeling fine and learns nothing. Three months later the problem comes up again in a performance review, and now it feels like an ambush.
+
+Both versions have the same flaw. Neither gives the other person anything concrete to look at.
+
+---
+
+## The reveal: feedback is a bug report about a process
+
+You already know how to describe a problem without drama. You do it every time you file a good bug report.
+
+A bad bug report says "the checkout is broken." A good one says: on this page, with these steps, I expected this, and I got that. Here's the log. Nobody gets defensive about a good bug report, because it isn't about anyone. It's about what happened.
+
+Feedback works the same way. The Center for Creative Leadership teaches this as the [Situation-Behavior-Impact model](https://www.ccl.org/articles/leading-effectively-articles/closing-the-gap-between-intent-vs-impact-sbii/): describe **when and where** it happened, the **observable behavior** (what a camera would have recorded, not what you think it means), and the **impact** it had. In engineering, the "camera" is already running. Your Git history, CI logs, review threads and incident timelines record almost everything.
+
+Here's the same message, rewritten from verdict to evidence:
+
+| Drama | Evidence |
+|---|---|
+| "Your PRs are sloppy." | "PRs #412, #418 and #425 were merged with failing lint checks. Here are the CI runs." |
+| "You don't care about testing." | "The payment refactor in #431 changed 600 lines and added no tests. The bug in the refund flow last Tuesday came from that change." |
+| "You're too slow." | "The search ticket was estimated at 3 days and closed after 9. I'd like to understand where the time went." |
+| "You ignore review comments." | "On #440, two comments about the N+1 query were marked resolved without a change. The query showed up in last week's slow-request log." |
+
+Read the right column again. Every line can be checked. If it's wrong, your teammate can show you, and that's a good outcome too. If it's right, there's nothing to argue about except what to do next.
+
+Notice what else changed. The evidence column describes the work. It never describes the person.
+
+> Judge the commit, not the committer. A diff can be wrong without anyone being bad.
+
+That idea isn't new. Google's SRE book describes [blameless postmortems](https://sre.google/sre-book/postmortem-culture/): after an incident, the write-up focuses on what happened and what contributed to it, not on who to blame. The book's reasoning is practical. If people expect to be shamed, they stop reporting problems, and you lose the information you need to fix things. A one-on-one is a tiny postmortem, and the same rule applies.
+
+![Photo: Mikhail Nilov on Pexels](/assets/evidence-feedback-screen.jpg)
+
+### Evidence has limits
+
+Evidence keeps you honest, but it doesn't tell the whole story. A ticket that took 9 days instead of 3 might mean the developer struggled. It might also mean the API docs were wrong, the designer changed the spec twice, or they spent four days helping someone else ship.
+
+That's why the evidence opens the conversation instead of closing it. You bring the facts. Then you ask what you're missing.
+
+Be careful with metrics, too. Commit counts, lines of code and number of PRs are easy to collect and easy to game, and they say almost nothing about whether the work was good. Pick evidence that points to a specific outcome (a failed deploy, a reopened bug, a slow query), not a number that only measures activity.
+
+---
+
+## The fix: run the meeting like a code review
+
+A good review ends with an approved diff. A good feedback meeting ends with an agreed change you can check. A few rules get you there.
+
+**Write it down first.** If you can't write the feedback as a list of links and facts, you're not ready to give it. Often you'll find that your strong feeling is backed by one PR, not a pattern. That's worth knowing before you say "always."
+
+**Send the notes ahead.** Surprise is where drama starts. If your teammate has a day to read the evidence, they arrive having thought about it instead of reacting to it.
+
+**Ask what you're missing.** Read the facts and the impact, then stop and listen. If new context comes up, like an unclear spec or a broken test setup, the fix is in the process, not the person. Update your notes.
+
+**Use the same format for praise.** "Great job this sprint" is as empty as "sloppy." Compare it with: "The caching change in #455 cut the dashboard's response time in the APM graph from about 2 seconds to under 300 ms. That's the main reason the support tickets stopped." Specific praise tells people what to keep doing, and it proves your feedback is about the work in both directions.
+
+**End with something you can check.** "Be more careful" can't be verified. "Turn on the required lint check for the repo, and we'll look at the next five PRs together" can. Put a date on it.
+
+A simple note template is enough:
+
+```md
+## Feedback notes — 2026-11-14
+
+### Situation
+Sprint 44, payment refactor (#431)
+
+### What happened
+- 600 lines changed, 0 tests added
+- Refund bug on 2026-11-04 traced to this change (incident INC-112)
+
+### Impact
+- 41 refunds failed for 3 hours
+- Support handled the tickets manually
+
+### Questions for you
+- Was there a reason tests were skipped? (time? unclear test setup?)
+
+### Proposed next step
+- Add refund-flow tests before the next payment change
+- Check: CI coverage report on the next payments PR
+```
+
+The numbers in that note are made up for the example. In yours, every number should come from a real log, dashboard or ticket. If you have to estimate it, say so.
+
+---
+
+## The takeaway
+
+If a piece of feedback would make a bad bug report, it will make a bad conversation. Bring the logs, describe what happened, ask what you missed, and agree on a change you can measure.
+
+Drama comes from verdicts. Evidence turns a verdict into a problem two engineers can solve together.
+
+## TL;DR
+
+- Judgments like "sloppy" or "slow" start arguments because the other person has to accept your conclusion without seeing the evidence.
+- Use the Situation-Behavior-Impact structure: when it happened, what a camera would have recorded, and what it caused.
+- Engineering already records the evidence for you: PRs, CI runs, review threads, incident timelines and dashboards.
+- Share the evidence before the meeting, ask for context you might be missing, and give praise in the same specific format.
+- End every feedback conversation with one change and a way to check that it worked.

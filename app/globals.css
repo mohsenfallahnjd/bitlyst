@@ -307,3 +307,45 @@ pre code.hljs {
     animation: none;
   }
 }
+
+/* Post card → post page morph (components/PostTransition.tsx) */
+::view-transition {
+  /* clicks during the animation reach the live page */
+  pointer-events: none;
+}
+::view-transition-group(.cover-morph),
+::view-transition-group(.text-morph) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+/* card thumbs are 3:2, the header cover is 1200:630: fill the box instead of stretching,
+   anchored right like the covers' scenes */
+::view-transition-old(.cover-morph),
+::view-transition-new(.cover-morph) {
+  height: 100%;
+  object-fit: cover;
+  object-position: right;
+}
+::view-transition-image-pair(.cover-morph) {
+  overflow: hidden;
+  border-radius: 0.75rem;
+}
+::view-transition-image-pair(.cover-morph),
+::view-transition-image-pair(.text-morph) {
+  animation-name: vt-soften;
+}
+@keyframes vt-soften {
+  30% {
+    filter: blur(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

@@ -46,9 +46,15 @@ Every post follows the same five beats. The headings change; the beats don't.
   ```js
   [10, 9, 1].sort(); // [1, 10, 9]  ← surprise
   ```
-- **Diagrams:** use `<FlowDiagram>` for "what happens, in order" and `<ParallelFlow>` for "what happens over time". Every diagram gets a `title`, and `notes` when a step isn't obvious. A diagram must explain something the text can't do as quickly — don't decorate.
+- **Diagrams (optional):** most posts don't need one. Add one only when it explains a mechanism or timeline faster than the text can, which usually means technical flows, not career or soft-skill posts. Use `<FlowDiagram>` for "what happens, in order" and `<ParallelFlow>` for "what happens over time". Every diagram gets a `title`, and `notes` when a step isn't obvious. If a list right next to it says the same thing, cut the diagram.
 - **Images:** posts should include images. Long posts usually need 2–3, placed where the reader needs a visual break. Use photos from free-to-use sites (check the license) or AI-generated art, and never pass off an illustration as a real screenshot. Save them in `public/assets/` as `<post-topic>-<name>.jpg`, about 1200px wide, and add them with `![Photo: name on Pexels](/assets/file.jpg)`.
-- **Cover image (optional):** set `cover: /assets/<post-topic>-cover.jpg` in frontmatter to show a main image under the post header, a thumbnail on post cards, and the share image on social sites (it replaces the generated card). Use a wide image, about 1200×630; it's cropped to that ratio. `coverAlt` is its caption, with the same rules as below. Don't repeat the cover as the first image in the body.
+- **Cover image (every post):** set `cover: /assets/<post-topic>-cover.jpg` in frontmatter. It shows as the main image under the post header, the thumbnail on post cards, and the share image on social sites (replacing the generated card). Don't repeat the cover as the first image in the body. Every cover uses the same template, so the post list looks like one set:
+  - **Style:** flat editorial AI illustration with light grain. No stock photos, no text, no logos.
+  - **Color:** solid saturated royal-blue background (about `#1a2fd6`). Figures and objects in light blues and soft whites, with **one** warm gold/orange accent (a glow, a coin, a check mark).
+  - **Layout:** left half empty, scene on the right half. One or two figures or objects that act out the post's surprise. Show the idea, not a literal screenshot.
+  - **File:** 1200×630 JPEG, about 80–150 KB.
+  - **Caption:** `coverAlt: "AI-generated illustration. <one line that adds the post's point>"`, following the caption rules below.
+  - **Prompt starter:** "Flat editorial vector illustration with subtle grain texture, wide banner. Solid saturated royal blue background, empty on the left half. Palette of light blues and soft whites with a single warm gold accent glow. On the right half: `<scene>`. Calm, modern tech-blog hero style, soft lighting, no text, no logos."
 - **Image captions:** alt text shows on the page as the caption. Use it for the credit, or for a point the reader can't get from the image. Don't describe what's in the image.
 - **End with** a `## TL;DR` of 3–5 bullets, each a full sentence.
 
@@ -92,8 +98,9 @@ When a part is published, remove its title from `upcoming` in `lib/series.ts`.
 - [ ] Every number is measured or sourced.
 - [ ] No emoji in headings; ≤2 emoji total.
 - [ ] Code snippets are minimal and show the surprising output.
-- [ ] Diagrams have a `title` (and `notes` where needed).
+- [ ] Any diagram earns its place (not a repeat of nearby text) and has a `title` (and `notes` where needed).
+- [ ] Cover follows the template: blue AI illustration, scene on the right, one gold accent, 1200×630, caption starts "AI-generated illustration."
 - [ ] Post has images, with licenses checked and captions that don't only describe the image.
 - [ ] Title is the surprise/outcome; summary contains the search term.
 - [ ] Ends with a one-line rule + TL;DR.
-- [ ] Frontmatter: `title`, `summary`, `publishedTime`, `level`, `tags` (+ `series`, `seriesOrder` if part of one, + `publishOrder` if another post has the same date: higher number shows first, and the newest written post gets the highest number; + `cover`, `coverAlt` if it has a main image).
+- [ ] Frontmatter: `title`, `summary`, `publishedTime`, `level`, `tags` (+ `series`, `seriesOrder` if part of one, + `publishOrder` if another post has the same date: higher number shows first, and the newest written post gets the highest number; + `cover`, `coverAlt`).
