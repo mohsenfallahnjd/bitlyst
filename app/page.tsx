@@ -1,32 +1,20 @@
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import Image from "next/image";
 import Link from "next/link";
+import CoverArt from "@/components/CoverArt";
 import NewsletterForm from "@/components/NewsletterForm";
 import PixelSprite from "@/components/PixelSprite";
 import PostCard, { PostStatsLine } from "@/components/PostCard";
-import ReaderPanel from "@/components/ReaderPanel";
-import TopicRequest from "@/components/TopicRequest";
 import { formatCount } from "@/lib/format";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getAllSeries } from "@/lib/series";
-import { getPostStats, getTrending } from "@/lib/stats";
-import { getAllTopics } from "@/lib/tags";
+import { getPostStats } from "@/lib/stats";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-/** Rotates daily through older posts so there's always something to (re)discover. */
-async function todaysPickSlug(slugs: string[]) {
-  "use cache";
-  // the pick changes once a day; cached so reading the clock doesn't block prerendering
-  cacheLife("hours");
-  if (slugs.length === 0) {
-    return undefined;
-  }
-  const day = Math.floor(Date.now() / 86_400_000);
-  return slugs[day % slugs.length];
-}
+const FEATURED_COVER = "aspect-[1200/630] h-full w-full object-cover";
 
 function SectionTitle({ children, href, more }: { children: React.ReactNode; href?: string; more?: string }) {
   return (
@@ -46,175 +34,126 @@ function SectionTitle({ children, href, more }: { children: React.ReactNode; hre
 
 export default async function HomePage() {
   const all = loadMarkdownDocs();
-  const [stats, trendingRaw] = await Promise.all([getPostStats(), getTrending(7, 5)]);
+  const stats = await getPostStats();
 
-  const bySlug = new Map(all.map((p) => [p.slug, p]));
   const [featured, ...rest] = all;
-  const latest = rest.slice(0, 5);
-  const trending = trendingRaw.flatMap((t) => {
-    const post = bySlug.get(t.slug);
-    return post ? [{ post, views: t.views }] : [];
-  });
-  // all-time most read as fallback while weekly data builds up
-  const popular =
-    trending.length >= 3
-      ? trending
-      : all
-          .filter((p) => stats.views[p.slug])
-          .sort((a, b) => (stats.views[b.slug] ?? 0) - (stats.views[a.slug] ?? 0))
-          .slice(0, 5)
-          .map((post) => ({ post, views: stats.views[post.slug] }));
-
-  const exclude = new Set([featured?.slug, ...latest.map((p) => p.slug)]);
-  const pickSlug = await todaysPickSlug(all.filter((p) => !exclude.has(p.slug)).map((p) => p.slug));
-  const pick = pickSlug ? bySlug.get(pickSlug) : undefined;
-  const topics = getAllTopics(all).slice(0, 12);
-  const series = getAllSeries(all);
+  const latest = rest.slice(0, 8);
+  const series = getAllSeries(all).filter((s) => s.parts.length > 0);
   const totalViews = Object.values(stats.views).reduce((s, n) => s + n, 0);
 
   return (
     <div className="space-y-14">
       {/* Hero */}
-      <section className="space-y-5 pt-2">
-        <div className="space-y-3">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight text-gray-900 dark:text-gray-50">
-            Understand JavaScript, React & Next.js —{" "}
-            <span className="text-gray-400 dark:text-gray-500">one short post at a time.</span>
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 max-w-lg">
-            Practical, diagram-first explanations you can read over coffee. {all.length} posts
-            {totalViews >= 100 && <>, {formatCount(totalViews)} reads</>} and counting.
-          </p>
-        </div>
-        <ReaderPanel posts={all.map(({ slug, title, publishedTime }) => ({ slug, title, publishedTime }))} />
+      <section className="space-y-3 pt-2">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight text-gray-900 dark:text-gray-50">
+          Understand JavaScript, React & Next.js —{" "}
+          <span className="text-gray-400 dark:text-gray-500">one short post at a time.</span>
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 max-w-lg">
+          Practical, diagram-first explanations you can read over coffee. {all.length} posts
+          {totalViews >= 100 && <>, {formatCount(totalViews)} reads</>} and counting.
+        </p>
       </section>
 
-      {/* Featured / newest */}
+      {/* Newest */}
       {featured && (
-        <section>
-          <SectionTitle>Newest</SectionTitle>
-          <Link href={`/p/${featured.slug}`} className="group block py-4">
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight leading-snug text-gray-900 dark:text-gray-50 group-hover:text-[var(--accent)] transition-colors">
-              {featured.title}
-            </h3>
-            {featured.summary && (
-              <p className="mt-2 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed">{featured.summary}</p>
-            )}
-            <div className="mt-3">
-              <PostStatsLine
-                post={toSummary(featured)}
-                views={stats.views[featured.slug]}
-                comments={stats.comments[featured.slug]}
+        <section aria-labelledby="newest-title">
+          <Link
+            href={`/p/${featured.slug}`}
+            className="group grid overflow-hidden rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md transition md:grid-cols-[1.2fr_1fr]"
+          >
+            {featured.cover ? (
+              <Image
+                src={featured.cover}
+                alt=""
+                width={1200}
+                height={630}
+                priority
+                sizes="(min-width: 960px) 31rem, 100vw"
+                className={FEATURED_COVER}
               />
+            ) : (
+              <CoverArt tags={featured.tags} variant="hero" className={FEATURED_COVER} />
+            )}
+            <div className="flex flex-col justify-center p-5 sm:p-7">
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--accent)]">
+                <span className="size-1.5 rounded-full bg-[var(--accent)]" aria-hidden />
+                Newest post
+              </span>
+              <h2
+                id="newest-title"
+                className="mt-4 text-2xl sm:text-[1.75rem] font-bold tracking-tight leading-tight text-balance text-gray-900 dark:text-gray-50 group-hover:text-[var(--accent)] transition-colors"
+              >
+                {featured.title}
+              </h2>
+              {featured.summary && (
+                <p className="mt-3 text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
+                  {featured.summary}
+                </p>
+              )}
+              <div className="mt-4">
+                <PostStatsLine
+                  post={toSummary(featured)}
+                  views={stats.views[featured.slug]}
+                  comments={stats.comments[featured.slug]}
+                />
+              </div>
+              <span className="mt-5 text-sm font-semibold text-[var(--accent)]">
+                Read post <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
+              </span>
             </div>
           </Link>
         </section>
       )}
 
-      <div className="grid gap-14 md:grid-cols-[minmax(0,1fr)_16rem] md:gap-10">
-        {/* Latest */}
-        <section>
-          <SectionTitle href="/posts" more={`All ${all.length} posts`}>
-            Latest
-          </SectionTitle>
-          {latest.map((p) => (
-            <PostCard key={p.slug} post={toSummary(p)} views={stats.views[p.slug]} comments={stats.comments[p.slug]} />
-          ))}
-        </section>
-
-        <aside className="space-y-10">
-          {popular.length > 0 && (
-            <section>
-              <SectionTitle href="/posts?sort=popular">
-                {trending.length >= 3 ? "Trending this week" : "Most read"}
-              </SectionTitle>
-              <ol className="mt-3 space-y-4">
-                {popular.map(({ post, views }, i) => (
-                  <li key={post.slug}>
-                    <Link href={`/p/${post.slug}`} className="group flex gap-3">
-                      <span className="text-lg font-bold tabular-nums leading-tight text-gray-300 dark:text-gray-700">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-sm font-medium leading-snug text-gray-800 dark:text-gray-200 group-hover:text-[var(--accent)] transition-colors">
-                          {post.title}
-                        </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">{formatCount(views)} reads</span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-
-          {pick && (
-            <section>
-              <SectionTitle>Today&rsquo;s pick</SectionTitle>
-              <Link
-                href={`/p/${pick.slug}`}
-                className="group mt-3 block rounded-xl border border-gray-200/80 dark:border-gray-800 p-4 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
-              >
-                <span className="block text-sm font-semibold leading-snug text-gray-900 dark:text-gray-100 group-hover:text-[var(--accent)] transition-colors">
-                  {pick.title}
-                </span>
-                {pick.summary && (
-                  <span className="mt-1.5 block text-xs text-gray-500 dark:text-gray-400 line-clamp-3">
-                    {pick.summary}
-                  </span>
-                )}
-                <span className="mt-2 block text-[11px] text-gray-400 dark:text-gray-500">
-                  {pick.readingTime} min · new pick every day
-                </span>
-              </Link>
-            </section>
-          )}
-
-          <section>
-            <SectionTitle href="/series">Series</SectionTitle>
-            <ul className="mt-3 space-y-3">
-              {series.map((s) => (
-                <li key={s.slug}>
-                  <Link href={`/series/${s.slug}`} className="group flex items-center gap-3">
-                    <PixelSprite name={s.mascot.sprite} size={36} animate={false} className="shrink-0" />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-[var(--accent)] transition-colors">
-                        {s.name}
-                      </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
-                        {s.parts.length > 0
-                          ? `${s.parts.length} part${s.parts.length > 1 ? "s" : ""}${s.upcoming.length > 0 ? ` · ${s.upcoming.length} coming` : ""}`
-                          : "Starting soon"}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section>
-            <SectionTitle href="/tags">Topics</SectionTitle>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {topics.map((t) => (
-                <Link
-                  key={t.slug}
-                  href={`/tags/${t.slug}`}
-                  className="rounded-full border border-gray-200 dark:border-gray-800 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
-                >
-                  #{t.name} <span className="text-gray-300 dark:text-gray-600">{t.count}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </aside>
-      </div>
-
-      {/* Stay in touch */}
-      <section className="grid gap-4 md:grid-cols-2">
-        <NewsletterForm />
-        <TopicRequest />
+      {/* Latest */}
+      <section>
+        <SectionTitle href="/posts" more={`All ${all.length} posts`}>
+          Latest
+        </SectionTitle>
+        {latest.map((p) => (
+          <PostCard key={p.slug} post={toSummary(p)} views={stats.views[p.slug]} comments={stats.comments[p.slug]} />
+        ))}
+        <Link
+          href="/posts"
+          className="mt-4 flex items-center justify-center rounded-xl border border-gray-200/80 dark:border-gray-800 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 hover:border-gray-300 hover:text-[var(--accent)] dark:hover:border-gray-700 transition-colors"
+        >
+          Browse all {all.length} posts →
+        </Link>
       </section>
+
+      {/* Series */}
+      {series.length > 0 && (
+        <section>
+          <SectionTitle href="/series">Series</SectionTitle>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Short posts on one theme, meant to be read in order. Each part stands alone, and together they build the
+            full picture.
+          </p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-3">
+            {series.map((s) => (
+              <li key={s.slug}>
+                <Link
+                  href={`/series/${s.slug}`}
+                  className="group flex items-center gap-3 rounded-xl border border-gray-200/80 dark:border-gray-800 p-3 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                >
+                  <PixelSprite name={s.mascot.sprite} size={32} animate={false} className="shrink-0" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-[var(--accent)] transition-colors">
+                      {s.name}
+                    </span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      {s.parts.length} part{s.parts.length > 1 ? "s" : ""}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <NewsletterForm />
     </div>
   );
 }

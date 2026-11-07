@@ -65,11 +65,7 @@ export default async function AboutPage() {
   const totalComments = Object.values(stats.comments).reduce((n, v) => n + v, 0);
   const avgRead = Math.round(posts.reduce((s, p) => s + (p.readingTime ?? 0), 0) / Math.max(posts.length, 1));
 
-  // "Start here": most read beginner/intermediate posts, falling back to the newest
-  const startHere = [...posts]
-    .filter((p) => p.level !== "advanced")
-    .sort((a, b) => (stats.views[b.slug] ?? 0) - (stats.views[a.slug] ?? 0))
-    .slice(0, 3);
+  const startHere = [...posts].slice(0, 3);
 
   const figures = [
     { value: posts.length, label: "posts" },

@@ -11,6 +11,7 @@
  * Existing articles are matched by canonical_url, then by title (RSS imports may lack canonical_url),
  * so re-running updates instead of duplicating. An update also sets canonical_url on the dev.to copy.
  * Updates never change an article's published/draft state.
+ * Frontmatter `cover` becomes the dev.to cover image (main_image); posts without one keep whatever cover they have.
  * Frontmatter `devto: false` skips a post; `devto: "<dev.to url>"` pins it to that dev.to article.
  */
 import fs from "node:fs";
@@ -73,7 +74,7 @@ function parallelFlow(a: Record<string, string>): string {
   return [a.label && `**${a.label}**\n`, `\`\`\`text\n${lines.join("\n")}\n\`\`\``].filter(Boolean).join("\n");
 }
 
-const absolute = (url: string) => (url.startsWith("/") ? `${SITE}${url}` : url);
+export const absolute = (url: string) => (url.startsWith("/") ? `${SITE}${url}` : url);
 
 /** Transform prose only — fenced code blocks are left untouched. */
 function convertProse(md: string): string {
@@ -108,6 +109,7 @@ function buildArticle(post: DocMeta) {
     description: post.summary || undefined,
     tags: devtoTags(post.tags),
     canonical_url: url,
+    main_image: post.cover ? absolute(post.cover) : undefined,
     series: post.series ? SERIES[post.series]?.name : undefined,
   };
 }

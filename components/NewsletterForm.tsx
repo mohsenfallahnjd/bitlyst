@@ -70,12 +70,15 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
   return (
     <div
       className={clsx(
-        "min-w-0 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 px-4 py-5 sm:px-6 sm:py-6",
+        "flex min-w-0 flex-col rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 px-4 py-5 sm:px-6 sm:py-6",
         className
       )}
     >
       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Get new posts in your inbox</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">No spam. Unsubscribe any time.</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+        One email when a new post is out: short, diagram-first explanations of JavaScript, React and Next.js. No spam,
+        unsubscribe any time.
+      </p>
 
       {topics.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
@@ -98,7 +101,7 @@ export default function NewsletterForm({ className, topics = [] }: Props) {
         </div>
       )}
 
-      <form onSubmit={submit} className="flex gap-2">
+      <form onSubmit={submit} className="mt-auto flex gap-2">
         <input
           type="email"
           required

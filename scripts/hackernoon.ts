@@ -6,7 +6,8 @@
  *   bun scripts/hackernoon.ts --status    list which posts are on HackerNoon, with word counts
  *
  * For each post: open .hackernoon/<slug>.html, press Copy, paste into a new HackerNoon story, put the
- * URL shown on the page in the story's "First Seen At" setting, then submit for review. Once it is live,
+ * URL shown on the page in the story's "First Seen At" setting, upload the featured image listed there (from
+ * frontmatter `cover`), then submit for review. Once it is live,
  * record the result in frontmatter: `hackernoon: "<hackernoon url>"`. Frontmatter `hackernoon: false`
  * skips a post.
  */
@@ -23,6 +24,7 @@ const OUT_DIR = path.join(process.cwd(), ".hackernoon");
 function buildPage(post: DocMeta): string {
   return buildPastePage(post, {
     platform: "HackerNoon",
+    cover: "settings",
     fields: [
       ["First Seen At (story settings)", `${SITE}/p/${post.slug}`],
       ["TL;DR", post.summary ?? ""],

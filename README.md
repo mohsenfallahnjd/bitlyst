@@ -134,6 +134,8 @@ That's it! Your post will automatically appear at `/p/your-slug`.
 - `summary` - Brief description for listings (optional)
 - `publishedTime` - Publication date in YYYY-MM-DD format (optional)
 - `tags` - Array of tags for categorization (optional)
+- `cover` - Main image path under `public/`, e.g. `/assets/my-post-cover.jpg`, shown under the header, on post cards and as the share image (optional)
+- `coverAlt` - Caption for the cover image (optional)
 
 ## 🛠️ Development
 

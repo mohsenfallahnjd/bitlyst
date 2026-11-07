@@ -5,7 +5,8 @@
  *   bun scripts/medium.ts --status    list which posts are on Medium
  *
  * For each post: open .medium/<slug>.html, press Copy, paste into a new Medium story, and set the
- * canonical link shown on the page in the story's settings. Then record the result in frontmatter:
+ * canonical link shown on the page in the story's settings. A frontmatter `cover` opens the story, so Medium
+ * picks it as the featured image. Then record the result in frontmatter:
  * `medium: "<medium url>"`. Frontmatter `medium: false` skips a post.
  */
 import fs from "node:fs";
@@ -16,7 +17,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { type DocMeta, loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
-import { toDevtoMarkdown } from "./devto";
+import { absolute, toDevtoMarkdown } from "./devto";
 
 const SITE = "https://bitlyst.blog";
 const OUT_DIR = path.join(process.cwd(), ".medium");
@@ -65,6 +66,7 @@ const postUrl = (post: DocMeta) => `${SITE}/p/${post.slug}`;
 function buildPage(post: DocMeta): string {
   return buildPastePage(post, {
     platform: "Medium",
+    cover: "story",
     footer: `*Originally published on [Bitlyst](${postUrl(post)}).*`,
     fields: [
       ["Canonical link (story settings)", postUrl(post)],
@@ -77,13 +79,32 @@ function buildPage(post: DocMeta): string {
 /** A standalone page with a Copy button, for platforms that only accept pasted stories. */
 export function buildPastePage(
   post: DocMeta,
-  target: { platform: string; fields: [label: string, value: string][]; footer?: string }
+  target: {
+    platform: string;
+    fields: [label: string, value: string][];
+    footer?: string;
+    /** "story": the cover opens the pasted story (Medium uses the first image as the featured image).
+     *  "settings": the cover is only listed above the story, for platforms where it is uploaded separately. */
+    cover?: "story" | "settings";
+  }
 ): string {
+  const coverUrl = post.cover ? absolute(post.cover) : undefined;
+  const coverMd =
+    coverUrl && target.cover === "story"
+      ? `![${post.coverAlt ?? ""}](${coverUrl})\n\n${post.coverAlt ? `*${post.coverAlt}*\n\n` : ""}`
+      : "";
   const content = post.content.replace(/^\s*# .*\n/, ""); // some posts open with their own H1; the title is added below
   const footer = target.footer ? `\n\n---\n\n${target.footer}\n` : "\n";
-  const markdown = `# ${post.title}\n\n${toMediumMarkdown(content)}${footer}`;
+  const markdown = `# ${post.title}\n\n${coverMd}${toMediumMarkdown(content)}${footer}`;
   const body = renderToStaticMarkup(createElement(Markdown, { remarkPlugins: [remarkGfm] }, markdown));
   const fields = target.fields.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`);
+  if (coverUrl && target.cover === "settings") {
+    fields.push(
+      `<dt>Featured image (download and upload in story settings)</dt><dd><a href="${escapeHtml(coverUrl)}">${escapeHtml(coverUrl)}</a>${
+        post.coverAlt ? `<br>Caption: ${escapeHtml(post.coverAlt)}` : ""
+      }<br><img src="${escapeHtml(coverUrl)}" alt="" width="360"></dd>`
+    );
+  }
 
   return `<!doctype html>
 <html lang="en">

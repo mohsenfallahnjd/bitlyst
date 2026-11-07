@@ -1,6 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { formatCount } from "@/lib/format";
 import type { PostSummary } from "@/lib/mdSource";
+import CoverArt from "./CoverArt";
 import ReadBadge from "./ReadBadge";
 import { CommentIcon, EyeIcon } from "./StatIcons";
 
@@ -38,19 +40,38 @@ export function PostStatsLine({ post, views, comments }: { post: PostSummary; vi
   );
 }
 
+const THUMB =
+  "mt-0.5 aspect-[3/2] w-[88px] sm:w-[120px] shrink-0 rounded-lg border border-gray-200/70 dark:border-gray-800 object-cover";
+
 export default function PostCard({ post, views, comments }: { post: PostSummary; views?: number; comments?: number }) {
   return (
     <article className="post-card group/card border-b border-gray-200/70 dark:border-gray-800/60 last:border-b-0">
-      <Link href={`/p/${post.slug}`} className="block py-5">
-        <h3 className="text-[15px] sm:text-base font-semibold tracking-tight leading-snug text-gray-900 dark:text-gray-100 group-hover/card:text-[var(--accent)] transition-colors">
-          {post.title}
-        </h3>
-        {post.summary && (
-          <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2">{post.summary}</p>
-        )}
-        <div className="mt-2.5">
-          <PostStatsLine post={post} views={views} comments={comments} />
+      <Link href={`/p/${post.slug}`} className="flex items-start gap-4 py-5">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-[15px] sm:text-base font-semibold tracking-tight leading-snug text-gray-900 dark:text-gray-100 group-hover/card:text-[var(--accent)] transition-colors">
+            {post.title}
+          </h3>
+          {post.summary && (
+            <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2">
+              {post.summary}
+            </p>
+          )}
+          <div className="mt-2.5">
+            <PostStatsLine post={post} views={views} comments={comments} />
+          </div>
         </div>
+        {post.cover ? (
+          <Image
+            src={post.cover}
+            alt=""
+            width={240}
+            height={160}
+            sizes="(min-width: 640px) 120px, 88px"
+            className={THUMB}
+          />
+        ) : (
+          <CoverArt tags={post.tags} variant="thumb" className={THUMB} />
+        )}
       </Link>
     </article>
   );

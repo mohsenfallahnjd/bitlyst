@@ -10,6 +10,7 @@ import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import AuthorBio from "@/components/AuthorBio";
 import Comments from "@/components/Comments";
+import CoverArt from "@/components/CoverArt";
 import DifficultyBadge from "@/components/DifficultyBadge";
 import NewsletterForm from "@/components/NewsletterForm";
 import { PostActionBar, PostRailActions } from "@/components/PostActions";
@@ -28,6 +29,8 @@ import { tagSlug } from "@/lib/format";
 import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
 import { getPostStats } from "@/lib/stats";
 import { useMDXComponents } from "@/mdx-components";
+
+const COVER = "aspect-[1200/630] w-full rounded-xl border border-gray-200/70 dark:border-gray-800 object-cover";
 
 export default async function Page(props: PageProps<"/p/[...slug]">) {
   const params = await props.params;
@@ -84,7 +87,7 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
                 name: "Bitlyst",
                 logo: { "@type": "ImageObject", url: "https://bitlyst.blog/logo.svg" },
               },
-              image: [`https://bitlyst.blog/og?slug=${post.slug}`],
+              image: [shareImage(post)],
               keywords: (post.tags ?? []).join(", "),
               articleSection: post.tags?.[0],
               wordCount,
@@ -130,6 +133,27 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
               </>
             )}
           </nav>
+
+          <figure className="mb-8">
+            {post.cover ? (
+              <Image
+                src={post.cover}
+                alt=""
+                width={1200}
+                height={630}
+                priority
+                sizes="(min-width: 768px) 42rem, 100vw"
+                className={COVER}
+              />
+            ) : (
+              <CoverArt tags={post.tags} variant="hero" className={COVER} />
+            )}
+            {post.cover && post.coverAlt && (
+              <figcaption className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                {post.coverAlt}
+              </figcaption>
+            )}
+          </figure>
 
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <DifficultyBadge level={post.level} />
@@ -248,6 +272,11 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
   );
 }
 
+/** Absolute share image: the post's cover when set, else the generated card. */
+function shareImage(post: { slug: string; cover?: string }) {
+  return post.cover ? new URL(post.cover, "https://bitlyst.blog").href : `https://bitlyst.blog/og?slug=${post.slug}`;
+}
+
 export async function generateMetadata(props: PageProps<"/p/[...slug]">): Promise<Metadata> {
   const params = await props.params;
   const slugParam = params.slug as string | string[] | undefined;
@@ -256,6 +285,8 @@ export async function generateMetadata(props: PageProps<"/p/[...slug]">): Promis
   if (!page) {
     notFound();
   }
+
+  const image = shareImage(page);
 
   return {
     title: page.title,
@@ -272,13 +303,13 @@ export async function generateMetadata(props: PageProps<"/p/[...slug]">): Promis
       type: "article",
       authors: page.authors.map((a) => a.name),
       siteName: "Bitlyst",
-      images: [{ url: `https://bitlyst.blog/og?slug=${slugPath}`, width: 1200, height: 630, alt: page.title }],
+      images: [{ url: image, alt: page.title, ...(page.cover ? {} : { width: 1200, height: 630 }) }],
     },
     twitter: {
       card: "summary_large_image",
       title: page.title,
       description: page.summary,
-      images: [{ url: `https://bitlyst.blog/og?slug=${slugPath}`, alt: page.title }],
+      images: [{ url: image, alt: page.title }],
     },
     alternates: { canonical: `https://bitlyst.blog/p/${slugPath}` },
   };

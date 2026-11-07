@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { BRAND, BRAND_LIGHT, DEFAULT_TOPIC, topicColor, WHITE } from "./topics";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -9,32 +10,6 @@ const [interBold, monoMedium] = await Promise.all([
   readFile(join(process.cwd(), "lib/og-fonts/inter-latin-700-normal.woff")),
   readFile(join(process.cwd(), "lib/og-fonts/jetbrains-mono-latin-500-normal.woff")),
 ]);
-
-const BRAND = "#0e36e9";
-const BRAND_LIGHT = "#3a5cff";
-const WHITE = "#ffffff";
-
-type TopicColor = { bar: string; ink: string };
-
-const DEFAULT_TOPIC: TopicColor = { bar: WHITE, ink: BRAND };
-
-const TOPICS: Record<string, TopicColor> = {
-  react: { bar: "#61dafb", ink: "#07202b" },
-  nextjs: { bar: "#0b0c10", ink: WHITE },
-  typescript: { bar: "#b7c9ff", ink: "#0f2a66" },
-  javascript: { bar: "#f7df1e", ink: "#1c1a02" },
-};
-
-/** The first topic among a post's tags wins, since a post lists its main subject first. */
-function topicColor(tags: string[]): TopicColor {
-  for (const tag of tags) {
-    const topic = TOPICS[tag.toLowerCase().replace(/[^a-z]/g, "")];
-    if (topic) {
-      return topic;
-    }
-  }
-  return DEFAULT_TOPIC;
-}
 
 /** Long titles step down so every post fits in three lines. */
 const titleSize = (title: string) => {
