@@ -1,9 +1,9 @@
 ---
-title: "1,000 Cards, 1,000 Layouts, and requestAnimationFrame Didn't Help"
-summary: "What layout thrashing and forced reflow are, why reading offsetWidth after a style change is so slow, and how batching reads and writes fixes it."
+title: "Layout Thrashing: Why Reading offsetWidth in a Loop Freezes the Page"
+summary: "What layout thrashing and forced reflow are, why reading offsetWidth after a style change is slow, and how batching reads and writes fixes it."
 publishedTime: "2026-11-06"
 publishOrder: 1
-level: "advanced"
+level: "intermediate"
 series: "under-the-benchmark"
 seriesOrder: 1
 cover: "/assets/layout-thrashing-cover.jpg"
@@ -11,87 +11,55 @@ coverAlt: "AI-generated illustration. Measure, move, measure again: the browser 
 tags: ["javascript", "browser", "performance", "layout", "dom", "rendering"]
 ---
 
-```
-LayoutCount: 1000
-```
-
-That number came from a loop that updates 1,000 cards, one time, inside one JavaScript task. A browser that's rendering a single frame should need to lay out the page once. This loop made it do so a thousand times, and it took 123 ms to get there.
-
-Here's the loop. It sets each card's height based on its width:
+This loop updates 1,000 cards once, and it made the browser lay out the page 1,000 times:
 
 ```js
 for (const card of cards) {
-  card.style.height = `${card.offsetWidth / 20}px`;
+  card.style.height = `${card.offsetWidth / 20}px`; // 123 ms for 1,000 cards
 }
 ```
 
-It's ordinary DOM code, and at 60 frames per second, you only get about 16 ms per frame. Picture this running when a dashboard opens. The page freezes for seven frames, and the code looks like it has nothing to apologize for.
+At 60 frames per second you get about 16 ms per frame, so this freezes the page for seven frames.
 
 ---
 
-## The wrong turn: requestAnimationFrame
+## The mental model: a lazy accountant
 
-The standard advice for janky DOM work is "put it in `requestAnimationFrame`." It sounds right. The browser wants visual changes done at the start of a frame, so give them to it there:
+Think of the browser as a **lazy accountant**. When you change a style, you hand it a receipt, and it puts the receipt on a pile without adding anything up. It does the math once, right before painting the screen.
 
-```js
-requestAnimationFrame(() => {
-  for (const card of cards) {
-    card.style.height = `${card.offsetWidth / 20}px`;
-  }
-});
-```
+When you read a size like `offsetWidth`, you're asking for the total *right now*. The accountant has to stop and add up the whole pile before answering.
 
-Measured in the same setup:
+> Writes go on the pile. Reads force the math.
 
-| Version | Time | Layouts |
-|---|---|---|
-| Plain loop | 122.9 ms | 1,000 |
-| Inside `requestAnimationFrame` | 120.1 ms | 1,000 |
-
-No change, because timing was never the problem. `requestAnimationFrame` decides when the loop starts. It can't change what happens between the lines inside it.
+Ask for the total after every receipt, and the accountant redoes the whole book every time. That's **layout thrashing**.
 
 ---
 
-## The reveal: the browser is lazy, and your read cancels it
+## How it works
 
-The browser doesn't do layout when you change a style. Setting `height` only marks the page as needing layout, and the work waits until it's really needed, normally once, right before painting. That's why a hundred style writes in a row cost almost nothing.
+Setting `card.style.height` only marks the page as "needs layout." That's cheap, so a hundred writes in a row cost almost nothing.
 
-But `offsetWidth` is a question, and it needs a true answer right now. If the page has pending changes, the browser can't answer from stale numbers, so it stops your JavaScript and runs layout immediately. This is a **forced reflow**.
+Reading `card.offsetWidth` needs a true, current answer. If any change is still pending, the browser pauses your JavaScript and runs layout right away. This is a **forced reflow**.
 
-A loop that alternates writes and reads ends up forcing one every time around:
+The loop above alternates read, write, read, write, so every read finds a pending write from the card before it:
 
 <FlowDiagram
   title="Each card in the loop, in order"
   nodes="Read card.offsetWidth → Write card.style.height"
-  notes="The previous card's write left layout dirty, so the browser must run a full layout before it can answer|Marks layout dirty again, ready to hurt the next read"
-  branch1="[red] Read and write interleaved → Next read forces a layout → One layout per card"
-  branch2="[green] All reads, then all writes → Reads share one clean layout → One layout at the end"
-  caption="Nothing in the code says 'run layout'. It's a side effect of a read that looks like a plain property."
+  notes="The previous card's write left layout pending, so the browser runs a full layout before it can answer|Marks layout as pending again, ready to slow down the next read"
+  branch1="[red] Read and write interleaved → One layout per card"
+  branch2="[green] All reads, then all writes → One layout in total"
 />
 
-The painful detail is that, in this test, the width doesn't even depend on the height. Every card is exactly as wide before and after. But the browser can't know that without doing the work, so it does the work.
+It doesn't matter that the width never actually changes. The browser can't know that without doing the math, so it does the math.
 
-The other nasty part is how this scales. Each height change can move every card below it, so each forced layout has a lot to look at. Here's how the time grew with card count:
-
-| Cards | Interleaved | Layouts | Reads, then writes | Layouts |
-|---|---|---|---|---|
-| 100 | 2.2 ms | 100 | 0.5 ms | 1 |
-| 1,000 | 124.3 ms | 1,000 | 4.8 ms | 1 |
-| 5,000 | 3,029.7 ms | 5,000 | 21.9 ms | 1 |
-
-*Headless Chrome 156, Apple M3 Pro, median of 7 runs (3 for the slowest row). Layout counts come from the DevTools Protocol's `Performance.getMetrics`. Each card is a small flex row with text in a 1,200 px wide page, and the real test varies each height by a pixel so every write changes something. Paint isn't included.*
-
-Fifty times the cards took about 1,400 times as long. That's the shape of a problem that works fine in development with 20 rows, then locks up the tab on a real account. At 5,000 cards, the interleaved version takes three full seconds and batching takes 22 ms, which is roughly 140 times faster.
-
-> **`offsetWidth` looks like reading a variable. After a style change, it's a function call that lays out your page.**
-
-`offsetWidth` isn't special. `offsetHeight`, `clientWidth`, `scrollTop`, `scrollHeight`, `getBoundingClientRect()`, `getComputedStyle()` and many others can all force the same thing. Paul Irish keeps a [list of what forces layout](https://gist.github.com/paulirish/5d52fb081b3570c81e3a).
+`offsetWidth` isn't the only trigger. `offsetHeight`, `clientWidth`, `scrollTop`, `getBoundingClientRect()` and `getComputedStyle()` all force the same thing. Paul Irish keeps a [full list](https://gist.github.com/paulirish/5d52fb081b3570c81e3a).
 
 ---
 
-## The fix
+## In practice
 
-Read everything first, then write everything. Same data, two loops:
+Read everything first, then write everything:
 
 ```js
 // before: read, write, read, write…
@@ -106,24 +74,72 @@ cards.forEach((card, i) => {
 });
 ```
 
-The first read might run one layout if the page was dirty, and the rest reuse it. The writes then pile up and get handled once by the browser's normal rendering pass. The cost of 1,000 cards fell from 124.3 ms to 4.8 ms.
+| Cards | Interleaved | Reads, then writes |
+|---|---|---|
+| 100 | 2.2 ms | 0.5 ms |
+| 1,000 | 124.3 ms | 4.8 ms |
+| 5,000 | 3,029.7 ms | 21.9 ms |
 
-This doesn't need to be inside `requestAnimationFrame` to work, although combining them is good when the work is tied to a visual update. What counts is the order inside.
+*Headless Chrome 156, Apple M3 Pro, median of 7 runs. The interleaved version ran 1 layout per card, the batched version 1 layout in total, counted with the DevTools Protocol's `Performance.getMetrics`.*
 
-To find these in your own app, record in the DevTools Performance panel and look for layout blocks with the "Forced reflow" warning. It links back to the line in your code that triggered it.
+The cost grows much faster than the card count, because each layout has more cards to place. A list that feels fine with 20 rows in development can freeze the tab with 5,000 rows on a real account.
+
+One common fix doesn't help: wrapping the loop in `requestAnimationFrame` measured 120.1 ms against 122.9 ms. It changes *when* the loop starts, not the read-write order inside it.
+
+To find thrashing in your own app, record in the DevTools Performance panel and look for layout blocks marked "Forced reflow". They link to the line that caused them.
 
 ---
 
-## The rule
+## Say it in an interview
 
-Never read layout after writing styles in a loop. Do all your reads first, all your writes after, and let the browser lay out once.
+> "The browser batches layout. Style changes only mark the page as needing layout, and it runs once before paint. Reading a geometry property like `offsetWidth` while changes are pending forces layout right away. If you alternate reads and writes in a loop, you force one layout per item. That's layout thrashing. The fix is to do all the reads first, then all the writes."
 
 ---
+
+## Cheat sheet
+
+| Remember | Detail |
+|---|---|
+| Writes are cheap | They only mark layout as pending |
+| Reads can be expensive | `offsetWidth`, `getBoundingClientRect()` and friends force layout if anything is pending |
+| Thrashing | Read, write, read, write gives one layout per item |
+| Fix | Batch all reads, then all writes |
+| Not a fix | `requestAnimationFrame` alone, because the order inside is still wrong |
 
 ## TL;DR
 
-- Style writes only mark the page as needing layout, and the browser normally runs that layout once, right before paint.
-- Reading a geometry property like `offsetWidth` while layout is pending forces the browser to run layout immediately, even if the value you read isn't affected.
-- Alternating reads and writes in a loop caused one full layout per card here, and 5,000 cards took 3,029.7 ms instead of 21.9 ms.
-- `requestAnimationFrame` doesn't fix this, because it changes when the loop starts and not the order of operations inside it.
-- Batch all reads before all writes, and use the Performance panel's forced reflow warnings to find the offending line.
+- The browser waits and runs layout once, right before paint.
+- Reading a size after a style change forces layout to run immediately.
+- Alternating reads and writes in a loop forced 1,000 layouts for 1,000 cards here.
+- Reading everything first and writing after took 1,000 cards from 124 ms to 5 ms.
+
+<DeepDive>
+
+### Full measurements
+
+| Cards | Interleaved | Layouts | Reads, then writes | Layouts |
+|---|---|---|---|---|
+| 100 | 2.2 ms | 100 | 0.5 ms | 1 |
+| 1,000 | 124.3 ms | 1,000 | 4.8 ms | 1 |
+| 5,000 | 3,029.7 ms | 5,000 | 21.9 ms | 1 |
+
+*Headless Chrome 156, Apple M3 Pro, median of 7 runs (3 for the slowest row). Layout counts come from the DevTools Protocol's `Performance.getMetrics`. Each card is a small flex row with text in a 1,200 px wide page, and each height varies by a pixel so every write really changes something. Paint isn't included.*
+
+### Why it grows faster than the card count
+
+Fifty times the cards took about 1,400 times as long. Each height change can move every card below it, so each forced layout has more to place. More cards means more layouts, and each layout is bigger, so the two multiply.
+
+### The requestAnimationFrame result
+
+| Version | Time | Layouts |
+|---|---|---|
+| Plain loop | 122.9 ms | 1,000 |
+| Inside `requestAnimationFrame` | 120.1 ms | 1,000 |
+
+`requestAnimationFrame` is still useful when the work is tied to a visual update. Combine it with batching: read everything, then write everything, inside the callback.
+
+### What the batched version actually does
+
+The first read may still run one layout if the page had pending changes from earlier code. Every read after that reuses the same clean layout. The writes then pile up, and the browser handles them once in its normal rendering pass before paint.
+
+</DeepDive>

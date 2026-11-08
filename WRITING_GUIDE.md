@@ -1,78 +1,104 @@
 # Bitlyst Writing Guide
 
-How every Bitlyst post is written. The voice is **a developer telling a friend what happened** — a real bug, a wrong guess, the moment it clicked — and the concept is taught *through* that story, not before it.
+Bitlyst exists for one reason: **make technical ideas simple enough to remember and explain.** After reading a post, someone should be able to explain the idea to a teammate, and answer it in an interview, without opening the post again.
+
+The model posts are the early ones: [Docker in 2 minutes](docs/docker-in-2-minutes.mdx), [SOLID Principles](docs/solid-principles.mdx). They are short, have one clear picture, and end with something you can memorize.
+
+> **The test:** can a reader close the tab and explain it in 30 seconds? If not, the post isn't done.
 
 ---
 
 ## 1. The shape of a post
 
-Every post follows the same five beats. The headings change; the beats don't.
-
-| Beat | What happens | Length |
+| Part | What it does | Length |
 |------|--------------|--------|
-| **1. The hook** | Drop the reader into a moment: a bug report, a weird console output, a failing test. No definitions, no "In this post we will…". | 2–5 short paragraphs |
-| **2. The wrong turn** | What you (or a reasonable dev) assumed first, and why it seemed right. Readers learn most from a believable mistake. | 1–2 sections |
-| **3. The reveal** | What JavaScript / React / Next.js is *actually* doing. This is where the concept is taught, with a diagram and minimal code. | the core |
-| **4. The fix** | The smallest change that solves it, and why it works. Show before → after. | 1 section |
-| **5. The takeaway** | The rule you'd tell a teammate, in one or two sentences. Then a short TL;DR list. | short |
+| **1. Hook** | One concrete moment: a weird output, a bug, a question people get asked. No "In this post we will…". | 1–3 lines |
+| **2. The mental model** | The whole idea in one picture: an analogy or one plain sentence. This is the line people remember. | 1–3 sentences |
+| **3. How it works** | The idea unpacked in small steps, plain words first, jargon second. Minimal code. | the core |
+| **4. In practice** | When it matters, what to do, before → after. Include the honest stakes: how often you'll actually hit it. | short |
+| **5. Say it in an interview** | A 2–4 sentence answer you could say out loud. Put it in a pull quote. | 2–4 sentences |
+| **6. Cheat sheet** | A small table or 3–5 bullet TL;DR: the facts to remember. | short |
+| **7. Going deeper** *(optional, `<DeepDive>`)* | For readers who want the internals: full measurements and method, edge cases, caveats, further reading. | any |
 
-**Test:** if you deleted every heading, would the post still read like a story with a beginning, middle and end? If not, rewrite.
+**Length:** aim for 400–800 words for parts 1–6. If the core goes past ~900 words, it probably holds two ideas: split it, or make it a series part. "Going deeper" doesn't count toward the limit.
+
+### The "Going deeper" section
+
+- Always the last section, after the TL;DR, wrapped in `<DeepDive>` (see `components/DeepDive.tsx`). The component draws the separate panel, the "Advanced · optional" label, the `Going deeper` heading and the "this is optional" line, so don't write those yourself, and don't put a `---` before it. Leave blank lines around the content:
+  ```mdx
+  <DeepDive>
+
+  ### Full measurements
+  ...
+
+  </DeepDive>
+  ```
+- Split into `###` subsections that each stand alone: full benchmark tables and how they were measured, edge cases and traps, what isn't proven, further reading.
+- The core never depends on it. A reader who stops at the TL;DR must not miss anything they need.
+- Add it only when there's real depth worth reading. Beginner posts usually skip it.
+- This is where long tables, exact flags, engine details and honest caveats go, so the core can stay simple.
+
+**Story is seasoning, not structure.** A short real story makes a post stick, but it has to be short. Don't spend a whole section on a "wrong turn" unless the wrong guess *is* the lesson (as with `[10, 9, 1].sort()`).
 
 ---
 
-## 2. Voice rules
+## 2. Making it memorable
 
-1. **First person only for things that really happened.** If the bug, the conversation or the experiment is real, tell it as "I": "I clicked the button and nothing happened." If the scenario is made up to carry the lesson, frame it as hypothetical with "picture…" and "you": "Picture a table that remembers your selection…". Never invent people, quotes from real colleagues, or events and present them as your own experience. The explanation itself is always present tense: "`sort()` compares strings, not numbers."
-2. **Start in the middle of the action.** First sentence = a concrete event, quote, or output.
-   - ✅ `The leaderboard said 9 points beat 10.`
-   - ❌ `Sorting is a fundamental operation in programming.`
-3. **One concept per post.** If a second concept shows up, it becomes the next post (or a series part).
-4. **Short paragraphs.** 1–4 sentences. A one-line paragraph is allowed for impact — at most once or twice per post.
-5. **Explain like a colleague, not a textbook.** Use "you" and "I". No "one must", "it is important to note", "simply", "just", "obviously".
-6. **Be honest about stakes.** If the perf gain is 0.3 µs, say so. If you got it wrong first, say so. Credibility beats looking clever.
-7. **Back claims with evidence.** Numbers come from a measurement (say what, where, how), a spec link, or a runnable snippet. Never invent figures.
-8. **Name the "why" in plain words before the jargon.** Say "JavaScript turns both numbers into text and compares them letter by letter" — *then* introduce "lexicographic order".
+1. **One mental model per post.** Find the picture first, write second. Good examples: "an image is the recipe, a container is the dish"; "a hidden class is a seating chart for an object". If you can't find one sentence for the idea, the topic is too big.
+2. **Plain words before jargon.** "JavaScript turns both numbers into text and compares them letter by letter", *then* "lexicographic order". Every term gets a one-line meaning the first time.
+3. **Use the same picture all the way through.** If the hook uses a seating chart, the explanation and the cheat sheet use it too. Don't switch analogies halfway.
+4. **Fewer facts, said twice.** It's better to teach three things well than ten things once. The key fact can appear in the mental model, the interview answer *and* the cheat sheet. Repetition is how people remember.
+5. **Numbers only when they are the point.** One measured number that shows the effect ("about 2× slower") beats a table of ten rows. Full benchmark tables belong in "Going deeper", not the core of the post.
+6. **Write for intermediate devs.** Assume they know the language, not engine internals. Even an "advanced" topic should read as easy.
 
 ---
 
-## 3. Formatting rules
+## 3. Voice rules
 
-- **Headings:** plain words, no emoji. Story-style chapter titles are welcome ("Chapter 2: I fixed the bug and made it slower"). Use `##` for beats, `###` sparingly.
-- **Emoji:** at most one or two per post, in the body, only when they add tone. Never in headings.
-- **Bold:** max one bolded phrase per paragraph — the thing you'd underline. If everything is bold, nothing is.
-- **Pull quotes (`>`):** once or twice per post, for the single line you want people to screenshot.
-- **Tables:** only for real comparisons (before/after, version A vs B, measurements). Not as decoration.
-- **Code:** the smallest snippet that shows the behavior. Put the surprising output in a comment on the same line:
+1. **First person only for things that really happened.** Made-up scenarios use "picture…" and "you". Never invent people, quotes or events.
+2. **Short paragraphs.** 1–3 sentences.
+3. **Explain like a colleague.** Use "you". No "one must", "it is important to note", "simply", "just", "obviously".
+4. **Be honest about stakes.** If it only matters in hot loops, say so plainly.
+5. **Back claims with evidence.** Numbers come from a measurement (say what, where, how), a spec link, or a runnable snippet. Never invent figures.
+
+---
+
+## 4. Formatting rules
+
+- **Headings:** plain words that say what the section teaches ("How V8 reads a property", not "Chapter 3"). No emoji. `##` for parts, `###` rarely.
+- **Emoji:** at most one or two per post, in the body. Never in headings.
+- **Bold:** the one thing per paragraph you'd underline. If everything is bold, nothing is.
+- **Pull quotes (`>`):** the interview answer, plus at most one other line.
+- **Tables:** for comparisons and cheat sheets. Keep them under ~6 rows.
+- **Code:** the smallest snippet that shows the behavior, with the surprising output in a comment on the same line:
   ```js
   [10, 9, 1].sort(); // [1, 10, 9]  ← surprise
   ```
-- **Diagrams (optional):** most posts don't need one. Add one only when it explains a mechanism or timeline faster than the text can, which usually means technical flows, not career or soft-skill posts. Use `<FlowDiagram>` for "what happens, in order" and `<ParallelFlow>` for "what happens over time". Every diagram gets a `title`, and `notes` when a step isn't obvious. If a list right next to it says the same thing, cut the diagram.
-- **Images:** posts should include images. Long posts usually need 2–3, placed where the reader needs a visual break. Use photos from free-to-use sites (check the license) or AI-generated art, and never pass off an illustration as a real screenshot. Save them in `public/assets/` as `<post-topic>-<name>.jpg`, about 1200px wide, and add them with `![Photo: name on Pexels](/assets/file.jpg)`.
-- **Cover image (every post):** set `cover: /assets/<post-topic>-cover.jpg` in frontmatter. It shows as the main image under the post header, the thumbnail on post cards, and the share image on social sites (replacing the generated card). Don't repeat the cover as the first image in the body. Every cover uses the same template, so the post list looks like one set:
+- **Diagrams (optional):** only when a mechanism or timeline is faster to see than to read. Use `<FlowDiagram>` for "what happens, in order" and `<ParallelFlow>` for "what happens over time". Every diagram gets a `title`, and `notes` when a step isn't obvious. If a list next to it says the same thing, cut the diagram.
+- **Images:** every post has at least one image besides the cover. Use free-to-use photos (check the license) or AI-generated art, and never pass off an illustration as a real screenshot. Save in `public/assets/` as `<post-topic>-<name>.jpg`, about 1200px wide: `![Photo: name on Pexels](/assets/file.jpg)`.
+- **Image captions:** alt text shows as the caption. Use it for the credit or for a point the image can't make alone. Don't describe the image.
+- **Cover image (every post):** `cover: /assets/<post-topic>-cover.jpg` in frontmatter. It's the hero image, card thumbnail and share image. Don't repeat it in the body. Same template for every post:
   - **Style:** flat editorial AI illustration with light grain. No stock photos, no text, no logos.
-  - **Color:** solid saturated royal-blue background (about `#1a2fd6`). Figures and objects in light blues and soft whites, with **one** warm gold/orange accent (a glow, a coin, a check mark).
-  - **Layout:** left half empty, scene on the right half. One or two figures or objects that act out the post's surprise. Show the idea, not a literal screenshot.
+  - **Color:** solid saturated royal-blue background (about `#1a2fd6`), figures in light blues and soft whites, **one** warm gold/orange accent.
+  - **Layout:** left half empty, scene on the right half. One or two figures or objects that act out the mental model.
   - **File:** 1200×630 JPEG, about 80–150 KB.
-  - **Caption:** `coverAlt: "AI-generated illustration. <one line that adds the post's point>"`, following the caption rules below.
+  - **Caption:** `coverAlt: "AI-generated illustration. <one line that adds the post's point>"`.
   - **Prompt starter:** "Flat editorial vector illustration with subtle grain texture, wide banner. Solid saturated royal blue background, empty on the left half. Palette of light blues and soft whites with a single warm gold accent glow. On the right half: `<scene>`. Calm, modern tech-blog hero style, soft lighting, no text, no logos."
-- **Image captions:** alt text shows on the page as the caption. Use it for the credit, or for a point the reader can't get from the image. Don't describe what's in the image.
-- **End with** a `## TL;DR` of 3–5 bullets, each a full sentence.
 
 ---
 
-## 4. Titles and summaries
+## 5. Titles and summaries
 
-- **Title = the surprise or the outcome**, not the topic.
-  - ✅ `The Leaderboard That Ranked 9 Above 10`
-  - ✅ `I Optimized a Button From O(n) to O(1). The Speed Didn't Matter.`
-  - ❌ `Array.prototype.sort Explained`
-- Avoid the "X — Y" pattern for every title; mix it up.
-- Put the searchable term in the **summary** (and tags) if it doesn't fit the title naturally: "Why JavaScript's `sort()` compares numbers as strings, and how to sort numbers correctly."
-- Summary: one or two sentences, under ~160 characters, describes what the reader will understand by the end.
+- **Title = the topic people search for, plus a hook.** Readers should know what they'll learn *and* want to click.
+  - ✅ `Hidden Classes in V8: Why Object Shape Changes Speed`
+  - ✅ `Debounce vs Throttle, Explained With an Elevator`
+  - ❌ `A Fifth Object Shape Made the Same Loop Twice as Slow` (clever, but nobody knows the topic)
+  - ❌ `Array.prototype.sort` (topic, no reason to click)
+- Summary: one or two sentences, under ~160 characters, says what the reader will be able to explain by the end.
 
 ---
 
-## 5. Series
+## 6. Series
 
 Posts can belong to a series (registered in `lib/series.ts`):
 
@@ -81,26 +107,33 @@ series: "js-plot-twists"
 seriesOrder: 1
 ```
 
-- **JavaScript Plot Twists** — real bugs caused by JS doing exactly what the spec says. Each part: one surprising behavior, one real-world bug it caused, the rule that prevents it.
+- **JavaScript Plot Twists** — surprising JS behaviors that follow the spec. Each part: one surprise, why it happens, the rule that prevents it.
 - **Next.js Field Notes** — tricks and traps from production App Router apps.
-- **Under the Benchmark** — same code, wildly different speed. Each part: one measured surprise, what the engine or hardware is really doing, and the honest stakes.
+- **Under the Benchmark** — performance ideas made simple. Each part: one mental model of what the engine or hardware does, one measured number that proves it, and when it actually matters.
 
 When a part is published, remove its title from `upcoming` in `lib/series.ts`.
 
 ---
 
-## 6. Pre-publish checklist
+## 7. Articles (soft-skill and opinion posts)
 
-- [ ] First sentence is a concrete moment, not a definition.
-- [ ] Anything told as "I" really happened; made-up scenarios are framed as "picture…" / "you", with no invented names.
-- [ ] There's a wrong turn before the reveal.
-- [ ] One concept only.
-- [ ] Every number is measured or sourced.
+Career, teamwork and opinion posts (for example `ai-is-your-junior-developer.mdx`, `feedback-with-evidence-not-drama.mdx`) are **articles**, not concept posts. They don't need the mental-model / interview / cheat-sheet shape or the length limit. Voice, honesty, image, cover and caption rules still apply.
+
+---
+
+## 8. Pre-publish checklist (technical posts)
+
+- [ ] The mental model is stated in 1–3 sentences near the top.
+- [ ] A reader could explain the idea in 30 seconds after reading.
+- [ ] One concept only; roughly 400–800 words before "Going deeper".
+- [ ] Deep details (full tables, flags, internals, caveats) are in an optional `<DeepDive>` at the end, and the core makes sense without it.
+- [ ] Every term is explained in plain words the first time.
+- [ ] Ends with "Say it in an interview" (pull quote) and a cheat sheet / TL;DR.
+- [ ] Numbers are measured or sourced, and only the ones that make the point.
+- [ ] Anything told as "I" really happened; made-up scenarios use "picture…" / "you".
 - [ ] No emoji in headings; ≤2 emoji total.
 - [ ] Code snippets are minimal and show the surprising output.
-- [ ] Any diagram earns its place (not a repeat of nearby text) and has a `title` (and `notes` where needed).
-- [ ] Cover follows the template: blue AI illustration, scene on the right, one gold accent, 1200×630, caption starts "AI-generated illustration."
-- [ ] Post has images, with licenses checked and captions that don't only describe the image.
-- [ ] Title is the surprise/outcome; summary contains the search term.
-- [ ] Ends with a one-line rule + TL;DR.
-- [ ] Frontmatter: `title`, `summary`, `publishedTime`, `level`, `tags` (+ `series`, `seriesOrder` if part of one, + `publishOrder` if another post has the same date: higher number shows first, and the newest written post gets the highest number; + `cover`, `coverAlt`).
+- [ ] Any diagram earns its place and has a `title`.
+- [ ] Cover follows the template; post has at least one more image with a useful caption.
+- [ ] Title has the searchable topic plus a hook.
+- [ ] Frontmatter: `title`, `summary`, `publishedTime`, `level`, `tags` (+ `series`, `seriesOrder`; + `publishOrder` if another post shares the date, higher shows first and the newest written gets the highest; + `cover`, `coverAlt`).

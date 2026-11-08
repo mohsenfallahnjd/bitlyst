@@ -1,5 +1,6 @@
 import type { MDXComponents } from "mdx/types";
 import CodeBlock from "@/components/CodeBlock";
+import DeepDive from "@/components/DeepDive";
 import FlowDiagram from "@/components/FlowDiagram";
 import ParallelFlow from "@/components/ParallelFlow";
 
@@ -77,6 +78,7 @@ const components: MDXComponents = {
       {alt && <span className="text-center text-xs text-gray-500 dark:text-gray-400">{alt}</span>}
     </span>
   ),
+  DeepDive,
   FlowDiagram,
   ParallelFlow,
 };
