@@ -81,6 +81,11 @@ function convertProse(md: string): string {
   return md
     .replace(/<FlowDiagram\b([\s\S]*?)\/>/g, (_, raw) => flowDiagram(attrs(raw)))
     .replace(/<ParallelFlow\b([\s\S]*?)\/>/g, (_, raw) => parallelFlow(attrs(raw)))
+    .replace(
+      /<DeepDive>/g,
+      "---\n\n## Going deeper\n\n*Advanced and optional. Everything above is enough to explain this in an interview. This part is for the curious: full numbers, edge cases and what's still unproven.*\n"
+    )
+    .replace(/<\/DeepDive>/g, "")
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, "") // MDX comments
     .replace(/(!?\[[^\]]*\])\((\/[^)\s]*)/g, (_, label, url) => `${label}(${absolute(url)}`) // relative links/images
     .replace(/(src|href)="(\/[^"]*)"/g, (_, attr, url) => `${attr}="${absolute(url)}"`);
