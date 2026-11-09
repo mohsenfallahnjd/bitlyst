@@ -6,7 +6,7 @@ import { type DocMeta, loadMarkdownDocs } from "@/lib/mdSource";
 export type Topic = { slug: string; name: string; count: number };
 
 /** Topics with at least this many posts get an indexable page + sitemap entry. */
-export const MIN_INDEXABLE_POSTS = 2;
+export const MIN_INDEXABLE_POSTS = 3;
 
 export function getAllTopics(posts: DocMeta[] = loadMarkdownDocs()): Topic[] {
   const bySlug = new Map<string, Topic>();
