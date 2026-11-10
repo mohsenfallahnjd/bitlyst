@@ -80,10 +80,10 @@ The model posts are the early ones: [Docker in 2 minutes](docs/docker-in-2-minut
 - **Cover image (every post):** `cover: /assets/<post-topic>-cover.jpg` in frontmatter. It's the hero image, card thumbnail and share image. Don't repeat it in the body. Same template for every post:
   - **Style:** flat editorial AI illustration with light grain. No stock photos, no text, no logos.
   - **Color:** solid saturated royal-blue background (about `#1a2fd6`), figures in light blues and soft whites, **one** warm gold/orange accent.
-  - **Layout:** left half empty, scene on the right half. One or two figures or objects that act out the mental model.
+  - **Layout:** scene centered and filling most of the frame, with a calm margin around it. No empty half: the site never puts text on the cover, and the card thumbnail is only 88–120px wide, so the subject must read at that size. One or two figures or objects that act out the mental model.
   - **File:** 1200×630 JPEG, about 80–150 KB.
   - **Caption:** `coverAlt: "AI-generated illustration. <one line that adds the post's point>"`.
-  - **Prompt starter:** "Flat editorial vector illustration with subtle grain texture, wide banner. Solid saturated royal blue background, empty on the left half. Palette of light blues and soft whites with a single warm gold accent glow. On the right half: `<scene>`. Calm, modern tech-blog hero style, soft lighting, no text, no logos."
+  - **Prompt starter:** "Flat editorial vector illustration with subtle grain texture, wide banner. Solid saturated royal blue background. Palette of light blues and soft whites with a single warm gold accent glow. Centered composition, subject large and filling most of the frame with a calm margin: `<scene>`. Calm, modern tech-blog hero style, soft lighting, no text, no logos."
 
 ---
 
