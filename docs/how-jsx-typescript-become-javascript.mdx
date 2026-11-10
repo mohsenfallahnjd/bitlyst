@@ -1,0 +1,167 @@
+---
+title: "How Next.js Turns JSX and TypeScript Into Plain JavaScript"
+summary: "Browsers can't read JSX or types. See what the compiler erases, what it rewrites, and what actually reaches the browser in a Next.js app."
+publishedTime: "2026-11-10"
+publishOrder: 1
+level: "beginner"
+cover: "/assets/jsx-to-javascript-cover.jpg"
+coverAlt: "AI-generated illustration. Types get crossed out and tags get rewritten before anything reaches the browser."
+tags: ["nextjs", "react", "jsx", "typescript", "swc", "turbopack"]
+---
+
+Paste one line of JSX into a browser console:
+
+```js
+const el = <h1>Hi</h1>; // SyntaxError: Unexpected token '<'
+```
+
+The browser has no idea what `<h1>` means inside JavaScript. Neither does it understand `: string` or `type Props`. Yet every Next.js app is written in exactly that. Something sits between your editor and the browser, translating.
+
+---
+
+## The mental model: a translator at the door
+
+> **The browser only speaks plain JavaScript. A compiler erases your types and rewrites every JSX tag as a function call, so what reaches the browser is ordinary JS.**
+
+Types and JSX are for you and your editor. They never ship. Picture a translator who reads your file, crosses out the notes in the margins (types), and rewrites the shorthand (JSX) in full sentences (function calls).
+
+---
+
+## What the translator does to one component
+
+Here's a tiny TypeScript component:
+
+```tsx
+type Props = { name: string };
+
+export function Hello({ name }: Props) {
+  return <h1 className="title">Hi {name}</h1>;
+}
+```
+
+I ran it through SWC, the compiler bundled with Next.js 16.4, using the same JSX settings Next.js uses. This is the real output:
+
+```js
+import { jsxs as _jsxs } from "react/jsx-runtime";
+
+export function Hello({ name }) {
+  return /*#__PURE__*/ _jsxs("h1", {
+    className: "title",
+    children: ["Hi ", name],
+  });
+}
+```
+
+Two things happened:
+
+1. **Types were erased.** `type Props` and `: Props` are gone. Not checked, just deleted.
+2. **JSX became a function call.** `<h1 className="title">` turned into `_jsxs("h1", { className: "title", children: [...] })`. The tag name is the first argument; attributes and children become an object.
+
+When that function runs, it returns a plain object, nothing magic:
+
+```js
+{ type: "h1", props: { className: "title", children: ["Hi ", "Sara"] } }
+```
+
+That object is a **React element**: a description of what to draw. React reads these descriptions later and turns them into real DOM (or HTML on the server).
+
+---
+
+## Who does what in Next.js
+
+Translating one file isn't the whole job. A real app has hundreds of files importing each other, so two tools share the work:
+
+| Step | Tool | What it does |
+|------|------|--------------|
+| Compile each file | **SWC** (written in Rust) | Erases types, rewrites JSX, turns modern syntax into what your target browsers support |
+| Bundle | **Turbopack** (default in Next.js 16) | Follows every `import`, groups files into chunks, splits server code from client code |
+| Minify (production) | SWC | Shortens names, removes dead code, makes the files small |
+
+SWC replaced Babel in Next.js 12. If you add a `.babelrc`, Next.js falls back to Babel for that project, and you lose the speed.
+
+---
+
+## In practice: what this means for you
+
+**Types aren't checked while you develop.** SWC deletes types without reading them. So `next dev` will happily run code with type errors; only your editor complains. `next build` is where the check happens: it runs the TypeScript compiler (`tsc`) and fails the build on errors, unless you set `typescript.ignoreBuildErrors`.
+
+**`import React` is no longer needed in every file.** Before React 17, JSX compiled to `React.createElement(...)`, so `React` had to be in scope. The newer "automatic runtime" imports the helper for you (`react/jsx-runtime`), which is why that line disappeared from tutorials.
+
+**Server code doesn't ship.** Turbopack builds separate bundles for the server and the browser. Server Components and their imports stay on the server; only files under a `"use client"` boundary end up in browser chunks. (More on that in [What is 'use client'](/p/nextjs-use-client).)
+
+---
+
+## Say it in an interview
+
+> "Browsers only understand JavaScript, so Next.js compiles JSX and TypeScript first. SWC, a Rust compiler, strips the types without checking them and rewrites each JSX tag into a call like `jsx('h1', props)`, which returns a plain object React uses to build the UI. Turbopack then bundles the files and splits server code from client code. Type checking is a separate step that runs in `next build`."
+
+---
+
+## Cheat sheet
+
+- **JSX → function call.** `<h1 a="b">x</h1>` becomes `jsx("h1", { a: "b", children: "x" })`, which returns a React element (a plain object).
+- **Types → deleted.** SWC erases them; `tsc` checks them only during `next build`.
+- **SWC compiles** each file; **Turbopack bundles** them into server and client chunks.
+- **Automatic runtime** (React 17+) is why you no longer write `import React` for JSX.
+- Nothing you write in JSX or TypeScript reaches the browser as-is.
+
+<DeepDive>
+
+### See it yourself
+
+You can call the same SWC build that Next.js uses from a Node script inside any Next.js project:
+
+```js
+const swc = require("next/dist/build/swc");
+
+swc.loadBindings().then(() =>
+  swc.transform(source, {
+    filename: "Hello.tsx",
+    jsc: {
+      parser: { syntax: "typescript", tsx: true },
+      target: "es2022",
+      transform: { react: { runtime: "automatic" } },
+    },
+  })
+).then((r) => console.log(r.code));
+```
+
+That's how the output in this post was produced (Next.js 16.4.3, React 19.3.1).
+
+### `jsx` vs `jsxs`
+
+The compiler picks `jsxs` when an element has several static children (an array) and `jsx` when it has one or none. React uses the difference to skip the "missing `key`" warning for children you wrote by hand, since those can't be reordered.
+
+### Development output is bigger
+
+With `development: true` (what `next dev` does), the same component compiles to `jsxDEV` from `react/jsx-dev-runtime`, with extra arguments:
+
+```js
+_jsxDEV("h1", { className: "title", children: ["Hi ", name] }, void 0, true, {
+  fileName: "Hello.tsx",
+  lineNumber: 3,
+  columnNumber: 10,
+});
+```
+
+That source location is how React DevTools and error overlays point you to the exact line in your file.
+
+### What `/*#__PURE__*/` is for
+
+It tells the minifier "this call has no side effects." If the result is never used, the minifier can delete the whole call. Without the comment, it has to assume calling a function might do something and keep it.
+
+### Classic vs automatic runtime
+
+| | Classic (before React 17) | Automatic (React 17+) |
+|---|---|---|
+| Output | `React.createElement("h1", props, ...children)` | `jsx("h1", { ...props, children })` |
+| Import | You write `import React from "react"` | Compiler adds `import { jsx } from "react/jsx-runtime"` |
+| Children | Extra arguments | A `children` prop |
+
+### Further reading
+
+- [Next.js Compiler](https://nextjs.org/docs/architecture/nextjs-compiler): why Next.js moved from Babel to SWC.
+- [Introducing the new JSX transform](https://legacy.reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html): the React team's post on the automatic runtime.
+- [Turbopack](https://nextjs.org/docs/app/api-reference/turbopack): the bundler that's now the default.
+
+</DeepDive>

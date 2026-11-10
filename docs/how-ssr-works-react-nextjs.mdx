@@ -1,0 +1,129 @@
+---
+title: "How SSR Works in React and Next.js: Built on the Server, Wired Up in the Browser"
+summary: "Server-side rendering in one picture: the server sends finished HTML, then hydration makes it interactive. Learn the steps, the gap between them, and why mismatches happen."
+publishedTime: "2026-11-10"
+publishOrder: 2
+level: "intermediate"
+cover: "/assets/ssr-hydration-cover.jpg"
+coverAlt: "AI-generated illustration. The house arrives fully built; hydration turns the power on room by room."
+tags: ["nextjs", "react", "ssr", "hydration", "rendering"]
+---
+
+Open a Next.js page on a slow phone. The page shows up almost at once: text, images, a "Like" button. You tap the button and nothing happens. A second later you tap again and it works.
+
+Nothing was broken. You tapped during the gap between the two halves of server-side rendering.
+
+---
+
+## The mental model: a house delivered with the power off
+
+> **SSR delivers a fully built house with the electricity off. Hydration is the electrician walking through and connecting every switch to the wiring that's already there.**
+
+The server builds the page as HTML, so you see it right away. But HTML can't run code, so nothing responds yet. Then the JavaScript arrives, and React connects your event handlers to the HTML that's already on screen. Only then does the house have power.
+
+---
+
+## How it works, step by step
+
+<FlowDiagram
+  title="One SSR request, from URL to working page"
+  nodes="Request → Server runs components → HTML sent → Browser paints → JS downloads → Hydration"
+  notes="The browser asks for /post/42|React calls your components on the server, with real data|A finished HTML page goes over the network|The user sees the page. Buttons don't work yet.|The browser fetches the JavaScript bundle for the page|React runs the same components in the browser and compares"
+  branch1="[green] Output matches the HTML → Attach event handlers → Interactive"
+  branch2="[orange] Output differs → Hydration error → React re-renders that part from scratch"
+/>
+
+**1. The server builds the house.** React calls your components on the server and turns the result into an HTML string. Here's a counter I rendered with React 19's `renderToString`:
+
+```jsx
+function Counter() {
+  const [n] = useState(0);
+  return <button onClick={() => {}}>Clicked {n} times</button>;
+}
+```
+
+```html
+<button>Clicked <!-- -->0<!-- --> times</button>  <!-- onClick is gone -->
+```
+
+The text is there. The `onClick` is not. **HTML can describe a button but can't hold a function**, so all behavior is left behind. (The `<!-- -->` comments mark where the text pieces split, so React can find them again later.)
+
+**2. The browser shows it immediately.** No JavaScript needed to see the page. That's the main win: fast first paint, and search engines get real content instead of an empty `<div>`.
+
+**3. The JavaScript arrives.** The browser downloads the same components, compiled for the client.
+
+**4. Hydration: the electrician walks through.** React runs your components again in the browser. Instead of building new DOM, it walks the HTML that's already there, checks it matches what it would have built, and attaches the event handlers. Now the button works.
+
+---
+
+## In practice
+
+**Next.js does this for every page by default.** No setting to turn on. In the App Router, Server Components render only on the server, and Client Components are rendered on the server *and* hydrated in the browser.
+
+That last part trips people up: **`"use client"` doesn't mean "rendered only in the browser."** It means "this also ships JavaScript and gets hydrated." The HTML for it still comes from the server.
+
+**Hydration mismatches come from the electrician finding a different house.** If the server's HTML and the browser's first render differ, React reports an error and rebuilds that part. Common causes:
+
+```jsx
+<p>{new Date().toLocaleTimeString()}</p>  // server time ≠ browser time
+<p>{Math.random()}</p>                     // different number each side
+<p>{typeof window !== "undefined" ? "client" : "server"}</p>  // different branch
+```
+
+The fix: render the same thing on both sides first, then change it in `useEffect` or an event. Updates after hydration are fine (see [Why setState doesn't cause hydration errors](/p/react-setstate-hydration)).
+
+**The honest stakes.** On a fast laptop the gap between "visible" and "interactive" is too short to notice. On a cheap phone with a big bundle it can be seconds. Shipping less client JavaScript (fewer, smaller Client Components) shortens it more than anything else.
+
+---
+
+## Say it in an interview
+
+> "With SSR, the server runs the React components and sends finished HTML, so the user sees content before any JavaScript loads. Then the JS bundle downloads and React hydrates: it renders the same tree in the browser, matches it against the existing DOM, and attaches event handlers instead of rebuilding the page. If the server and client output differ, you get a hydration mismatch. Next.js does SSR for every page by default."
+
+---
+
+## Cheat sheet
+
+| | Who builds the HTML | User sees content | Interactive |
+|---|---|---|---|
+| **CSR** (client-side rendering) | Browser, after JS loads | Late | When content appears |
+| **SSR** | Server, on each request | Early | After hydration |
+| **SSG** (static generation) | Server, at build time | Earliest (from cache/CDN) | After hydration |
+
+- SSR = **HTML first, behavior later.** Hydration attaches the behavior.
+- Hydration **reuses** the server's DOM; it doesn't rebuild it.
+- **Mismatch** = server and first client render differ. Keep the first render the same on both sides.
+- `"use client"` components are still server-rendered, then hydrated.
+
+<DeepDive>
+
+### SSR vs Server Components
+
+They sound alike but answer different questions.
+
+- **SSR** is about *where the first HTML comes from*. Any component, server or client, gets turned into HTML on the server.
+- **Server Components** are about *whose code ships to the browser*. A Server Component's code never ships and never hydrates. The browser gets its output as an RSC payload (a compact description of the rendered tree) plus the HTML.
+
+So in Next.js, a Server Component is rendered on the server only, and a Client Component is rendered on the server (SSR) and again in the browser (hydration). Only Client Components pay the hydration cost, which is why keeping them small shortens the gap.
+
+### Streaming: the house arrives room by room
+
+`renderToString` waits for the whole page before sending anything. Modern React uses streaming instead (`renderToPipeableStream` in Node, `renderToReadableStream` in web runtimes). With `<Suspense>`, the server sends the page shell first, then each slow section as its data arrives. Next.js streams by default, and a `loading.tsx` file is a Suspense boundary around the page.
+
+React also hydrates selectively: each Suspense boundary can hydrate on its own, and if the user clicks inside a section that hasn't hydrated yet, React hydrates that one first.
+
+### What a mismatch actually costs
+
+In React 18+, a mismatch is a recoverable error: React throws away the server HTML up to the nearest Suspense boundary and renders that part on the client. The page still works, but you lose the SSR benefit for that part, and you may see a flash as content changes. In development, Next.js shows the diff in its error overlay.
+
+### Where prerendering fits
+
+SSR on every request costs server time. If a page's HTML doesn't depend on the request, Next.js can render it once at build time (SSG) and serve it from a CDN. With Cache Components on, Next.js prerenders the static shell of a page at build time and streams only the dynamic parts per request. Hydration works the same in every case.
+
+### Further reading
+
+- [`hydrateRoot`](https://react.dev/reference/react-dom/client/hydrateRoot): React's API, including how mismatches are handled.
+- [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components): how Next.js splits the work.
+- [`renderToPipeableStream`](https://react.dev/reference/react-dom/server/renderToPipeableStream): the streaming server API.
+
+</DeepDive>
