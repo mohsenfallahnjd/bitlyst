@@ -1,0 +1,120 @@
+---
+title: "JavaScript Classes Are Functions in a Costume (and What this.constructor Points To)"
+summary: "A JavaScript class is a function with stricter rules. Learn the three rules it adds and why this.constructor lets an object reach its own class."
+publishedTime: "2026-11-10"
+publishOrder: 2
+level: "beginner"
+cover: "/assets/js-classes-cover.jpg"
+coverAlt: "AI-generated illustration. Lift the class mask and it's the same plain function underneath."
+tags: ["javascript", "classes", "this", "prototypes", "oop"]
+---
+
+Ask JavaScript what a class is:
+
+```js
+class User {}
+typeof User; // "function"  ← surprise
+```
+
+Not `"class"`. A function. Six years ago I wrote two short posts about this, one on what a class really is and one on a `this` trick inside classes. This post folds both into one idea.
+
+## The mental model
+
+> A JavaScript class is **a function wearing a costume**. Underneath it's the same constructor function JavaScript always had. The costume adds a few strict rules and nicer syntax.
+
+Other languages build classes into the core of the language. JavaScript added the `class` keyword in ES2015 on top of what it already had: functions and prototypes.
+
+## What's under the costume
+
+When you write a class, JavaScript builds a function. Calling it with `new` does what constructor functions always did:
+
+1. Create an empty object.
+2. Link that object to `User.prototype`, so it can use the class's methods.
+3. Run the `constructor` body with `this` pointing at the new object.
+4. Return the object.
+
+```js
+class User {
+  constructor(name) { this.name = name; }
+  hello() { return `Hi, ${this.name}`; }
+}
+
+const u = new User("Sara");
+Object.getPrototypeOf(u) === User.prototype; // true
+```
+
+The methods live once on `User.prototype`. Every user borrows them from there instead of carrying its own copy.
+
+## The three rules the costume adds
+
+If it's a function, why not write a plain function? Because the costume changes how it behaves:
+
+| Rule | Plain function | Class |
+|------|----------------|-------|
+| Strict mode | Only if you opt in | Always on inside the class body |
+| Hoisting | Usable above its definition | Not usable before the line it's defined on |
+| Calling it | Works with or without `new` | Throws without `new` |
+
+```js
+new Late(); // ReferenceError: Cannot access 'Late' before initialization
+class Late {}
+
+User("Sara"); // TypeError: Class constructor User cannot be invoked without 'new'
+```
+
+All three rules catch mistakes early. Forgetting `new` on an old constructor function quietly set properties on the global object. A class throws instead.
+
+## The this.constructor trick
+
+The second old post was about this puzzle. A `static` method belongs to the class, not to its objects:
+
+```js
+class User {
+  static greet() { return "hi from User"; }
+}
+
+new User().greet(); // TypeError: ... greet is not a function
+```
+
+So how can the constructor call a static method without typing the class name? Through `this.constructor`:
+
+```js
+class User {
+  constructor() {
+    console.log(this.constructor.greet()); // "hi from User"
+  }
+  static greet() { return "hi from User"; }
+}
+```
+
+Here's why it works. Every prototype has a `constructor` property that points back to the function that made it. The new object doesn't have `constructor` itself, so JavaScript looks it up on `User.prototype` and finds `User`. **`this.constructor` is the class, so `this.constructor.greet()` is just `User.greet()`.**
+
+![AI-generated illustration. The object can't hold a static method itself, but this.constructor is the thread back to the class that does.](/assets/js-classes-this-constructor.jpg)
+
+## In practice
+
+Picture a subclass that overrides the static method:
+
+```js
+class Admin extends User {
+  static greet() { return "hi from Admin"; }
+}
+
+new Admin(); // logs "hi from Admin"
+```
+
+If the constructor had hard-coded `User.greet()`, `Admin` would still print the `User` greeting. `this.constructor` picks the class that actually ran `new`, so subclasses get their own version for free. You'll see this in base classes that read static config, such as default options or a type name.
+
+Day to day, you'll mostly hit the costume rules as error messages: "cannot be invoked without 'new'" or "before initialization". Now you know where they come from.
+
+## Say it in an interview
+
+> "A class in JavaScript is a special kind of function. `new` creates an object linked to the class's prototype and runs the constructor on it. Compared with a plain function, a class is always in strict mode, can't be used before its definition, and throws if you call it without `new`. Inside an instance, `this.constructor` points back to the class, which is how you reach static members, and in a subclass it points to the subclass."
+
+## Cheat sheet
+
+- `typeof SomeClass === "function"`: a class is a function in a costume.
+- `new` creates an object, links it to `Class.prototype` and runs the constructor.
+- The costume adds three rules: strict mode, no use before definition, `new` required.
+- `static` members live on the class, not on its objects.
+- `this.constructor` is the class that ran `new`, so `this.constructor.someStatic()` respects subclasses.
