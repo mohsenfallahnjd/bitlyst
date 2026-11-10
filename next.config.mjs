@@ -5,6 +5,8 @@ const nextConfig = {
   cacheComponents: true,
   // links prefetch one shared App Shell per route instead of every linked page
   partialPrefetching: true,
+  reactCompiler: true,
+  experimental: { turbopackRustReactCompiler: true },
   cacheLife: {
     // read counts, trending, comments: refresh in the background every 5 minutes
     stats: { stale: 300, revalidate: 300, expire: 86_400 },

@@ -7,6 +7,7 @@ const LINKS = [
   { label: "Topics", href: "/tags" },
   { label: "Links", href: "/links" },
   { label: "About", href: "/about" },
+  { label: "Sync devices", href: "/sync" },
   // a feed file, not a page: a <Link> would prefetch it as an RSC payload
   { label: "RSS", href: "/rss.xml", plain: true },
   { label: "GitHub", href: "https://github.com/mohsenfallahnjd/bitlyst", external: true },

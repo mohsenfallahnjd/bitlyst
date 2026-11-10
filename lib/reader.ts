@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 
 /**
  * Per-browser reading state kept in localStorage: what you've read, where you
- * stopped, your daily streak and when you last visited. Never leaves the device.
+ * stopped, your daily streak and when you last visited. Stays on the device unless
+ * you turn on cross-device sync (see lib/readerSync.ts).
  */
 export type ReaderState = {
   /** slug → { p: max scroll progress 0..1, t: last opened (ms) } */
@@ -18,6 +19,8 @@ export type ReaderState = {
 
 const KEY = "bitlyst:reader";
 const EVENT = "bitlyst:reader";
+/** Fired only for changes made on this device — what sync pushes. */
+export const LOCAL_EVENT = "bitlyst:reader-local";
 export const READ_THRESHOLD = 0.85;
 
 const EMPTY: ReaderState = { history: {}, streak: { day: "", count: 0, best: 0 }, lastVisit: 0, prevVisit: 0 };
@@ -36,13 +39,52 @@ export function readState(): ReaderState {
   }
 }
 
-function writeState(next: ReaderState) {
+function writeState(next: ReaderState, { remote = false } = {}) {
   try {
     localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
     /* storage blocked — features just stay hidden */
   }
   window.dispatchEvent(new Event(EVENT));
+  if (!remote) {
+    window.dispatchEvent(new Event(LOCAL_EVENT));
+  }
+}
+
+function dayNum(day: string) {
+  const [y, m, d] = day.split("-").map(Number);
+  return y && m && d ? y * 10_000 + m * 100 + d : 0;
+}
+
+/** Merges state synced from other devices: highest progress and latest open per post, latest streak day. */
+export function applyRemote(remote: Pick<ReaderState, "history" | "streak">) {
+  const state = readState();
+  const history = { ...state.history };
+  let changed = false;
+  for (const [slug, r] of Object.entries(remote.history)) {
+    const l = history[slug];
+    const p = Math.max(l?.p ?? 0, r.p);
+    const t = Math.max(l?.t ?? 0, r.t);
+    if (!l || l.p !== p || l.t !== t) {
+      history[slug] = { p, t };
+      changed = true;
+    }
+  }
+
+  let streak = state.streak;
+  const ln = dayNum(streak.day);
+  const rn = dayNum(remote.streak.day);
+  if (rn > ln || (rn === ln && remote.streak.count > streak.count)) {
+    streak = { ...remote.streak, best: Math.max(streak.best, remote.streak.best) };
+    changed = true;
+  } else if (remote.streak.best > streak.best) {
+    streak = { ...streak, best: remote.streak.best };
+    changed = true;
+  }
+
+  if (changed) {
+    writeState({ ...state, history, streak }, { remote: true });
+  }
 }
 
 /** Called once per page load from the root layout. */
