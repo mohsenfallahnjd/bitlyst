@@ -1,0 +1,106 @@
+---
+title: "How 'this' Works in JavaScript: Decided by the Call, Not the Code"
+summary: "'this' in JavaScript depends on how a function is called, not where it's written. Four rules and one arrow-function exception cover every case."
+publishedTime: "2026-11-10"
+publishOrder: 6
+level: "beginner"
+cover: "/assets/javascript-this-cover.jpg"
+coverAlt: "AI-generated illustration. 'this' belongs to whoever holds the mic when the function is called, and the mic can change hands."
+tags: ["javascript", "this", "functions", "arrow-functions"]
+---
+
+Same function, two calls, two different results:
+
+```js
+const user = {
+  name: "Sara",
+  hello() { return `Hi, ${this.name}`; },
+};
+
+user.hello();       // "Hi, Sara"
+
+const hello = user.hello;
+hello();            // TypeError: Cannot read properties of undefined (reading 'name')
+```
+
+Nothing about the function changed. Only **how it was called**.
+
+## The mental model
+
+> `this` is like the word **"me"**. It means whoever is speaking *right now*, not whoever wrote the sentence. A function finds out what `this` is **at the moment it's called**.
+
+For arrow functions, there's one exception: they never say "me" themselves. They **repeat the "me" of the function around them**.
+
+## How it works: look at the call
+
+To find `this`, ignore where the function was written. Look at the line that **calls** it, and check these rules in order:
+
+| How it's called | `this` is | Example |
+|---|---|---|
+| With `new` | the new object | `new User("Sara")` |
+| With `call`, `apply` or `bind` | whatever you pass | `hello.call(admin)` |
+| As `obj.method()` | the object left of the dot | `user.hello()` → `user` |
+| Plain `fn()` | `undefined` | `hello()` |
+
+The last row explains the hook. `hello()` has nothing left of the dot, so `this` is `undefined`, and reading `.name` from it throws.
+
+(In old scripts without strict mode, a plain call gives the global object instead of `undefined`. Modules and classes are always strict, so `undefined` is what you'll see in modern code.)
+
+The "left of the dot" rule works with any object, even one that borrowed the method:
+
+```js
+const admin = { name: "Ali", hello: user.hello };
+admin.hello(); // "Hi, Ali"
+```
+
+## Arrow functions: no "me" of their own
+
+An arrow function doesn't get its own `this`. It uses the `this` of the code around it, the place where it was **written**.
+
+```js
+const timer = {
+  name: "Timer",
+  start() {
+    setTimeout(() => console.log(this.name)); // "Timer"
+  },
+};
+timer.start();
+```
+
+The arrow sits inside `start`, and `start` was called as `timer.start()`, so the arrow's `this` is `timer`.
+
+That's also why an arrow is a bad choice for an object method:
+
+```js
+const box = { name: "Box", hi: () => this.name };
+box.hi(); // this is not box: an arrow ignores the dot
+```
+
+## Is `this` part of scope?
+
+No, and that's the main source of confusion. **Variables are decided by where the code is written.** That's scope: a function can see the variables around it. **`this` is decided by the call**, so the same function can get a different `this` each time.
+
+Arrow functions are the one place where the two meet. An arrow looks up `this` the same way it looks up a variable: from the code around it.
+
+## In practice
+
+You'll hit this mostly when you **pass a method somewhere else**: a callback, an event handler, `setTimeout(user.hello)`. The method gets called later as a plain `fn()`, and `this` is lost.
+
+Two fixes:
+
+```js
+setTimeout(() => user.hello());     // call it with the dot yourself
+setTimeout(user.hello.bind(user));  // or lock `this` with bind
+```
+
+## Say it in an interview
+
+> "`this` depends on how a function is called, not where it's defined. With `new` it's the new object, with `call`/`apply`/`bind` it's what you pass, with `obj.method()` it's the object before the dot, and with a plain call it's `undefined` in strict mode. Arrow functions don't have their own `this`; they use the `this` of the surrounding code."
+
+## Cheat sheet
+
+- `this` = "me": decided **when the function is called**.
+- Look at the call: `new` → new object, `call`/`bind` → what you pass, `obj.fn()` → `obj`, `fn()` → `undefined`.
+- **Arrow functions** use the `this` of the code around them.
+- Scope (variables) follows where code is written. `this` follows how it's called.
+- Passing a method as a callback loses `this`: wrap it in an arrow or use `bind`.
