@@ -1,9 +1,10 @@
 import Image from "next/image";
-import Link from "next/link";
+import { COVER_PLACEHOLDER_BG } from "@/lib/cover";
 import { formatCount } from "@/lib/format";
 import type { PostSummary } from "@/lib/mdSource";
 import CoverArt from "./CoverArt";
 import PostTransition from "./PostTransition";
+import PreloadCoverLink from "./PreloadCoverLink";
 import ReadBadge from "./ReadBadge";
 import { CommentIcon, EyeIcon } from "./StatIcons";
 
@@ -47,7 +48,7 @@ const THUMB =
 export default function PostCard({ post, views, comments }: { post: PostSummary; views?: number; comments?: number }) {
   return (
     <article className="post-card group/card border-b border-gray-200/70 dark:border-gray-800/60 last:border-b-0">
-      <Link href={`/p/${post.slug}`} className="flex items-start gap-4 py-5">
+      <PreloadCoverLink href={`/p/${post.slug}`} cover={post.cover} className="flex items-start gap-4 py-5">
         <div className="min-w-0 flex-1">
           <PostTransition slug={post.slug} part="title">
             <h3 className="text-[15px] sm:text-base font-semibold tracking-tight leading-snug text-gray-900 dark:text-gray-100 group-hover/card:text-[var(--accent)] transition-colors">
@@ -73,13 +74,13 @@ export default function PostCard({ post, views, comments }: { post: PostSummary;
               width={240}
               height={160}
               sizes="(min-width: 640px) 120px, 88px"
-              className={THUMB}
+              className={`${THUMB} ${COVER_PLACEHOLDER_BG}`}
             />
           ) : (
             <CoverArt tags={post.tags} variant="thumb" className={THUMB} />
           )}
         </PostTransition>
-      </Link>
+      </PreloadCoverLink>
     </article>
   );
 }

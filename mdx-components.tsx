@@ -1,6 +1,7 @@
 import type { MDXComponents } from "mdx/types";
 import CodeBlock from "@/components/CodeBlock";
 import DeepDive from "@/components/DeepDive";
+import FadeImage from "@/components/FadeImage";
 import FlowDiagram from "@/components/FlowDiagram";
 import ParallelFlow from "@/components/ParallelFlow";
 
@@ -63,21 +64,28 @@ const components: MDXComponents = {
   tr: (props) => <tr {...props} className="border-b border-gray-100 dark:border-gray-800/60 last:border-b-0" />,
   td: (props) => <td {...props} className="px-4 py-2.5" />,
   hr: () => <hr className="my-12 border-gray-200 dark:border-gray-800" />,
-  img: ({ src, alt, width, height, ...props }) => (
-    <span className="my-8 flex flex-col gap-2 rounded-xl border border-gray-200/70 dark:border-gray-800 bg-surface-light dark:bg-surface-dark p-3">
-      <img
-        {...props}
-        src={src}
-        alt={alt ?? ""}
-        width={width}
-        height={height}
-        loading="lazy"
-        decoding="async"
-        className="rounded-lg w-full h-auto"
-      />
-      {alt && <span className="text-center text-xs text-gray-500 dark:text-gray-400">{alt}</span>}
-    </span>
-  ),
+  // width/height come from lib/rehypeImageSize (local files only). Sized raster images go through
+  // next/image (AVIF/WebP, responsive srcset) and reserve their box so text doesn't jump on load.
+  img: ({ src, alt, width, height, ...props }) => {
+    const w = Number(width);
+    const h = Number(height);
+    const optimizable = typeof src === "string" && w > 0 && h > 0 && !/\.svg($|[?#])/i.test(src);
+    return (
+      <span className="my-8 flex flex-col gap-2 rounded-xl border border-gray-200/70 dark:border-gray-800 bg-surface-light dark:bg-surface-dark p-3">
+        <FadeImage
+          {...(optimizable ? {} : props)}
+          optimized={optimizable}
+          src={src}
+          alt={alt ?? ""}
+          width={width}
+          height={height}
+          sizes={optimizable ? "(min-width: 768px) 41rem, calc(100vw - 3.5rem)" : undefined}
+          className="rounded-lg w-full h-auto"
+        />
+        {alt && <span className="text-center text-xs text-gray-500 dark:text-gray-400">{alt}</span>}
+      </span>
+    );
+  },
   DeepDive,
   FlowDiagram,
   ParallelFlow,

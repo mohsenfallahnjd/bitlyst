@@ -26,8 +26,10 @@ import ShareButton from "@/components/ShareButton";
 import { CommentIcon } from "@/components/StatIcons";
 import TOC from "@/components/TOC";
 import ViewCounter from "@/components/ViewCounter";
+import { COVER_PLACEHOLDER_BG, HERO_COVER_HEIGHT, HERO_COVER_SIZES, HERO_COVER_WIDTH } from "@/lib/cover";
 import { tagSlug } from "@/lib/format";
 import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
+import rehypeImageSize from "@/lib/rehypeImageSize";
 import { getPostStats } from "@/lib/stats";
 import { useMDXComponents } from "@/mdx-components";
 
@@ -141,11 +143,11 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
                 <Image
                   src={post.cover}
                   alt=""
-                  width={1200}
-                  height={630}
-                  priority
-                  sizes="(min-width: 768px) 42rem, 100vw"
-                  className={COVER}
+                  width={HERO_COVER_WIDTH}
+                  height={HERO_COVER_HEIGHT}
+                  preload
+                  sizes={HERO_COVER_SIZES}
+                  className={`${COVER} ${COVER_PLACEHOLDER_BG}`}
                 />
               ) : (
                 <CoverArt tags={post.tags} variant="hero" className={COVER} />
@@ -231,7 +233,7 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
             options={{
               mdxOptions: {
                 remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter, remarkGfm],
-                rehypePlugins: [rehypeSlug, rehypeHighlight],
+                rehypePlugins: [rehypeSlug, rehypeHighlight, rehypeImageSize],
               },
             }}
           />

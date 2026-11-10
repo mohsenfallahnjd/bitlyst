@@ -105,7 +105,7 @@ export default async function AboutPage() {
             width={88}
             height={88}
             className="rounded-2xl object-cover size-[88px] shrink-0 ring-1 ring-black/5 dark:ring-white/10"
-            priority
+            preload
           />
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Hi, I&apos;m Mohsen 👋</h1>

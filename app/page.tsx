@@ -6,6 +6,7 @@ import NewsletterForm from "@/components/NewsletterForm";
 import PixelSprite from "@/components/PixelSprite";
 import PostCard, { PostStatsLine } from "@/components/PostCard";
 import PostTransition from "@/components/PostTransition";
+import { COVER_PLACEHOLDER_BG, HERO_COVER_HEIGHT, HERO_COVER_SIZES, HERO_COVER_WIDTH } from "@/lib/cover";
 import { formatCount } from "@/lib/format";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getAllSeries } from "@/lib/series";
@@ -73,11 +74,11 @@ export default async function HomePage() {
                 <Image
                   src={featured.cover}
                   alt=""
-                  width={1200}
-                  height={630}
-                  priority
-                  sizes="(min-width: 768px) 40rem, 100vw"
-                  className={FEATURED_COVER}
+                  width={HERO_COVER_WIDTH}
+                  height={HERO_COVER_HEIGHT}
+                  preload
+                  sizes={HERO_COVER_SIZES}
+                  className={`${FEATURED_COVER} ${COVER_PLACEHOLDER_BG}`}
                 />
               ) : (
                 <CoverArt tags={featured.tags} variant="hero" className={FEATURED_COVER} />
