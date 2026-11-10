@@ -1,0 +1,120 @@
+---
+title: "turbopackRustReactCompiler: Running the React Compiler in Rust Inside Next.js"
+summary: "The React Compiler normally runs through Babel in Node.js. Next.js can run a Rust version inside Turbopack instead. Learn what that changes and what it saves."
+publishedTime: "2026-11-10"
+publishOrder: 5
+level: "intermediate"
+cover: "/assets/rust-react-compiler-cover.jpg"
+coverAlt: "AI-generated illustration. The Rust compiler works right inside Turbopack, so files skip the long trip to Node.js and back."
+tags: ["nextjs", "react", "react-compiler", "turbopack", "rust", "performance"]
+---
+
+This blog's `next.config.mjs` has two lines that look like they do the same thing:
+
+```js
+reactCompiler: true,
+experimental: { turbopackRustReactCompiler: true },
+```
+
+They don't. The first turns the React Compiler **on**. The second picks **which version** of it runs.
+
+## The mental model
+
+> Turbopack speaks Rust. The normal React Compiler speaks JavaScript. Without the flag, every component file goes through **an interpreter**: it's handed to Node.js, compiled there, and handed back. `turbopackRustReactCompiler` hires **a native speaker** instead: a Rust version of the compiler that runs inside Turbopack itself.
+
+Same work, same output. Just no interpreter in the middle.
+
+## First: what the React Compiler does
+
+The **React Compiler** is a build step that adds memoization to your components for you. Memoization means "remember the last result and reuse it if the inputs didn't change". It's what `useMemo`, `useCallback` and `memo` do by hand ([quick refresher here](/p/react-memo-usememo-usecallback)).
+
+```jsx
+// You write this:
+function Price({ amount }) {
+  const label = formatMoney(amount);
+  return <span>{label}</span>;
+}
+// The compiler outputs a version that skips formatMoney
+// and reuses the same <span> when amount hasn't changed.
+```
+
+It works at build time, on every file that has components or hooks. So **how fast it runs adds to every build and every file save.**
+
+## How it works
+
+### Without the flag: the Babel version
+
+The official React Compiler is a **Babel plugin**, written in JavaScript. Turbopack is written in Rust, and Rust can't run JavaScript by itself. So for each file that needs compiling:
+
+1. Turbopack sends the file's code to a Node.js process.
+2. Babel reads it, runs the React Compiler, and writes out new code.
+3. The new code goes back to Turbopack, which carries on bundling.
+
+That's a trip between two worlds for every component file. You also need `babel-plugin-react-compiler` installed.
+
+### With the flag: the Rust version
+
+`turbopackRustReactCompiler` swaps in a **Rust version** of the React Compiler that runs inside Turbopack's own process. The code never leaves Rust: no handoff to Node.js and no extra package to install.
+
+## What it saved on this blog
+
+I timed the compile step of a cold `next build` on this blog (3 runs each, on my Mac):
+
+```text
+React Compiler off      → 2.1 s
+Babel React Compiler    → 2.8 s   (about a third slower)
+Rust React Compiler     → 2.1 s   ← same as having it off
+```
+
+So the Rust version gave me the compiler's benefits for **no measurable build cost**, while the Babel version added about 0.7 seconds.
+
+## In practice
+
+Turn it on if all three are true:
+
+- You use **Turbopack**, the default in Next.js 16. With `--webpack` this option throws an error.
+- You already have `reactCompiler: true`. The flag alone does nothing.
+- You're fine with **experimental**. It arrived in Next.js 16.3 to gather feedback before becoming the default.
+
+Then remove `babel-plugin-react-compiler` from your dependencies. It's no longer used.
+
+Be honest about the stakes: 0.7 seconds on a small blog is nothing. The saving grows with the number of component files, so you notice it in big apps and in dev, where every save recompiles.
+
+## Say it in an interview
+
+> "The React Compiler automatically memoizes React components at build time. Normally it runs as a Babel plugin, so a Rust bundler like Turbopack has to send each file to Node.js and back. Next.js's `turbopackRustReactCompiler` flag uses a Rust version of the compiler that runs natively inside Turbopack, which removes that round trip. It needs `reactCompiler: true`, works only with Turbopack, and is experimental."
+
+## Cheat sheet
+
+- `reactCompiler: true` turns the compiler **on**.
+- `turbopackRustReactCompiler: true` picks the **Rust** version instead of Babel.
+- **Babel version:** JavaScript, runs in Node.js, every file makes a round trip.
+- **Rust version:** runs inside Turbopack, no round trip, no Babel plugin needed.
+- **Limits:** Turbopack only, experimental since Next.js 16.3.
+
+<DeepDive>
+
+### How I measured
+
+- **Project:** this blog, Next.js 16.4.6, 243 static pages, on my Mac.
+- **Each run:** delete `.next/cache/turbopack` and the build output, run `next build`, read the `✓ Compiled successfully in …` line.
+- **Configs:** `reactCompiler: false` / `reactCompiler: true` with `turbopackRustReactCompiler: false` (with `babel-plugin-react-compiler` installed temporarily) / both `true`.
+- **Results:** off 2.1 / 2.1 / 2.1 s, Babel 3.2 / 2.7 / 2.8 s, Rust 2.2 / 2.1 / 2.1 s.
+- **What this doesn't show:** how the gap grows in a large app, or the effect on dev-mode reloads. Measure your own project before you quote a number.
+
+### Next.js already skips files that don't need it
+
+Even with the Babel version, Next.js doesn't send every file to Babel. A fast check written in SWC (Next.js's Rust compiler) first looks for files with JSX or hooks, and only those go to the React Compiler. That keeps the Babel cost down, but every file that does need it still pays for the trip.
+
+### Where JavaScript tools run inside Turbopack
+
+Turbopack runs JavaScript tools like Babel, PostCSS and webpack loaders in separate Node.js processes. The `turbopackPluginRuntimeStrategy` option chooses between child processes (the default) and worker threads. A Rust port removes the React Compiler from that path completely.
+
+### Further reading
+
+- [`turbopackRustReactCompiler`](https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopackRustReactCompiler) in the Next.js docs
+- [`reactCompiler`](https://nextjs.org/docs/app/api-reference/config/next-config-js/reactCompiler) in the Next.js docs
+- [React Compiler introduction](https://react.dev/learn/react-compiler/introduction)
+- [What Is Turbopack?](/p/turbopack-explained-nextjs)
+
+</DeepDive>

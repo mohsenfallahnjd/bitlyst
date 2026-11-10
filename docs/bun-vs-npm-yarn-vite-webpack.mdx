@@ -1,0 +1,110 @@
+---
+title: "Bun vs npm, Yarn, Vite and Webpack: Who Does What in a JavaScript Kitchen"
+summary: "npm and Yarn fetch packages, Vite and webpack bundle code, Node runs it. Bun tries to do all of it. Learn which tool does which job."
+publishedTime: "2026-11-10"
+publishOrder: 3
+level: "beginner"
+cover: "/assets/bun-tooling-cover.jpg"
+coverAlt: "AI-generated illustration. Node, npm and a bundler are three kitchen jobs; Bun packs all of them into one box."
+tags: ["bun", "npm", "yarn", "vite", "webpack", "tooling"]
+---
+
+Picture a job ad that says "Vite, webpack, npm, Yarn or Bun". It reads like five options for one job. **It's actually three different jobs**, and only one tool on that list tries to do all three.
+
+## The mental model
+
+> A JavaScript project is a **kitchen**. **Node** is the stove that cooks (runs your code). **npm and Yarn** are grocery delivery (they bring packages into the pantry, `node_modules`). **webpack and Vite** are the chef who plates the food for guests (they bundle your code for the browser). **Bun** is a kitchen-in-a-box: stove, delivery and chef in one tool.
+
+Keep those three jobs in mind and every tool falls into place.
+
+## Job 1: the stove (runtime)
+
+A **runtime** is the program that runs JavaScript outside the browser. For years that meant **Node.js**. When you type `node server.js`, Node runs it.
+
+Bun is a runtime too: `bun server.js` does the same job. It's built from different parts (Zig and Apple's JavaScriptCore engine, while Node uses C++ and Google's V8), and it can run TypeScript files directly without a separate build step.
+
+## Job 2: grocery delivery (package manager)
+
+A **package manager** reads `package.json`, downloads the packages it lists, and puts them in `node_modules`. It also writes a **lockfile**, a receipt of the exact versions it picked, so every machine gets the same ones.
+
+- **npm** ships with Node. It's the default.
+- **Yarn** was created in 2016 by Facebook and others, when npm was slow and had no lockfile. npm caught up later, so today the gap is small.
+- **pnpm** is another option. It saves disk space by storing each package once and linking to it.
+- **`bun install`** does the same job and works with the same `package.json`, much faster.
+
+How much faster? I ran a quick test on my Mac: one project with React, Next.js, Vite, webpack, TypeScript and ESLint, cache already warm, `node_modules` deleted before each run.
+
+```bash
+npm install    # ~2.2 s
+yarn install   # ~1.15 s  (Yarn 1)
+bun install    # ~0.2 s   ← about 10× faster than npm
+```
+
+## Job 3: the chef (bundler)
+
+Browsers don't want your 300 source files, JSX and TypeScript. A **bundler** turns them into a few optimized files the browser can load.
+
+- **webpack** is the veteran (2012). It bundles everything, even during development, and can be configured to do almost anything. That power is also why its config files get long, and why big projects start slowly in dev.
+- **Vite** (2020) takes a shortcut in development: it serves your files to the browser almost as they are and only transforms the file you just changed. That's why the dev server starts in about a second. For production, it still runs a real bundler.
+- **Turbopack** is Next.js's own bundler, now the default there ([how it works](/p/turbopack-explained-nextjs)).
+- **`bun build`** is Bun's bundler.
+
+So **Vite vs webpack** is a fair comparison: both are chefs. **Vite vs npm** isn't: one cooks, the other shops.
+
+## The whole kitchen in one table
+
+| Tool | Runtime (stove) | Package manager (delivery) | Bundler (chef) | Test runner |
+|------|:---:|:---:|:---:|:---:|
+| Node + npm | Node | npm | — | `node --test` |
+| Yarn | — | ✓ | — | — |
+| webpack | — | — | ✓ | — |
+| Vite | — | — | ✓ | — (Vitest is separate) |
+| Bun | ✓ | ✓ | ✓ | `bun test` |
+
+## In practice
+
+You don't have to switch everything at once. The easiest step is the most popular one: **keep Node and your bundler, and use `bun install` only as a faster package manager.** It reads the same `package.json`, so trying it is cheap: delete `node_modules`, run `bun install`, and see if your app still starts.
+
+Be honest about the stakes. On a small project, 2 seconds vs 0.2 seconds barely matters on your laptop. It matters in CI, where installs run on every push, and in big monorepos. Running Bun as your production runtime is a bigger step. Most npm packages work, but Node has more years in production, so test your exact stack before you commit.
+
+## Say it in an interview
+
+> "These tools do different jobs. Node is a runtime that runs JavaScript. npm and Yarn are package managers that install dependencies. webpack and Vite are bundlers that prepare code for the browser, and Vite is faster in dev because it serves files without bundling them first. Bun is an all-in-one toolkit: a runtime, package manager, bundler and test runner, with a very fast `bun install`."
+
+## Cheat sheet
+
+- **Three jobs:** run code (runtime), install packages (package manager), prepare code for the browser (bundler).
+- **Node** = stove. **npm / Yarn / pnpm** = delivery. **webpack / Vite / Turbopack** = chef.
+- **Bun** = kitchen-in-a-box: all three plus a test runner.
+- **Vite vs webpack:** Vite skips bundling in dev, so it starts faster.
+- **Easiest win:** use `bun install` as a drop-in faster package manager.
+
+<DeepDive>
+
+### Why bun install is so fast
+
+Bun's team explains the tricks in [Behind the Scenes of Bun Install](https://bun.com/blog/behind-the-scenes-of-bun-install) (Lydia Hallie, September 2025). The main ideas:
+
+- **Fewer trips to the operating system.** Every file read or network call is a "system call", and each one has a cost. In their `strace` run, Bun made about 166,000 system calls for an install where npm made about 997,000 and Yarn about 4 million.
+- **No Node layers in between.** Bun is written in Zig and talks to the operating system directly, instead of going through Node's file system APIs and thread pool.
+- **A binary cache of package info.** Registry data is parsed once and saved in a compact binary format, so later installs skip parsing JSON.
+- **Copy-on-write file copies.** On macOS, Bun uses `clonefile()`, which can clone a whole package folder in one call without duplicating bytes on disk. On Linux it defaults to hard links.
+- **A readable lockfile.** `bun.lock` is text, so you can review it in pull requests. The older binary `bun.lockb` was dropped for that reason.
+
+Their headline claim is that `bun install` is about 7× faster than npm, 4× faster than pnpm and 17× faster than Yarn on average. Those are the Bun team's own benchmarks, and the post doesn't state the machine or project for every test.
+
+### How my numbers were measured
+
+- **Machine:** my Mac (macOS), Node 22.18.0, npm 10.9.3, Yarn 1.22.22, Bun 1.4.4.
+- **Project:** a `package.json` with `react`, `react-dom`, `next`, `typescript`, `vite`, `webpack` and `eslint` (140 top-level packages, about 385 MB in `node_modules`).
+- **Method:** each tool installed once to warm its cache and write a lockfile. Then, three times each: delete `node_modules` and time `install --ignore-scripts`.
+- **Results:** npm 2.37 / 2.11 / 2.19 s, Yarn 1.17 / 1.15 / 1.12 s, Bun 0.23 / 0.23 / 0.19 s.
+- **What this doesn't show:** cold installs with an empty cache, which depend heavily on your network, or Yarn 4 and pnpm.
+
+### Further reading
+
+- [Bun docs](https://bun.com/docs)
+- [Why Vite](https://vite.dev/guide/why.html)
+- [webpack concepts](https://webpack.js.org/concepts/)
+
+</DeepDive>

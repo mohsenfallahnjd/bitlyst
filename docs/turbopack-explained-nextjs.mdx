@@ -1,0 +1,104 @@
+---
+title: "What Is Turbopack? How Next.js's Rust Bundler Avoids Doing Work Twice"
+summary: "Turbopack is the Rust bundler inside Next.js. Learn the one idea behind its speed, remembering every small step, and when you'll actually feel it."
+publishedTime: "2026-11-10"
+publishOrder: 4
+level: "intermediate"
+cover: "/assets/turbopack-cover.jpg"
+coverAlt: "AI-generated illustration. Everything already prepped stays in the fridge; only the file you changed gets chopped again."
+tags: ["nextjs", "turbopack", "bundler", "rust", "performance"]
+---
+
+I built this blog twice in a row. The first `next build` compiled in **2.8 seconds**. The second, with no code changes, compiled in **0.45 seconds**. Same code, same machine. The difference is the whole idea behind Turbopack.
+
+## The mental model
+
+> Turbopack is **a chef who never chops the same onion twice**. Every small prep step is labeled and kept in the fridge. When you change one recipe, the chef redoes only the steps that used the changed ingredient and reuses everything else.
+
+A **bundler** is the tool that turns your source files (TypeScript, JSX, CSS) into the files the browser and server actually run. Turbopack is the bundler built into Next.js, written in Rust, and it's the default since Next.js 16. (If you're unsure what a bundler does next to npm or Bun, see [who does what in a JavaScript kitchen](/p/bun-vs-npm-yarn-vite-webpack).)
+
+## How it works
+
+### 1. It breaks the work into tiny labeled steps
+
+Bundling is many small jobs: read a file, parse it, compile its JSX, find its imports, build a chunk. Turbopack runs each job as a small function and **remembers its result**, plus what that result depended on.
+
+### 2. A change only redoes what depends on it
+
+When you save `Button.tsx`, Turbopack knows which steps read that file. Those steps run again. Steps for the other 500 files are reused from the fridge. That's called **incremental computation**: doing only the work that changed.
+
+### 3. The fridge survives restarts
+
+Those results are saved to disk in `.next/cache`. Close your laptop, run `next dev` tomorrow, and most of the prep is already done. That's why my second build compiled 6× faster.
+
+### 4. It only cooks what's ordered
+
+In development, Turbopack compiles only the pages you open. A 200-page app doesn't compile 200 pages before you see the first one.
+
+### 5. One kitchen for server and browser
+
+Next.js builds code for the server and for the browser. webpack ran separate compilers and stitched their output together. Turbopack keeps **one graph** (a map of which file imports which) for both, so it knows exactly what changed on each side.
+
+## Turbopack vs webpack vs Vite
+
+| | webpack | Vite | Turbopack |
+|---|---|---|---|
+| Written in | JavaScript | JavaScript (plus native helpers) | Rust |
+| In development | Bundles everything up front | Serves files almost unbundled | Bundles, but only what changed and what you opened |
+| Remembers past work | Partly | Partly | Every small step, saved to disk |
+| Where you use it | Anywhere | Anywhere | Next.js |
+
+The Vite row is a real design choice. Serving files unbundled is fast for small apps, but a big app can mean thousands of browser requests. Turbopack bundles in dev too, but cheaply, because almost every step is a cache hit.
+
+## In practice
+
+You're probably using it already: `next dev` and `next build` use Turbopack by default. To compare, add `--webpack`.
+
+Be honest about the stakes. On this blog, the full build took about 11 seconds just to generate 243 static pages, cold or warm. **Turbopack speeds up compiling, not your data fetching or prerendering.** You feel it most in big apps, on dev server restarts, and when you save a file and wait for the page to update.
+
+Two things it doesn't do:
+
+- **It doesn't check types.** It removes TypeScript types without reading them. Your editor and `next build` do the checking.
+- **It doesn't run webpack plugins.** Most webpack loaders work, but a project that depends on a custom webpack plugin has to stay on `--webpack` for now.
+
+## Say it in an interview
+
+> "Turbopack is the Rust bundler built into Next.js. Its main idea is incremental computation: it splits bundling into small functions, caches each result with what it depended on, and when a file changes it reruns only the affected steps. The cache is saved to disk, it compiles only the pages you request in dev, and it keeps one module graph for server and client code."
+
+## Cheat sheet
+
+- **What:** the default bundler in Next.js 16, written in Rust.
+- **Core idea:** remember every small step, redo only what a change touches.
+- **Cache:** saved in `.next/cache`, survives restarts.
+- **Dev:** compiles only the pages you open.
+- **Doesn't:** type-check, or run webpack plugins (use `--webpack` if you need them).
+
+<DeepDive>
+
+### How I measured
+
+- **Project:** this blog, Next.js 16.4.6, 243 static pages, on my Mac.
+- **Cold:** `rm -rf .next`, then `next build`. Compile step: **2.8 s**.
+- **Warm:** a second `next build` right after. Compile step: **0.45 s**.
+- **Only the Turbopack cache deleted** (`rm -rf .next/cache/turbopack`): compile went back to **2.7 s**, so the speedup comes from Turbopack's disk cache.
+- Static page generation took about 11 s in every run. That part is rendering your pages, not bundling.
+- The numbers come from the `✓ Compiled successfully in …` line `next build` prints.
+
+### Settings worth knowing
+
+- [`turbopackFileSystemCache`](https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopackFileSystemCache): the disk cache, on by default for dev and build.
+- [`turbopack.resolveAlias`](https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack): the Turbopack version of `webpack.resolve.alias`.
+- `turbopack.rules`: run webpack loaders (for example an SVG loader) inside Turbopack.
+
+### Edge cases
+
+- **Platforms:** Turbopack needs native binaries. macOS, Windows and Linux (x64 and ARM64) are supported. Other platforms fall back to WebAssembly, which can't run Turbopack, so you need `--webpack` there.
+- **Babel:** if Turbopack finds a Babel config file, it runs Babel for your files. That costs speed, since Babel runs in Node.js rather than in Rust.
+- **Sass:** custom `sassOptions.functions` aren't supported, because Rust can't call those JavaScript functions directly.
+- **Compiling JSX and TypeScript:** Turbopack uses SWC, another Rust tool. See [how Next.js turns JSX and TypeScript into JavaScript](/p/how-jsx-typescript-become-javascript).
+
+### Further reading
+
+- [Turbopack in the Next.js docs](https://nextjs.org/docs/app/api-reference/turbopack)
+
+</DeepDive>
