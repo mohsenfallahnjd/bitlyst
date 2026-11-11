@@ -33,16 +33,14 @@ export default function PostEngagement({ postSlug }: { postSlug: string }) {
     if (!userId) {
       return;
     }
-    Promise.all([
-      fetch(`/api/reactions/${postSlug}`).then((r) => (r.ok ? r.json() : null)),
-      fetch(`/api/reactions/${postSlug}/user/${userId}`).then((r) => (r.ok ? r.json() : null)),
-    ])
-      .then(([reactionData, userData]) => {
-        if (reactionData) {
-          setCounts(reactionData);
+    fetch(`/api/reactions/${postSlug}?user=${encodeURIComponent(userId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.counts) {
+          setCounts(data.counts);
         }
-        if (userData?.userReactions) {
-          setUserReacted(new Set(userData.userReactions as ReactionType[]));
+        if (data?.userReactions) {
+          setUserReacted(new Set(data.userReactions as ReactionType[]));
         }
         setLoaded(true);
       })

@@ -23,20 +23,26 @@ async function connectRedis() {
   return client;
 }
 
-// GET /api/reactions/[slug] - Get reaction counts for a post
+// GET /api/reactions/[slug]?user=<id> - reaction counts for a post, plus that reader's own reactions
+// when `user` is given. One request and one Redis round trip instead of two.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
     if (!isPost(slug)) {
       return NextResponse.json({ error: "Unknown post" }, { status: 404 });
     }
+    const userId = request.nextUrl.searchParams.get("user");
+    if (userId !== null && !USER_ID_RE.test(userId)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
     const client = await connectRedis();
 
-    // Get reaction counts from Redis
-    const reactions = await client.hGetAll(`reactions:${slug}`);
+    const [reactions, mine] = await Promise.all([
+      client.hGetAll(`reactions:${slug}`),
+      userId ? client.sMembers(`user-reactions:${userId}:${slug}`) : Promise.resolve([] as string[]),
+    ]);
 
-    // Convert string values to numbers and initialize with zeros
-    const reactionData: ReactionData = {
+    const counts: ReactionData = {
       like: parseInt(reactions.like || "0"),
       love: parseInt(reactions.love || "0"),
       fire: parseInt(reactions.fire || "0"),
@@ -44,7 +50,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       wow: parseInt(reactions.wow || "0"),
     };
 
-    return NextResponse.json(reactionData);
+    return NextResponse.json({ counts, userReactions: mine });
   } catch (error) {
     console.error("Error fetching reactions:", error);
     return NextResponse.json({ error: "Failed to fetch reactions" }, { status: 500 });
