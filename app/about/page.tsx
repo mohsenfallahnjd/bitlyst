@@ -4,10 +4,9 @@ import Link from "next/link";
 import DonatePrompt from "@/components/DonatePrompt";
 import NewsletterForm from "@/components/NewsletterForm";
 import PostCard from "@/components/PostCard";
+import { StatTiles } from "@/components/StatCounts";
 import TopicRequest from "@/components/TopicRequest";
-import { formatCount } from "@/lib/format";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
-import { getPostStats } from "@/lib/stats";
 import { getAllTopics } from "@/lib/tags";
 
 export const metadata: Metadata = {
@@ -57,22 +56,18 @@ const LINKS = [
   },
 ];
 
-export default async function AboutPage() {
+export default function AboutPage() {
   const posts = loadMarkdownDocs();
-  const stats = await getPostStats();
   const topics = getAllTopics(posts).slice(0, 10);
-  const totalViews = Object.values(stats.views).reduce((n, v) => n + v, 0);
-  const totalComments = Object.values(stats.comments).reduce((n, v) => n + v, 0);
   const avgRead = Math.round(posts.reduce((s, p) => s + (p.readingTime ?? 0), 0) / Math.max(posts.length, 1));
 
   const startHere = [...posts].slice(0, 3);
+  const featured = posts.flatMap((p) => (p.featuredIn ?? []).map((f) => ({ ...f, slug: p.slug, title: p.title })));
 
   const figures = [
     { value: posts.length, label: "posts" },
     { value: getAllTopics(posts).length, label: "topics" },
     { value: `~${avgRead} min`, label: "avg read" },
-    ...(totalViews >= 100 ? [{ value: formatCount(totalViews), label: "reads" }] : []),
-    ...(totalComments >= 10 ? [{ value: totalComments, label: "comments" }] : []),
   ];
 
   return (
@@ -146,8 +141,35 @@ export default async function AboutPage() {
               <dd className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-50">{value}</dd>
             </div>
           ))}
+          <StatTiles
+            tileClass="bg-surface-light dark:bg-surface-dark px-4 py-3"
+            labelClass="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500"
+            valueClass="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-50"
+          />
         </dl>
       </section>
+
+      {/* Featured in */}
+      {featured.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            Featured in
+          </h2>
+          <ul className="space-y-2 text-sm">
+            {featured.map((f) => (
+              <li key={`${f.slug}-${f.url}`} className="text-gray-700 dark:text-gray-300">
+                <a href={f.url} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
+                  {f.name}
+                </a>
+                {" — "}
+                <Link href={`/p/${f.slug}`} className="hover:underline">
+                  {f.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Start here */}
       <section>
@@ -156,7 +178,7 @@ export default async function AboutPage() {
         </h2>
         <div>
           {startHere.map((p) => (
-            <PostCard key={p.slug} post={toSummary(p)} views={stats.views[p.slug]} comments={stats.comments[p.slug]} />
+            <PostCard key={p.slug} post={toSummary(p)} />
           ))}
         </div>
       </section>

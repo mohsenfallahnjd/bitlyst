@@ -1,0 +1,211 @@
+---
+title: "Packed vs Holey Arrays in V8: Why new Array(n) Makes Spread 4x Slower"
+summary: "V8 labels every array by what it holds and whether it may have gaps. Labels only get more general, and holey arrays take slower paths."
+publishedTime: "2026-11-11"
+level: "intermediate"
+series: "under-the-benchmark"
+seriesOrder: 6
+draft: true
+cover: "/assets/holey-arrays-cover.jpg"
+coverAlt: "AI-generated illustration. Same contents, but one box wears a permanent-marker label, so every slot gets checked."
+tags: ["javascript", "v8", "performance", "arrays", "elements-kinds"]
+---
+
+Two arrays. Same million numbers, in the same order, with no gaps in either:
+
+```js
+const a = [];
+for (let i = 0; i < 1_000_000; i++) a.push(i);
+
+const b = new Array(1_000_000);
+for (let i = 0; i < 1_000_000; i++) b[i] = i;
+```
+
+Copy each one with spread:
+
+```
+[...a]: 0.17 ms
+[...b]: 0.71 ms
+```
+
+Same contents, same length, and `b` takes four times as long to copy. The difference is how `b` started, not what it holds.
+
+---
+
+## The mental model: a label in permanent marker
+
+V8 puts a label on every array's storage box. The label says two things:
+
+- **What's inside:** small whole numbers, any numbers, or anything at all.
+- **Whether there may be gaps:** *packed* (no gaps) or *holey* (maybe gaps).
+
+V8 reads the label to pick its fastest code. And the label is written in **permanent marker**: it can become more general, but it never goes back, even after you fix the contents.
+
+> The label describes the array's history, not its contents.
+
+V8 calls these labels **elements kinds**.
+
+---
+
+## How it works
+
+There are three content labels, from most specific to most general:
+
+| Label | Holds | Example |
+|---|---|---|
+| `SMI` | small whole numbers | `[1, 2, 3]` |
+| `DOUBLE` | any numbers | `[1, 2, 3.5]` |
+| `ELEMENTS` | anything | `[1, 2, "3"]` |
+
+Each one comes in a packed and a holey version, so a plain array has one of six labels.
+
+You can read part of the label with `node --allow-natives-syntax`:
+
+```js
+%HasHoleyElements([1, 2, 3]);    // false
+%HasHoleyElements(new Array(3)); // true  ← born with 3 empty slots
+```
+
+`new Array(1_000_000)` doesn't create a million `undefined`s. It creates a million **holes**: slots that don't exist yet. Filling them in doesn't change the label, because V8 won't scan a million slots to check that every gap is gone.
+
+**Why gaps cost time:** reading a hole means "look further up, on `Array.prototype`". So on a holey array, V8 has to be ready for a hole at every slot. A packed array can be copied in one go. A holey one takes a slower path that handles slot by slot, and that's the 4× in the hook.
+
+These moves change the label for good:
+
+- **Holey:** start with `new Array(n)` or `[1, , 3]`, `delete arr[i]`, or write past the end (`arr[arr.length + 5] = x`).
+- **DOUBLE:** add one decimal, `NaN` or `-0`.
+- **ELEMENTS:** add one string, object, `null` or `undefined`.
+
+```js
+const c = [1, 2, 3];
+c.push(4.5);
+c.pop();     // only whole numbers again…
+             // …but the label still says DOUBLE
+```
+
+---
+
+## In practice
+
+Build arrays so they're packed from the first write:
+
+```js
+// before: born holey, stays holey
+const ids = new Array(rows.length);
+for (let i = 0; i < rows.length; i++) ids[i] = rows[i].id;
+
+// after: packed
+const ids = rows.map((r) => r.id);
+```
+
+`push`, `map`, `filter` and `Array.from({ length: n }, fn)` all give packed arrays.
+
+Three more habits:
+
+- **Fill front to back.** Writing into `[]` from the last index down made building a million-item array 6.6× slower here (38.5 ms vs 5.8 ms).
+- **Don't `delete` array items.** Use `splice`, or `filter` into a new array.
+- **Keep number arrays numeric.** One `null` placeholder moves the whole array to `ELEMENTS`.
+
+**Honest stakes:** the hook costs about half a millisecond per million-item copy. A plain `for` loop over a holey array was about 1.4× slower. Most apps will never notice. Big arrays in hot paths will: data grids, charts, parsers, game loops. Profile first. When it is the problem, the fix is usually one line where the array is created.
+
+---
+
+## Say it in an interview
+
+> "V8 tracks an elements kind for every array: whether it holds small integers, doubles or anything, and whether it's packed or may have holes. Optimized code and built-ins like spread pick fast paths from that kind. Transitions only go one way, toward more general, so `new Array(n)` stays holey even after you fill every slot. To keep arrays fast, build them with `push`, `map` or `Array.from`, avoid `delete`, and don't mix types into number arrays."
+
+---
+
+## Cheat sheet
+
+| Remember | Detail |
+|---|---|
+| Elements kind | The label: what's inside + packed or holey |
+| Content labels | `SMI` → `DOUBLE` → `ELEMENTS`, one way only |
+| Holey makers | `new Array(n)`, `[1, , 3]`, `delete`, writing past the end |
+| Packed makers | `push`, `map`, `filter`, `Array.from` |
+| Cost seen here | Spread 4.3× slower, `for` loop 1.4× slower on holey |
+
+## TL;DR
+
+- V8 labels every array by what it holds and whether it may have gaps.
+- Labels only get more general. Filling the gaps never makes an array packed again.
+- Spreading a million-item holey array took 0.71 ms vs 0.17 ms for a packed one.
+- Create arrays with `push`, `map` or `Array.from`, and profile before you rewrite anything.
+
+<DeepDive>
+
+### Full measurements
+
+All numbers: Node 26.13 (V8 14.6), Apple M3 Pro, median of 7 fresh processes. Each array holds 1,000,000 small integers, and the timed code runs inside functions after a warm-up.
+
+**Spread (`[...arr]`), by how the array was built:**
+
+| Built with | Label | Time per copy |
+|---|---|---|
+| `push` in a loop | packed | 0.17 ms |
+| `Array.from({ length }, fn)` | packed | 0.17 ms |
+| `new Array(n).fill(0)`, then index writes | packed | 0.16 ms |
+| `new Array(n)`, then index writes | holey | 0.71 ms |
+| `push`, then `delete a[5]; a[5] = 5` | holey | 0.73 ms |
+
+The last row has no gaps at all. One `delete`, followed by putting the value straight back, is enough to make it holey for good.
+
+**Other operations, packed vs holey (ns per item):**
+
+| Operation | Packed | Holey |
+|---|---|---|
+| `for` loop sum | 0.58 | 0.84 |
+| `[...arr]` | 0.17 | 0.72 |
+| `slice()` | 0.16 | 0.15 |
+| `includes` / `indexOf` | 0.15 | 0.15 |
+| `for...of`, `reduce`, `map` | ~5.2 | ~5.4 |
+
+Not every operation cares. `slice`, `includes` and `indexOf` were the same speed either way. The callback-based methods were dominated by the callback in this setup, so the label barely showed.
+
+**Building a million-item array:**
+
+| How | Time |
+|---|---|
+| `push`, front to back | 5.8 ms |
+| `[]`, index writes from the end | 38.5 ms |
+| `new Array(n)`, index writes from the end | 1.9 ms (but holey) |
+
+### Memory: one string boxes every decimal
+
+A `DOUBLE` array stores raw 8-byte numbers. Once it becomes `ELEMENTS`, every decimal has to live in its own small object on the heap, and the array stores pointers to them:
+
+| 1,000,000 numbers | Label | Heap |
+|---|---|---|
+| whole numbers | `SMI` | 7.6 MB |
+| whole numbers, after one string was written and replaced | `ELEMENTS` | 7.6 MB |
+| decimals | `DOUBLE` | 7.6 MB |
+| decimals, after one string was written and replaced | `ELEMENTS` | 22.9 MB |
+
+Small whole numbers fit inside the pointer itself, so they cost nothing extra. Decimals tripled.
+
+### `fill()` depends on your Node version
+
+`new Array(n).fill(0)` gives a **holey** array in Node 22 (V8 12.4) and a **packed** one in Node 24 and 26. `Array.from` and `push` are packed in every version, so they're the safer advice.
+
+### Why holes are expensive
+
+A hole isn't `undefined`: reading one has to check the prototype chain, because `Array.prototype[5]` could exist. V8 keeps a global "nobody has put indexed properties on `Array.prototype`" flag (a *protector*) so most hole reads can just return `undefined`, but code still has to check for the hole on each read. For spread, the result must be packed, so V8 likely has to walk the holey array and turn holes into `undefined`, instead of copying the storage in one block. That's a reasonable reading of the numbers, not something this benchmark isolates.
+
+### What didn't matter
+
+Reading one index past the end (`i <= arr.length`) used to be a well-known slowdown. Here it cost about 0.69 vs 0.58 ns per item: real, but small on this V8 version.
+
+### Measuring it yourself
+
+Time code inside functions, not at the top level of a script. A top-level version of the hook measured 0.51 vs 1.05 ms, because the top-level loop itself wasn't optimized and hid half the difference.
+
+### More labels
+
+V8 has more elements kinds than these six: frozen and sealed arrays, typed arrays, arguments objects, and a `DICTIONARY` mode for very sparse arrays (like writing only index 1,000,000 into `[]`). The six above are the ones plain arrays move through every day.
+
+### Further reading
+
+- [Elements kinds in V8](https://v8.dev/blog/elements-kinds) by Mathias Bynens, on the V8 blog
+
+</DeepDive>

@@ -7,7 +7,6 @@ import { PostStatsLine } from "@/components/PostCard";
 import SeriesProgress from "@/components/SeriesProgress";
 import { toSummary } from "@/lib/mdSource";
 import { getAllSeries, getSeries } from "@/lib/series";
-import { getPostStats } from "@/lib/stats";
 
 export function generateStaticParams() {
   return getAllSeries().map((s) => ({ slug: s.slug }));
@@ -35,7 +34,6 @@ export default async function SeriesPage({ params }: PageProps<"/series/[slug]">
   if (!series) {
     notFound();
   }
-  const stats = await getPostStats();
   const total = series.parts.length + series.upcoming.length;
   const minutes = series.parts.reduce((n, p) => n + (p.readingTime ?? 0), 0);
 
@@ -116,7 +114,7 @@ export default async function SeriesPage({ params }: PageProps<"/series/[slug]">
                 {p.summary && (
                   <span className="block text-sm leading-relaxed text-gray-500 dark:text-gray-400">{p.summary}</span>
                 )}
-                <PostStatsLine post={toSummary(p)} views={stats.views[p.slug]} comments={stats.comments[p.slug]} />
+                <PostStatsLine post={toSummary(p)} />
               </span>
             </Link>
           </li>

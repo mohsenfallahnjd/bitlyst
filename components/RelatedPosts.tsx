@@ -16,15 +16,7 @@ function getRelated(current: DocMeta, all: DocMeta[], limit = 3): DocMeta[] {
     .map(({ post }) => post);
 }
 
-export default function RelatedPosts({
-  current,
-  views = {},
-  comments = {},
-}: {
-  current: DocMeta;
-  views?: Record<string, number>;
-  comments?: Record<string, number>;
-}) {
+export default function RelatedPosts({ current }: { current: DocMeta }) {
   const related = getRelated(current, loadMarkdownDocs());
   if (related.length === 0) {
     return null;
@@ -35,7 +27,7 @@ export default function RelatedPosts({
       <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">Read next</h2>
       <div>
         {related.map((p) => (
-          <PostCard key={p.slug} post={toSummary(p)} views={views[p.slug]} comments={comments[p.slug]} />
+          <PostCard key={p.slug} post={toSummary(p)} />
         ))}
       </div>
     </section>

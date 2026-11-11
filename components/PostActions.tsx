@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { formatCount } from "@/lib/format";
 import { getPostBody } from "@/lib/postBody";
+import { useStats } from "@/lib/useStats";
 import ShareButton from "./ShareButton";
 import { CommentIcon } from "./StatIcons";
 
@@ -68,10 +69,11 @@ function ProgressRing({ value }: { value: number }) {
 const iconBtn =
   "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors";
 
-type Props = { title: string; url: string; readingTime: number; comments: number };
+type Props = { slug: string; title: string; url: string; readingTime: number };
 
 /** Mobile: bottom bar that slides in while reading and hides when scrolling down fast. */
-export function PostActionBar({ title, url, readingTime, comments }: Props) {
+export function PostActionBar({ slug, title, url, readingTime }: Props) {
+  const comments = useStats()?.comments[slug] ?? 0;
   const progress = useArticleProgress();
   const progressRef = useRef(progress);
   progressRef.current = progress;
@@ -127,7 +129,8 @@ export function PostActionBar({ title, url, readingTime, comments }: Props) {
 }
 
 /** Desktop: progress + actions under the sticky table of contents. */
-export function PostRailActions({ title, url, readingTime, comments }: Props) {
+export function PostRailActions({ slug, title, url, readingTime }: Props) {
+  const comments = useStats()?.comments[slug] ?? 0;
   const progress = useArticleProgress();
   return (
     <div className="mt-6 space-y-3 border-t border-gray-200/70 dark:border-gray-800/60 pt-5">

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PostCard from "@/components/PostCard";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
-import { getPostStats } from "@/lib/stats";
 import { getAllTopics, getPostsByTopic, MIN_INDEXABLE_POSTS } from "@/lib/tags";
 
 export function generateStaticParams() {
@@ -43,7 +42,6 @@ export default async function TopicPage({ params }: PageProps<"/tags/[tag]">) {
     notFound();
   }
   const posts = getPostsByTopic(tag, all);
-  const stats = await getPostStats();
   const related = getAllTopics(posts)
     .filter((t) => t.slug !== tag)
     .slice(0, 8);
@@ -88,7 +86,7 @@ export default async function TopicPage({ params }: PageProps<"/tags/[tag]">) {
 
       <div>
         {posts.map((p) => (
-          <PostCard key={p.slug} post={toSummary(p)} views={stats.views[p.slug]} comments={stats.comments[p.slug]} />
+          <PostCard key={p.slug} post={toSummary(p)} />
         ))}
       </div>
 

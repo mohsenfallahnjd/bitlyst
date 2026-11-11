@@ -1,12 +1,11 @@
 import Image from "next/image";
 import { COVER_PLACEHOLDER_BG } from "@/lib/cover";
-import { formatCount } from "@/lib/format";
 import type { PostSummary } from "@/lib/mdSource";
 import CoverArt from "./CoverArt";
 import PostTransition from "./PostTransition";
 import PreloadCoverLink from "./PreloadCoverLink";
 import ReadBadge from "./ReadBadge";
-import { CommentIcon, EyeIcon } from "./StatIcons";
+import { PostCounts } from "./StatCounts";
 
 export function shortDate(iso?: string) {
   if (!iso) {
@@ -20,23 +19,12 @@ export function shortDate(iso?: string) {
   });
 }
 
-export function PostStatsLine({ post, views, comments }: { post: PostSummary; views?: number; comments?: number }) {
+export function PostStatsLine({ post }: { post: PostSummary }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-gray-500">
       {post.publishedTime && <time dateTime={post.publishedTime}>{shortDate(post.publishedTime)}</time>}
       {post.readingTime && <span>{post.readingTime} min read</span>}
-      {!!views && (
-        <span className="inline-flex items-center gap-1" title={`${views.toLocaleString("en-US")} reads`}>
-          <EyeIcon className="size-3" />
-          {formatCount(views)}
-        </span>
-      )}
-      {!!comments && (
-        <span className="inline-flex items-center gap-1" title={`${comments} comments`}>
-          <CommentIcon className="size-3" />
-          {comments}
-        </span>
-      )}
+      <PostCounts slug={post.slug} />
       <ReadBadge slug={post.slug} publishedTime={post.publishedTime} />
     </div>
   );
@@ -45,7 +33,7 @@ export function PostStatsLine({ post, views, comments }: { post: PostSummary; vi
 const THUMB =
   "mt-0.5 aspect-[3/2] w-[88px] sm:w-[120px] shrink-0 rounded-lg border border-gray-200/70 dark:border-gray-800 object-cover";
 
-export default function PostCard({ post, views, comments }: { post: PostSummary; views?: number; comments?: number }) {
+export default function PostCard({ post }: { post: PostSummary }) {
   return (
     <article className="post-card group/card border-b border-gray-200/70 dark:border-gray-800/60 last:border-b-0">
       <PreloadCoverLink href={`/p/${post.slug}`} cover={post.cover} className="flex items-start gap-4 py-5">
@@ -63,7 +51,7 @@ export default function PostCard({ post, views, comments }: { post: PostSummary;
             </PostTransition>
           )}
           <div className="mt-2.5">
-            <PostStatsLine post={post} views={views} comments={comments} />
+            <PostStatsLine post={post} />
           </div>
         </div>
         <PostTransition slug={post.slug} part="cover">

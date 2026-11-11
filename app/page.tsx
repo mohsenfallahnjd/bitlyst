@@ -6,11 +6,10 @@ import NewsletterForm from "@/components/NewsletterForm";
 import PixelSprite from "@/components/PixelSprite";
 import PostCard, { PostStatsLine } from "@/components/PostCard";
 import PostTransition from "@/components/PostTransition";
+import { TotalReads } from "@/components/StatCounts";
 import { COVER_PLACEHOLDER_BG, HERO_COVER_HEIGHT, HERO_COVER_SIZES, HERO_COVER_WIDTH } from "@/lib/cover";
-import { formatCount } from "@/lib/format";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getAllSeries } from "@/lib/series";
-import { getPostStats } from "@/lib/stats";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -38,12 +37,10 @@ function SectionTitle({ children, href, more }: { children: React.ReactNode; hre
 
 export default async function HomePage() {
   const all = loadMarkdownDocs();
-  const stats = await getPostStats();
 
   const [featured, ...rest] = all;
   const latest = rest.slice(0, 8);
   const series = getAllSeries(all).filter((s) => s.parts.length > 0);
-  const totalViews = Object.values(stats.views).reduce((s, n) => s + n, 0);
 
   return (
     <div className="space-y-14">
@@ -55,7 +52,7 @@ export default async function HomePage() {
         </h1>
         <p className="text-gray-500 dark:text-gray-400 max-w-lg">
           Practical, diagram-first explanations you can read over coffee. {all.length} posts
-          {totalViews >= 100 && <>, {formatCount(totalViews)} reads</>} and counting.
+          <TotalReads prefix=", " /> and counting.
         </p>
       </section>
 
@@ -105,11 +102,7 @@ export default async function HomePage() {
                 </PostTransition>
               )}
               <div className="mt-4">
-                <PostStatsLine
-                  post={toSummary(featured)}
-                  views={stats.views[featured.slug]}
-                  comments={stats.comments[featured.slug]}
-                />
+                <PostStatsLine post={toSummary(featured)} />
               </div>
               <span className="mt-5 text-sm font-semibold text-[var(--accent)]">
                 Read post <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>
@@ -125,7 +118,7 @@ export default async function HomePage() {
           Latest
         </SectionTitle>
         {latest.map((p) => (
-          <PostCard key={p.slug} post={toSummary(p)} views={stats.views[p.slug]} comments={stats.comments[p.slug]} />
+          <PostCard key={p.slug} post={toSummary(p)} />
         ))}
         <Link
           href="/posts"

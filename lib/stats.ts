@@ -113,7 +113,7 @@ export async function getDailyViews(days: number): Promise<{ day: string; bySlug
   }));
 }
 
-/** Uncached all-time counts for /admin, which shouldn't lag behind the public 5 minute cache. */
+/** Uncached all-time counts for /admin, which shouldn't lag behind the public 30 minute cache. */
 export async function getAllViewsFresh(): Promise<Record<string, number>> {
   const redis = await getRedis();
   if (!redis) {

@@ -23,6 +23,7 @@ import ReadTracker from "@/components/ReadTracker";
 import RelatedPosts from "@/components/RelatedPosts";
 import SeriesNav from "@/components/SeriesNav";
 import ShareButton from "@/components/ShareButton";
+import { CommentCount } from "@/components/StatCounts";
 import { CommentIcon } from "@/components/StatIcons";
 import TOC from "@/components/TOC";
 import ViewCounter from "@/components/ViewCounter";
@@ -30,7 +31,6 @@ import { COVER_PLACEHOLDER_BG, HERO_COVER_HEIGHT, HERO_COVER_SIZES, HERO_COVER_W
 import { tagSlug } from "@/lib/format";
 import { loadMarkdownBySlug, loadMarkdownDocs } from "@/lib/mdSource";
 import rehypeImageSize from "@/lib/rehypeImageSize";
-import { getPostStats } from "@/lib/stats";
 import { useMDXComponents } from "@/mdx-components";
 
 const COVER = "aspect-[1200/630] w-full rounded-xl border border-gray-200/70 dark:border-gray-800 object-cover";
@@ -46,16 +46,13 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
   }
 
   const postUrl = `https://bitlyst.blog/p/${post.slug}`;
-  const stats = await getPostStats();
-  const views = stats.views[post.slug] ?? 0;
-  const commentCount = stats.comments[post.slug] ?? 0;
   const wordCount = post.content.split(/\s+/).filter(Boolean).length;
   const readingTime = post.readingTime ?? 1;
   const author = post.authors[0];
   const topics = [...new Map((post.tags ?? []).map((t) => [tagSlug(t), t])).entries()];
   const [primaryTopic] = topics;
   const updated = post.modifiedTime && post.modifiedTime !== post.publishedTime ? post.modifiedTime : undefined;
-  const actionProps = { title: post.title, url: postUrl, readingTime, comments: commentCount };
+  const actionProps = { slug: post.slug, title: post.title, url: postUrl, readingTime };
 
   return (
     <div data-post className="xl:grid xl:grid-cols-[minmax(0,1fr)_12rem] xl:gap-12">
@@ -96,19 +93,6 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
               wordCount,
               timeRequired: `PT${post.readingTime ?? 1}M`,
               inLanguage: "en",
-              commentCount,
-              interactionStatistic: [
-                {
-                  "@type": "InteractionCounter",
-                  interactionType: "https://schema.org/ReadAction",
-                  userInteractionCount: views,
-                },
-                {
-                  "@type": "InteractionCounter",
-                  interactionType: "https://schema.org/CommentAction",
-                  userInteractionCount: commentCount,
-                },
-              ],
             },
           ]),
         }}
@@ -165,6 +149,17 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
             <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800/80 px-2.5 py-0.5 font-medium">
               {readingTime} min read
             </span>
+            {post.featuredIn?.map((f) => (
+              <a
+                key={f.url}
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-400/10 px-2.5 py-0.5 font-medium text-amber-800 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-400/20 hover:ring-amber-400 transition-colors"
+              >
+                Featured in {f.name}
+              </a>
+            ))}
           </div>
 
           {post.series && (
@@ -207,13 +202,13 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
                       · Updated <time dateTime={updated}>{shortDate(updated)}</time>
                     </span>
                   )}
-                  <ViewCounter slug={post.slug} initial={views} />
+                  <ViewCounter slug={post.slug} initial={0} />
                   <a
                     href="#comments"
                     className="inline-flex items-center gap-1 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                   >
                     <CommentIcon className="size-3" />
-                    {commentCount > 0 ? commentCount : "Discuss"}
+                    <CommentCount slug={post.slug} fallback="Discuss" />
                   </a>
                 </div>
               </div>
@@ -264,7 +259,7 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
 
         <Comments slug={post.slug} />
 
-        <RelatedPosts current={post} views={stats.views} comments={stats.comments} />
+        <RelatedPosts current={post} />
 
         <NewsletterForm className="mt-14" />
       </div>

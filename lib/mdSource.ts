@@ -24,6 +24,8 @@ export type DocMeta = {
   cover?: string;
   /** caption for the cover (credit or a point the image can't make) */
   coverAlt?: string;
+  /** newsletters/sites that featured the post, shown as a badge on the post and listed on /about */
+  featuredIn?: { name: string; url: string }[];
 };
 
 /** DocMeta without the body — what list UIs (and client components) need. */
@@ -63,6 +65,7 @@ function parseDoc(slug: string, src: string): DocMeta {
     publishOrder: (data.publishOrder as number | undefined) ?? undefined,
     cover: (data.cover as string | undefined) ?? undefined,
     coverAlt: (data.coverAlt as string | undefined) ?? undefined,
+    featuredIn: (data.featuredIn as DocMeta["featuredIn"]) ?? undefined,
   };
 }
 

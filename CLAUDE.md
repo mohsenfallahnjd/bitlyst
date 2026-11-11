@@ -14,6 +14,8 @@ Deep-dive panel in MDX: `<DeepDive>` wraps the optional advanced section at the 
 
 Diagrams in MDX: `<FlowDiagram>` (ordered steps that can fork into outcomes; supports `title`, `notes`, `caption`) and `<ParallelFlow>` (waterfall timeline of sequential vs concurrent work). Usage is documented at the top of each component in `components/`.
 
+When a newsletter or site features a post, add it to the post's `featuredIn` frontmatter (list of `{ name, url }`). It shows as a badge on the post and in the "Featured in" list on `/about`.
+
 Series are registered in `lib/series.ts` and joined via `series` + `seriesOrder` frontmatter.
 
 Posts sharing a `publishedTime` date are ordered by `publishOrder` frontmatter (higher shows first, default 0), then by slug. Newest written goes on top: when a post shares its date with another, give it the next number above the highest one that day.
@@ -22,7 +24,7 @@ Posts sharing a `publishedTime` date are ordered by `publishOrder` frontmatter (
 
 `cacheComponents: true` and `partialPrefetching: true` in `next.config.mjs`. Route segment configs (`revalidate`, `dynamic`, `dynamicParams`, `runtime`) are not allowed.
 
-- Cache data reads with `"use cache"` + `cacheLife(...)` inside the function. Redis/Postgres stats and comments use the custom `stats` profile (5 min); comment reads also use `cacheTag("comments")`, which `app/api/comment/[id]` invalidates with `revalidateTag("comments", "max")`.
+- Cache data reads with `"use cache"` + `cacheLife(...)` inside the function. Redis/Postgres stats and comments use the custom `stats` profile (30 min), but only behind `app/api/stats`: pages load counts in the browser with `useStats()` (`lib/useStats.ts`, `components/StatCounts.tsx`) so they stay fully static. Never call `getPostStats()` in a page; it makes every page re-render on that timer and burns function CPU. The comment list uses `cacheLife("max")` with no timer; comment reads use `cacheTag("comments")`, which `app/api/comment/[id]` invalidates with `revalidateTag("comments", "max")`.
 - Read `cookies()`, `headers()` or `searchParams` only inside a component wrapped in `<Suspense>` (see `app/search/page.tsx`, `app/admin/page.tsx`).
 - Don't read the clock (`new Date()`, `Date.now()`) or `Math.random()` in server components outside a `"use cache"` scope — it fails the prerender.
 - Unknown dynamic params: call `notFound()` in the page.

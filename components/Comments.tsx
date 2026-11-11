@@ -5,7 +5,8 @@ import CommentForm from "./CommentForm";
 /** Approved comments for a post — cached, and invalidated when a comment is approved or deleted. */
 async function getApprovedComments(slug: string) {
   "use cache";
-  cacheLife("stats");
+  // no timer: approving or deleting a comment calls revalidateTag("comments")
+  cacheLife("max");
   cacheTag("comments");
   try {
     return await prisma.comment.findMany({

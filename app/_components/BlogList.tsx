@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import PostCard from "@/components/PostCard";
 import type { PostSummary } from "@/lib/mdSource";
-import type { PostStats } from "@/lib/stats";
+import { useStats } from "@/lib/useStats";
 
 function getYear(publishedTime?: string) {
   if (!publishedTime) {
@@ -19,16 +19,19 @@ const SORTS = [
   { key: "discussed", label: "Most discussed" },
 ];
 
-export default function BlogList({ posts, stats }: { posts: PostSummary[]; stats: PostStats }) {
+export default function BlogList({ posts }: { posts: PostSummary[] }) {
   const sp = useSearchParams();
+  // until counts load, "Most read" / "Most discussed" keep the newest-first order
+  const views = useStats()?.views ?? {};
+  const comments = useStats()?.comments ?? {};
   const level = (sp.get("level") || "").toLowerCase();
   const sort = sp.get("sort") || "";
 
   let filtered = level ? posts.filter((p) => p.level === level) : posts;
   if (sort === "popular") {
-    filtered = [...filtered].sort((a, b) => (stats.views[b.slug] ?? 0) - (stats.views[a.slug] ?? 0));
+    filtered = [...filtered].sort((a, b) => (views[b.slug] ?? 0) - (views[a.slug] ?? 0));
   } else if (sort === "discussed") {
-    filtered = [...filtered].sort((a, b) => (stats.comments[b.slug] ?? 0) - (stats.comments[a.slug] ?? 0));
+    filtered = [...filtered].sort((a, b) => (comments[b.slug] ?? 0) - (comments[a.slug] ?? 0));
   }
 
   const hrefFor = (next: { sort?: string; level?: string }) => {
@@ -45,9 +48,7 @@ export default function BlogList({ posts, stats }: { posts: PostSummary[]; stats
     return qs ? `/posts?${qs}` : "/posts";
   };
 
-  const card = (post: PostSummary) => (
-    <PostCard key={post.slug} post={post} views={stats.views[post.slug]} comments={stats.comments[post.slug]} />
-  );
+  const card = (post: PostSummary) => <PostCard key={post.slug} post={post} />;
 
   // Group by year only in the default chronological view
   const grouped: Record<string, PostSummary[]> = {};
