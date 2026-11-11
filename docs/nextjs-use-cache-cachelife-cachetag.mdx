@@ -1,0 +1,213 @@
+---
+title: "Next.js use cache, cacheLife and cacheTag: How One View Counter Rebuilt Every Page"
+summary: "use cache stores a result, cacheLife decides when it goes stale, cacheTag lets you throw it out on demand. When to use each, and where TanStack Query fits."
+publishedTime: "2026-11-11"
+publishOrder: 1
+level: "intermediate"
+series: "nextjs-field-notes"
+seriesOrder: 4
+draft: true
+cover: "/assets/use-cache-cover.jpg"
+coverAlt: "AI-generated illustration. One shared fridge for every visitor. The gold sticker decides when a box goes stale."
+tags: ["nextjs", "app-router", "caching", "use-cache", "tanstack-query"]
+---
+
+Vercel's usage page told me this blog had used **2 h 32 min of function CPU** in 30 days: 80% of everything on my account. It's a blog. The posts only change when I deploy.
+
+The cause was one line near the top of my pages:
+
+```tsx
+const stats = await getPostStats(); // read + comment counts, cached for 5 minutes
+```
+
+The counts were cached for 5 minutes. But the 5-minute timer didn't stay on the counts. Every page that showed them took it on, so every post, tag and series page went stale every 5 minutes and was rebuilt on the server the next time a reader or a crawler came by.
+
+---
+
+## The mental model: a shared fridge
+
+Think of the server cache as **one fridge that every visitor shares**.
+
+- **`"use cache"`** puts a result in the fridge. The next caller takes it out instead of cooking it again.
+- **`cacheLife`** is the best-before sticker. After that date, the next visitor still gets the old dish while a fresh one cooks in the background.
+- **`cacheTag`** is the name on the lid. You can throw out every box labelled `comments` at once, the moment the comments change.
+
+> A page is only as fresh as the shortest best-before date inside it.
+
+---
+
+## How it works
+
+### `"use cache"`: store the result
+
+```tsx
+async function getPost(slug: string) {
+  "use cache";
+  return db.post.findUnique({ where: { slug } });
+}
+```
+
+The arguments are part of the key, so `getPost("a")` and `getPost("b")` are separate boxes in the fridge. You can put `"use cache"` on a component too, and its rendered output is stored.
+
+One rule: you can't read `cookies()` or `headers()` inside. Read them outside and pass the value in as an argument.
+
+### `cacheLife`: when it goes stale
+
+```tsx
+async function getExchangeRates() {
+  "use cache";
+  cacheLife("hours"); // or "minutes", "days", "max", or your own profile
+  return fetch("https://api.example.com/rates").then((r) => r.json());
+}
+```
+
+After the time is up, the next request still gets the old result straight away, and Next.js refreshes it in the background. Nobody waits.
+
+**The trap from my hook:** a page's prerendered HTML is a cached thing too. If something inside it has a 5-minute life, the whole page gets a 5-minute life. That's how one counter set the clock for every page.
+
+### `cacheTag`: throw it out on demand
+
+```tsx
+async function getComments(slug: string) {
+  "use cache";
+  cacheLife("max");                         // no timer...
+  cacheTag("comments", `comments:${slug}`); // ...just a name
+  return db.comment.findMany({ where: { slug, approved: true } });
+}
+
+// when a comment is approved:
+revalidateTag("comments", "max"); // route handler: serve old, refresh in background
+updateTag(`comments:${slug}`);    // server action: the next request waits for fresh data
+```
+
+A timer is a guess about when data changes. A tag means you **refresh exactly when it changes**. My comment list used to sit on the 5-minute timer. Now it's `"max"` plus a tag, and new comments still show up straight away.
+
+---
+
+## Which one to use
+
+| Your data | Use |
+|---|---|
+| Changes only when you deploy (posts, docs) | Nothing. It's static already |
+| Changes when *you* change it (CMS, comments, products) | `"use cache"` + `cacheLife("max")` + `cacheTag`, invalidate on write |
+| Changes on its own, slowly (rates, star counts) | `"use cache"` + `cacheLife("hours")` |
+| Changes constantly and shows on every page (view counts) | A small cached API route, fetched in the browser |
+| Belongs to one user (cart, dashboard) | Not the shared fridge. Fetch it per user |
+
+---
+
+## Where TanStack Query fits
+
+They solve different problems, so you use both:
+
+- **Server cache (`use cache`)** answers: *"Don't hit the database for every visitor."* One fridge, shared by everyone.
+- **TanStack Query** answers: *"Don't refetch for this visitor every time a component mounts."* It's each visitor's own lunchbox in browser memory, with refetch on focus, polling, retries and optimistic updates.
+
+The pattern I ended up with: render the page from server-cached data, and load live or per-user bits in the browser from a route handler that is itself cached.
+
+```tsx
+// app/api/stats/route.ts — one shared, cached answer
+export async function GET() {
+  return Response.json(await getPostStats()); // getPostStats uses "use cache"
+}
+
+// in the browser — one request per visitor, shared by every component
+const { data } = useQuery({
+  queryKey: ["stats"],
+  queryFn: () => fetch("/api/stats").then((r) => r.json()),
+  staleTime: 30 * 60_000, // match the server's refresh time
+});
+```
+
+When the user changes something, clear both layers: `updateTag` in the server action, then `queryClient.invalidateQueries({ queryKey: [...] })` in the browser.
+
+**Honest stakes:** after moving the counts into the browser, the build output for my post, tag and series pages went from **refresh every 5m** to **refresh every 1d**. Only `/api/stats` still refreshes on a timer. Most apps won't hit this exact bug, but any value read high up in a page can quietly set the clock for the whole page.
+
+---
+
+## Say it in an interview
+
+> "`use cache` marks a function or component whose result Next.js stores and reuses, keyed by its arguments. `cacheLife` sets how long it stays fresh and when it's refreshed in the background, and a page can't stay cached longer than the shortest life inside it. `cacheTag` names entries so I can invalidate them when the data changes, with `revalidateTag` or `updateTag`. TanStack Query is a separate, per-user cache in the browser: I use the server cache for shared data and TanStack Query for live or per-user data."
+
+---
+
+## Cheat sheet
+
+| Tool | One line |
+|---|---|
+| `"use cache"` | Store this result; arguments are the key |
+| `cacheLife` | Best-before: stale → refresh in the background |
+| `cacheTag` + `revalidateTag` | Throw out by name, serve old while refreshing |
+| `cacheTag` + `updateTag` | Throw out by name, next request waits (server actions only) |
+| TanStack Query | Per-visitor browser cache on top |
+
+## TL;DR
+
+- `"use cache"` stores, `cacheLife` sets when it goes stale, `cacheTag` lets you clear it on demand.
+- A page is only as fresh as the shortest-lived cache inside it. One 5-minute counter made all my pages refresh every 5 minutes.
+- Prefer "cache forever + tag" for data you control, timers for data you don't.
+- Use TanStack Query for per-user and live data, ideally fetching from a cached route.
+
+<DeepDive>
+
+### The three numbers behind `cacheLife`
+
+Every profile is three numbers:
+
+| Number | Meaning |
+|---|---|
+| `stale` | How long the browser may reuse it without asking the server |
+| `revalidate` | After this, the next request triggers a background refresh |
+| `expire` | After this with no traffic at all, the next request waits for a fresh result |
+
+The built-in profiles (Next.js 16.4):
+
+| Profile | `stale` | `revalidate` | `expire` |
+|---|---|---|---|
+| `default` | 5 min | 15 min | never |
+| `seconds` | 30 s | 1 s | 1 min |
+| `minutes` | 5 min | 1 min | 1 h |
+| `hours` | 5 min | 1 h | 1 day |
+| `days` | 5 min | 1 day | 1 week |
+| `weeks` | 5 min | 1 week | 30 days |
+| `max` | 5 min | 30 days | 1 year |
+
+You can define your own in `next.config` under `cacheLife`. Mine was `stats: { stale: 300, revalidate: 300, expire: 86_400 }`.
+
+### Too short to prerender
+
+Very short lives don't get baked into the static page at all:
+
+- `revalidate: 0` or `expire` under 5 minutes: left out of the prerender and computed on every request (a "dynamic hole").
+- `stale` under 30 seconds: also left out of the prerender.
+
+My 5-minute profile sat just above that line, so it was baked in and set the clock for the whole page.
+
+### Nested caches
+
+If an outer `"use cache"` calls `cacheLife` itself, its own lifetime wins. If it doesn't, it starts from `default` (15 min) and **shrinks** to match any shorter cache inside it. A longer inner cache never makes it longer. Always set `cacheLife` explicitly so you can read the lifetime at the call site.
+
+### `revalidateTag` vs `updateTag`
+
+| | `revalidateTag(tag, "max")` | `updateTag(tag)` |
+|---|---|---|
+| Where | Server actions and route handlers | Server actions only |
+| Next request gets | The old result while it refreshes | Fresh data (it waits) |
+| Good for | Webhooks, admin tools, CMS updates | "I just saved it, show me my change" |
+
+Calling `revalidateTag` doesn't rebuild anything by itself. It marks entries stale, and each page refreshes when someone next visits it.
+
+### Where the fridge lives
+
+Plain `"use cache"` keeps entries in memory on each server instance. On serverless platforms instances come and go, so expect some misses. `"use cache: remote"` stores entries in a shared cache that all instances can read, at the cost of a network round-trip and usually a platform fee. `"use cache: private"` is for results that depend on cookies or headers and must never be shared between users.
+
+### Measuring it yourself
+
+Run `next build` and read the `Revalidate` column in the route table. Before my fix, `/p/javascript-this-explained` showed `5m`. After it, `1d` (that last day comes from a cached copyright year in the footer).
+
+### Further reading
+
+- [`use cache`](https://nextjs.org/docs/app/api-reference/directives/use-cache), [`cacheLife`](https://nextjs.org/docs/app/api-reference/functions/cacheLife) and [`cacheTag`](https://nextjs.org/docs/app/api-reference/functions/cacheTag) in the Next.js docs
+- [TanStack Query: Advanced Server Rendering](https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr)
+
+</DeepDive>
