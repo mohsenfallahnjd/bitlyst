@@ -13,7 +13,7 @@
     "url": "https://github.com/mohsenfallahnjd/bitlyst/issues"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": "26.x"
   },
   "keywords": [
     "blog",
