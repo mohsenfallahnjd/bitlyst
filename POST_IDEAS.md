@@ -22,7 +22,16 @@ Each idea: working title, the mental model (one line), and why it's worth writin
   - Model: XSS runs the attacker's code on your page; CSRF makes your browser send a request you didn't mean to.
   - Why: completes a security trio with `httpOnly-cookies-guide` and `cors-explained-simple`. Asked in almost every frontend interview.
 
+### Book Bites (book briefs, see BOOK_BRIEF_GUIDE.md)
+
+- [ ] **The Pragmatic Programmer** (Hunt & Thomas): broad habits, many short ideas; pick the 5 that still hold up.
+- [ ] **Refactoring** (Martin Fowler): small safe steps; code smells as a vocabulary.
+- [ ] **Designing Data-Intensive Applications** (Martin Kleppmann): big book; brief it as "what every frontend dev should know about the backend".
+- [ ] **Clean Code** (Robert C. Martin): pairs with the APOSD brief and their public debate; brief it fairly, with its weak spots.
+
 ## Writing
+
+- [ ] **A Philosophy of Software Design** (Book Bites #1) → `a-philosophy-of-software-design-book-summary`
 
 - [ ] **How V8 makes JS fast: Ignition, Sparkplug, Maglev, TurboFan** → `v8-compiler-tiers`
 - [ ] **Why React needs `key`** → `react-keys-reconciliation`

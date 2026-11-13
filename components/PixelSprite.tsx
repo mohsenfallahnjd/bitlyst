@@ -128,6 +128,48 @@ const SPRITES = {
       grid: ["..ZZ.", ".ZZ..", "ZZZZ.", "..ZZ.", ".ZZ..", ".Z..."],
     },
   },
+  // Book Bites — a coral hardback with a gold title band, cream page edges and a floating bookmark
+  folio: {
+    palette: {
+      K: OUTLINE,
+      P: "#16181e",
+      R: "#e2604c",
+      S: "#b8422f",
+      W: "#f6f7f9",
+      w: "#f3e7cc",
+      G: "#f5b82e",
+    },
+    body: [
+      "................",
+      "..KKKKKKKKKKKK..",
+      "..KSRRRRRRRRwK..",
+      "..KSRRRRRRRRwK..",
+      "..KSRWPRRWPRwK..",
+      "..KSRWPRRWPRwK..",
+      "..KSRRRRRRRRwK..",
+      "..KSRRPRRPRRwK..",
+      "..KSRRRPPRRRwK..",
+      "..KSRRRRRRRRwK..",
+      "..KSRGGGGGGRwK..",
+      "..KSRRRRRRRRwK..",
+      "..KKKKKKKKKKKK..",
+      "....KK....KK....",
+      "...KKK....KKK...",
+      "................",
+    ],
+    lids: [
+      [5, 4, 2, 2],
+      [9, 4, 2, 2],
+    ],
+    lidColor: "#e2604c",
+    // bookmark ribbon
+    prop: {
+      palette: { Z: "#3a52ee" },
+      x: 16,
+      y: 0,
+      grid: [".ZZZ.", ".ZZZ.", ".ZZZ.", ".ZZZ.", ".ZZZ.", ".Z.Z."],
+    },
+  },
 } satisfies Record<string, Sprite>;
 
 export type SpriteName = keyof typeof SPRITES;

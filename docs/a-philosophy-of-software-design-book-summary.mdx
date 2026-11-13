@@ -1,0 +1,186 @@
+---
+title: "A Philosophy of Software Design Summary: Deep Modules Beat Small Ones"
+summary: "John Ousterhout's book in one sitting: complexity is the enemy, deep modules fight it, and 10–20% of your time should go to design. Five ideas to use on Monday."
+publishedTime: "2026-11-13"
+publishOrder: 4
+level: "intermediate"
+series: "book-bites"
+seriesOrder: 1
+cover: "/assets/aposd-book-cover.jpg"
+coverAlt: "AI-generated illustration. One lever on top, all the machinery underneath. That's what a deep module feels like to use."
+tags: ["books", "software-design", "architecture", "clean-code", "complexity"]
+---
+
+Picture a codebase where adding one field means editing seven files, and nobody is sure which seven. No single commit made it that way. It got there one reasonable shortcut at a time.
+
+That slow slide is what this book is about.
+
+*Book: A Philosophy of Software Design, John Ousterhout (2nd edition, 2021).* Ousterhout is a Stanford professor who created the Tcl language, and the book grew out of a software design course he teaches there.
+
+---
+
+## The book in one sentence
+
+> Complexity is the enemy, and the best weapon against it is modules that hide a lot behind a simple interface.
+
+Everything else in the book either explains where complexity comes from or gives you a way to hide it.
+
+---
+
+## Idea 1: Complexity is anything that makes code hard to change
+
+Ousterhout defines complexity by its effect: **anything that makes a system hard to understand or modify.** He names three symptoms:
+
+- **Change amplification:** one small change needs edits in many places.
+- **Cognitive load:** you have to hold a lot in your head to make a change safely.
+- **Unknown unknowns:** you can't even tell *what* you need to change. This is the worst one.
+
+And two causes: **dependencies** (code that can't be understood alone) and **obscurity** (important information that isn't obvious).
+
+The key point: complexity is **incremental**. No single shortcut ruins a codebase, so every shortcut feels fine.
+
+**Use it:** in code review, ask "does this make the next change harder?" instead of "does this work?"
+
+---
+
+## Idea 2: Be strategic, not tactical
+
+**Tactical programming** means getting the current feature working as fast as possible. **Strategic programming** means treating working code as not enough: the real goal is a design that keeps future changes cheap.
+
+The book's name for the extreme tactical developer is the **tactical tornado**: someone who ships features fast and leaves a mess for everyone else, often while being praised as the most productive person on the team.
+
+Ousterhout's suggestion is modest: spend about **10–20% of your development time** on design improvements. Not a rewrite, just a steady investment that pays back within months.
+
+**Use it:** when you touch a file, leave its design slightly better than you found it, and count that as part of the task.
+
+---
+
+## Idea 3: Deep modules beat shallow ones
+
+This is the idea the book is known for.
+
+Think of a module (a function, class or service) as a rectangle. The **top edge is its interface**: what you must learn to use it. The **area is its functionality**: what it does for you.
+
+- A **deep module** has a small interface and a lot of functionality. The book's classic example is Unix file I/O: a handful of calls (`open`, `read`, `write`, `lseek`, `close`) hide disks, caching, permissions and file systems.
+- A **shallow module** has an interface almost as complex as what it does. Calling it saves you little.
+
+![A deep module is a light switch: one simple control in front, all the wiring hidden in the wall. Photo: Kurtkaiser, CC0, via Wikimedia Commons](/assets/aposd-light-switch.jpg)
+
+Here's the difference in TypeScript (this example is not from the book):
+
+```ts
+// shallow: three calls, and the caller must know the order and the format
+const raw = readFileSync(path, "utf8");
+const parsed = parseJson(raw);
+const config = applyDefaults(parsed);
+
+// deep: one call, the rest is hidden
+const config = loadConfig(path);
+```
+
+The book also names the failure mode of "small is always good": **classitis**, where a codebase splits into many tiny classes, each easy to read alone but with so many interfaces that the system as a whole is harder to learn.
+
+**Use it:** judge a function by how much it hides, not by how short it is.
+
+---
+
+## Idea 4: Hide information, and watch for leaks
+
+Each module should own a **design decision** (a file format, a protocol, a caching rule) so the rest of the code doesn't need to know it. That's **information hiding**.
+
+The opposite is **information leakage**: the same decision shows up in several places. If two modules both know the layout of a file, changing the layout means changing both.
+
+A common cause is **temporal decomposition**: splitting code by the order things happen ("read, then process, then write") instead of by what knowledge each part owns. The reader and writer end up sharing the format.
+
+**Use it:** before splitting a module, ask "what knowledge does each piece own?" If the answer is "the same thing", keep them together.
+
+---
+
+## Idea 5: Define errors out of existence
+
+Every error a function can throw is part of its interface, and every caller has to deal with it. So the best error handling is often an API where the error **can't happen**.
+
+JavaScript has good examples (these are not from the book):
+
+```js
+"abc".slice(1, 100); // "bc"  ← clamps instead of throwing
+new Set([1]).delete(5); // false ← "make sure 5 isn't there" always succeeds
+```
+
+The book's own example is a Tcl command Ousterhout regrets designing: removing a variable that didn't exist threw an error, so callers wrapped it in error handling. Defining it as "make sure this variable doesn't exist" would have removed the error entirely.
+
+**Use it:** when you add a `throw`, ask whether a different definition of the operation would make the case normal instead.
+
+---
+
+## Where it's weak
+
+- **It disagrees with Clean Code, and both sides have a point.** Ousterhout argues that very short functions and "self-documenting code with no comments" often make systems harder to understand. Robert Martin disagrees. The two discussed it at length in [a public conversation](https://github.com/johnousterhout/aposd-vs-clean-code) from 2024–2025. Read both before adopting either as a rule.
+- **"Deep" can be misread as "big".** A 2,000-line class with a two-method interface is deep, and also hard to work on. The book wants deep *and* well organized inside.
+- **It's light on testing.** It's skeptical of test-driven development, arguing it pulls attention toward getting features working rather than finding the best design. Many teams won't agree.
+- **Few web examples.** Most examples come from systems code and student projects. You'll need to translate them to frontend work yourself.
+
+---
+
+## Use it on Monday
+
+1. In your next PR, name one place where you **hid** something from callers.
+2. Find a function whose callers always call two other functions right after it. Merge them into one **deep** call.
+3. Pick one `throw` in your code and see if a broader definition removes it.
+4. Before building a module, sketch **two** different interfaces and compare them. The book calls this "design it twice".
+5. Write the comment for a function's interface **before** the code. If the comment is hard to write, the design isn't clear yet.
+
+---
+
+## Say it in an interview
+
+> "I like Ousterhout's idea of deep modules: a good abstraction has a simple interface and hides a lot of functionality behind it. Complexity shows up as change amplification, cognitive load and unknown unknowns, and it builds up one shortcut at a time, so I try to work strategically: spend some of every task improving the design, hide design decisions inside one module, and design APIs so common error cases simply can't happen."
+
+---
+
+## Cheat sheet
+
+| Idea | In one line |
+|---|---|
+| Complexity | Anything that makes code hard to understand or change |
+| Strategic programming | Working code isn't enough; invest 10–20% in design |
+| Deep modules | Small interface, lots of functionality |
+| Information hiding | One module owns each design decision |
+| Errors out of existence | Define operations so the error case can't happen |
+
+## Should you read it?
+
+**Read it if** you've written code for a year or more and feel your designs get messy as they grow. It's short, a weekend's reading, and written plainly.
+
+**Short on time?** Read the chapters on complexity, deep modules, information hiding and errors. That's most of the value.
+
+**Skip it if** you want a catalog of patterns or framework advice. It's about how to think, not what to type.
+
+The author's page for the book: [A Philosophy of Software Design](https://web.stanford.edu/~ouster/cgi-bin/book.php).
+
+<DeepDive>
+
+### More ideas from the book, in one line each
+
+- **Pull complexity downward.** If either the module or its callers must handle something hard, it's usually better for the module to do it once.
+- **Different layer, different abstraction.** If a method only passes its arguments to another method with the same signature (a *pass-through method*), the layers aren't adding value.
+- **Somewhat general-purpose.** Design a module's interface a bit more general than today's single use. It often turns out simpler, not more complex.
+- **Comments describe what the code can't.** Good comments explain why, and what a reader can't see from the code: units, invariants, edge cases. Comments that repeat the code are noise.
+- **Names matter.** A name that's hard to pick is a hint that the thing it names doesn't have a clear purpose.
+- **Red flags.** The book ends chapters with warning signs, like shallow modules, pass-through methods, information leakage and vague names. They make a handy review checklist.
+
+### What changed in the 2nd edition
+
+According to Ousterhout's own page, the 2nd edition (July 2021) added a chapter called "Decide What Matters", took a firmer position in favor of general-purpose designs, and added sections contrasting the book's advice with *Clean Code*, mainly on method length and comments. He says it may not be worth buying the 2nd edition if you already own the first, and offers the new material as a free extract for first-edition owners.
+
+### The Clean Code conversation
+
+Between September 2024 and February 2025, Ousterhout and Robert Martin held a series of discussions about where their books disagree, and published the result as a single document on GitHub. The main topics are method length, comments and test-driven development, with code examples on both sides. It's long, but it's the most useful thing to read after this book, because it shows the same problem argued well from two directions.
+
+### Further reading
+
+- [A Philosophy of Software Design](https://web.stanford.edu/~ouster/cgi-bin/book.php), author's page
+- [aposd-vs-clean-code](https://github.com/johnousterhout/aposd-vs-clean-code), the Ousterhout–Martin discussion
+- [SOLID principles](/p/solid-principles), on this blog, for a different take on module design
+
+</DeepDive>

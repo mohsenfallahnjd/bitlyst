@@ -110,6 +110,7 @@ seriesOrder: 1
 - **JavaScript Plot Twists** — surprising JS behaviors that follow the spec. Each part: one surprise, why it happens, the rule that prevents it.
 - **Next.js Field Notes** — tricks and traps from production App Router apps.
 - **Under the Benchmark** — performance ideas made simple. Each part: one mental model of what the engine or hardware does, one measured number that proves it, and when it actually matters.
+- **Book Bites** — one brief per software book: the 3–5 ideas worth keeping and how to use them. Briefs have their own shape and copyright rules: follow [BOOK_BRIEF_GUIDE.md](BOOK_BRIEF_GUIDE.md).
 
 When a part is published, remove its title from `upcoming` in `lib/series.ts`.
 

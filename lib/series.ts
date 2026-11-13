@@ -43,6 +43,13 @@ export const SERIES: Record<string, Series> = {
     mascot: { sprite: "tick", name: "Tick", bio: "Doesn't believe a number until it has run seven times." },
     upcoming: [],
   },
+  "book-bites": {
+    name: "Book Bites",
+    description:
+      "Software books in one sitting: the few ideas worth keeping, how to use them on Monday, and whether to read the whole thing.",
+    mascot: { sprite: "folio", name: "Folio", bio: "Reads the whole book. Keeps only the pages you'll actually use." },
+    upcoming: [],
+  },
 };
 
 export type SeriesWithParts = Series & { slug: string; parts: DocMeta[] };
