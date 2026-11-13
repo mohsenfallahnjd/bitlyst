@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import FeaturedBadge, { FeatureIcon, featureKind } from "@/components/FeaturedBadge";
 import DonatePrompt from "@/components/DonatePrompt";
 import NewsletterForm from "@/components/NewsletterForm";
 import PostCard from "@/components/PostCard";
@@ -62,7 +63,9 @@ export default function AboutPage() {
   const avgRead = Math.round(posts.reduce((s, p) => s + (p.readingTime ?? 0), 0) / Math.max(posts.length, 1));
 
   const startHere = [...posts].slice(0, 3);
-  const featured = posts.flatMap((p) => (p.featuredIn ?? []).map((f) => ({ ...f, slug: p.slug, title: p.title })));
+  const featuredPosts = posts.filter((p) => p.featuredIn?.length);
+  const featureCount = featuredPosts.reduce((n, p) => n + (p.featuredIn?.length ?? 0), 0);
+  const outlets = [...new Map(featuredPosts.flatMap((p) => p.featuredIn!).map((f) => [f.name, f])).values()];
 
   const figures = [
     { value: posts.length, label: "posts" },
@@ -150,21 +153,41 @@ export default function AboutPage() {
       </section>
 
       {/* Featured in */}
-      {featured.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-            Featured in
-          </h2>
-          <ul className="space-y-2 text-sm">
-            {featured.map((f) => (
-              <li key={`${f.slug}-${f.url}`} className="text-gray-700 dark:text-gray-300">
-                <a href={f.url} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
+      {featuredPosts.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+              Featured in
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {featureCount} features · {featuredPosts.length} posts · {outlets.length} outlets
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {outlets.map((f) => (
+                <span
+                  key={f.name}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200 ring-1 ring-amber-300/70 dark:ring-amber-400/30"
+                >
+                  <FeatureIcon kind={featureKind(f)} className="size-3.5" />
                   {f.name}
-                </a>
-                {" — "}
-                <Link href={`/p/${f.slug}`} className="hover:underline">
-                  {f.title}
+                </span>
+            ))}
+          </div>
+          <ul className="grid gap-2">
+            {featuredPosts.map((p) => (
+              <li
+                key={p.slug}
+                className="rounded-lg border border-gray-200/80 dark:border-gray-800 px-3 py-2.5 transition-colors hover:border-amber-300 dark:hover:border-amber-400/40"
+              >
+                <Link href={`/p/${p.slug}`} className="text-sm font-semibold text-gray-900 dark:text-gray-50 hover:underline">
+                  {p.title}
                 </Link>
+                <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
+                  {p.featuredIn!.map((f) => (
+                    <FeaturedBadge key={f.url} feature={f} />
+                  ))}
+                </div>
               </li>
             ))}
           </ul>

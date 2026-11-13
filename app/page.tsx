@@ -7,7 +7,7 @@ import PixelSprite from "@/components/PixelSprite";
 import PostCard, { PostStatsLine } from "@/components/PostCard";
 import PostTransition from "@/components/PostTransition";
 import { TotalReads } from "@/components/StatCounts";
-import { COVER_PLACEHOLDER_BG, HERO_COVER_HEIGHT, HERO_COVER_SIZES, HERO_COVER_WIDTH } from "@/lib/cover";
+import { COVER_PLACEHOLDER_BG, HERO_COVER_HEIGHT, HERO_COVER_WIDTH } from "@/lib/cover";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
 import { getAllSeries } from "@/lib/series";
 
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-// Featured cover keeps the full 1200×630 frame (same ratio as the post page, so the cover morph lines up).
+// Featured cover: 1200×630 on mobile; on sm+ it fills the left column (cropped) beside the text.
 const FEATURED_COVER =
-  "aspect-[1200/630] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]";
+  "aspect-[1200/630] w-full object-cover sm:absolute sm:inset-0 sm:h-full sm:aspect-auto transition-transform duration-500 ease-out group-hover:scale-[1.02]";
 
 function SectionTitle({ children, href, more }: { children: React.ReactNode; href?: string; more?: string }) {
   return (
@@ -64,9 +64,9 @@ export default async function HomePage() {
             // prefetch the post itself, not just the shared route shell, so the header renders in the same
             // commit as the click and the cover/title/summary morph instead of passing through loading.tsx
             prefetch={true}
-            className="group block overflow-hidden rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg transition"
+            className="group grid sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] sm:items-center overflow-hidden rounded-2xl border border-gray-200/80 dark:border-gray-800 bg-white dark:bg-gray-900/40 shadow-sm hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg transition"
           >
-            <div className="relative overflow-hidden">
+            <div className="relative overflow-hidden sm:self-stretch sm:min-h-52">
               <PostTransition slug={featured.slug} part="cover">
                 {featured.cover ? (
                   <Image
@@ -75,35 +75,35 @@ export default async function HomePage() {
                     width={HERO_COVER_WIDTH}
                     height={HERO_COVER_HEIGHT}
                     preload
-                    sizes={HERO_COVER_SIZES}
+                    sizes="(min-width: 640px) 19rem, 100vw"
                     className={`${FEATURED_COVER} ${COVER_PLACEHOLDER_BG}`}
                   />
                 ) : (
                   <CoverArt tags={featured.tags} variant="hero" className={FEATURED_COVER} />
                 )}
               </PostTransition>
-              <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 dark:bg-gray-950/80 px-2.5 py-1 text-xs font-semibold text-[var(--accent)] shadow-sm backdrop-blur">
+              <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 dark:bg-gray-950/80 px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)] shadow-sm backdrop-blur">
                 <span className="size-1.5 rounded-full bg-[var(--accent)]" aria-hidden />
                 Newest post
               </span>
             </div>
-            <div className="p-5 sm:p-8">
+            <div className="p-4 sm:p-5">
               <PostTransition slug={featured.slug} part="title">
                 <h2
                   id="newest-title"
-                  className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight text-balance text-gray-900 dark:text-gray-50 group-hover:text-[var(--accent)] transition-colors"
+                  className="text-xl sm:text-2xl font-bold tracking-tight leading-tight text-balance text-gray-900 dark:text-gray-50 group-hover:text-[var(--accent)] transition-colors"
                 >
                   {featured.title}
                 </h2>
               </PostTransition>
               {featured.summary && (
                 <PostTransition slug={featured.slug} part="summary">
-                  <p className="mt-3 max-w-2xl text-[15px] sm:text-base text-gray-500 dark:text-gray-400 leading-relaxed">
+                  <p className="mt-2 line-clamp-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                     {featured.summary}
                   </p>
                 </PostTransition>
               )}
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200/70 dark:border-gray-800 pt-4">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200/70 dark:border-gray-800 pt-3">
                 <PostStatsLine post={toSummary(featured)} />
                 <span className="text-sm font-semibold text-[var(--accent)]">
                   Read post <span className="inline-block transition-transform group-hover:translate-x-0.5">→</span>

@@ -11,6 +11,7 @@ import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import AuthorBio from "@/components/AuthorBio";
 import Comments from "@/components/Comments";
 import CoverArt from "@/components/CoverArt";
+import FeaturedBadge from "@/components/FeaturedBadge";
 import DifficultyBadge from "@/components/DifficultyBadge";
 import NewsletterForm from "@/components/NewsletterForm";
 import { PostActionBar, PostRailActions } from "@/components/PostActions";
@@ -149,18 +150,15 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
             <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800/80 px-2.5 py-0.5 font-medium">
               {readingTime} min read
             </span>
-            {post.featuredIn?.map((f) => (
-              <a
-                key={f.url}
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-400/10 px-2.5 py-0.5 font-medium text-amber-800 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-400/20 hover:ring-amber-400 transition-colors"
-              >
-                Featured in {f.name}
-              </a>
-            ))}
           </div>
+
+          {post.featuredIn && post.featuredIn.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+              {post.featuredIn.map((f) => (
+                <FeaturedBadge key={f.url} feature={f} />
+              ))}
+            </div>
+          )}
 
           {post.series && (
             <div className="mb-3">
