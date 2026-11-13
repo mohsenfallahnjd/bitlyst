@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import BlogList from "@/app/_components/BlogList";
-import LevelFilter from "@/components/LevelFilter";
+import BlogList, { BlogListView } from "@/app/_components/BlogList";
+import LevelFilter, { LevelFilterView } from "@/components/LevelFilter";
 import { TotalReads } from "@/components/StatCounts";
 import TagsFilter from "@/components/TagsFilter";
 import { loadMarkdownDocs, toSummary } from "@/lib/mdSource";
@@ -30,6 +30,7 @@ export const metadata: Metadata = {
 export default async function BlogIndex() {
   const all = loadMarkdownDocs();
   const topics = getAllTopics(all);
+  const posts = all.map(toSummary);
 
   return (
     <div className="space-y-8">
@@ -43,10 +44,21 @@ export default async function BlogIndex() {
 
       <TagsFilter tags={topics.map((t) => ({ key: t.slug, name: t.name, count: t.count }))} />
 
-      <Suspense>
+      {/* The fallback is the default view (latest first, all levels), so the prerendered HTML lists
+          every post. The live list replaces it once the URL's ?sort= and ?level= can be read. */}
+      <Suspense
+        fallback={
+          <>
+            <LevelFilterView level="" />
+            <div className="mt-6">
+              <BlogListView posts={posts} level="" sort="" />
+            </div>
+          </>
+        }
+      >
         <LevelFilter />
         <div className="mt-6">
-          <BlogList posts={all.map(toSummary)} />
+          <BlogList posts={posts} />
         </div>
       </Suspense>
     </div>

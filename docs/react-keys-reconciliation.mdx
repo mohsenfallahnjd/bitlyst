@@ -1,0 +1,186 @@
+---
+title: "Why React Needs key: The Bug That Moves Your Input to the Wrong Row"
+summary: "React matches list items between renders by key. Use the index and React gets the wrong match, so state ends up in the wrong row. How keys work and when an index is fine."
+publishedTime: "2026-11-13"
+publishOrder: 2
+level: "beginner"
+cover: "/assets/react-keys-cover.jpg"
+coverAlt: "AI-generated illustration. When one item leaves, the note stays with the right name tag, not the right seat."
+tags: ["react", "keys", "reconciliation", "lists", "state"]
+---
+
+Picture a shopping list with a note field on each row:
+
+```jsx
+{items.map((item, i) => (
+  <li key={i}>
+    {item.name} <input placeholder="note" />
+  </li>
+))}
+```
+
+The list is Milk, Eggs, Bread. You type "2 dozen" next to Eggs. Then you delete Milk.
+
+The list now shows Eggs and Bread, and **"2 dozen" sits next to Bread.**
+
+Nothing crashed, nothing warned. The note moved to the wrong row because of `key={i}`.
+
+---
+
+## The mental model: name tags, not seat numbers
+
+Every render, React has to answer one question for each item in the list: **"Is this the same item as last time, or a new one?"**
+
+It answers by looking at the `key`, like checking name tags at a door.
+
+> A key is a name tag. React matches items between renders by name tag, not by position.
+
+If the tag matches, React keeps that item's state and DOM element and only updates what changed. If a tag disappears, that item is removed. If a new tag shows up, a new item is created.
+
+The index makes a bad name tag because it's really a **seat number**. When someone leaves, everyone behind them moves up a seat, and their tag changes.
+
+![A good key stays the same wherever the item sits in the list. Photo: Travis Wise, CC BY 2.0, via Wikimedia Commons](/assets/react-keys-name-tags.jpg)
+
+---
+
+## How it works
+
+Comparing the new list to the old one is called **reconciliation**. Here's what React sees in the hook, with index keys:
+
+| Key | Before | After | What React concludes |
+|---|---|---|---|
+| `0` | Milk | Eggs | Same item, its name changed |
+| `1` | Eggs | Bread | Same item, its name changed |
+| `2` | Bread | (gone) | Item 2 was deleted |
+
+React thinks **Bread** was deleted and the other two were renamed. So it keeps the first two `<li>` elements, with their inputs, and removes the last one. The input that holds "2 dozen" belonged to key `1`, and key `1` is now labeled Bread.
+
+Now the same delete with real IDs, `key={item.id}`:
+
+| Key | Before | After | What React concludes |
+|---|---|---|---|
+| `milk` | Milk | (gone) | Milk was deleted |
+| `eggs` | Eggs | Eggs | Same item, keep it |
+| `bread` | Bread | Bread | Same item, keep it |
+
+Now React removes the right row, and "2 dozen" stays with Eggs.
+
+This applies to **any state inside a list item**: text in an uncontrolled input, `useState` in a child component, focus, scroll position, a playing video, a running animation.
+
+---
+
+## In practice
+
+**Use a stable ID from your data:**
+
+```jsx
+{items.map((item) => (
+  <li key={item.id}>...</li>
+))}
+```
+
+A good key is:
+
+- **Unique among its siblings.** Two different lists can reuse the same keys.
+- **Stable.** The same item gets the same key on every render.
+
+Two keys to avoid:
+
+```jsx
+<li key={i}>              // breaks when items are removed, inserted or reordered
+<li key={Math.random()}>  // a new name tag every render: every row is recreated
+```
+
+`Math.random()` is worse than the index. Every render, React sees all new tags, so it throws away every row and builds it again. Inputs lose what you typed and lose focus while you type.
+
+**When the index is fine:** the list never changes order, nothing is inserted or removed in the middle, and the items hold no state. A static list of footer links is fine with an index. If you leave `key` out, React uses the index for you and logs a warning.
+
+### Bonus: a key change resets state on purpose
+
+Because a new key means "new item", you can use it to reset a component:
+
+```jsx
+<ProfileForm key={userId} userId={userId} />
+```
+
+When `userId` changes, React throws away the old form, with all its half-typed state, and mounts a fresh one. That's simpler than an effect that clears each field by hand.
+
+**Honest stakes:** with read-only lists you'll never see this bug. You'll hit it the first time a list item holds state (an input, a toggle, an expanded panel) and the list can be filtered, sorted or edited. That's most real apps.
+
+---
+
+## Say it in an interview
+
+> "When a list re-renders, React matches old and new items by their key to decide which ones to keep, update, add or remove. That's part of reconciliation. If you use the index as the key, removing or reordering items shifts the keys, so React keeps the wrong elements and state ends up on the wrong item. Keys should be stable and unique among siblings, usually an ID from the data. Changing a key also forces React to remount a component, which is a clean way to reset its state."
+
+---
+
+## Cheat sheet
+
+| Remember | Detail |
+|---|---|
+| What a key does | Tells React which item is which between renders |
+| Same key | Keep state and DOM, update props |
+| New or missing key | Mount a new item / remove the old one |
+| Good key | Stable, unique among siblings: `item.id` |
+| Index as key | Only for static lists with no state |
+| `Math.random()` | Never: every row is recreated each render |
+
+## TL;DR
+
+- React matches list items by key, like checking name tags.
+- The index is a seat number: it shifts when items move, so state lands on the wrong row.
+- Use a stable ID from your data.
+- Change a component's key to reset its state on purpose.
+
+<DeepDive>
+
+### Why React doesn't just compare everything
+
+Finding the smallest set of changes between two trees is expensive in general. React avoids that with two shortcuts, described in the React docs on reconciliation:
+
+1. **Different element types make different trees.** If a `<div>` becomes a `<section>`, React doesn't compare their children. It tears down the old subtree and builds the new one.
+2. **Keys mark which children are the same.** Within one parent, React matches children by key. Without keys, it can only match by position.
+
+Together, these make each update roughly proportional to the number of elements, instead of something much slower.
+
+### Index keys also cost speed
+
+Correctness is the main problem with index keys, but there's a performance cost too. Insert one item at the **top** of a 1,000-row list with index keys, and every row's key now points at different data, so React updates all 1,000 rows. With ID keys, React adds one row and leaves the rest alone.
+
+### Keys only matter among siblings
+
+A key is compared only with the other children of the same parent. Moving an item to a different parent always remounts it, even with the same key. Keys don't need to be unique across the whole page.
+
+### Fragments can take a key
+
+When each item renders more than one element without a wrapper, use the long form of a Fragment:
+
+```jsx
+import { Fragment } from "react";
+
+{terms.map((t) => (
+  <Fragment key={t.id}>
+    <dt>{t.word}</dt>
+    <dd>{t.meaning}</dd>
+  </Fragment>
+))}
+```
+
+The short `<>...</>` syntax can't take a key.
+
+### `key` is not a prop
+
+React reads `key` itself and doesn't pass it to your component, so `props.key` is `undefined`. If the child needs the ID, pass it again under another name: `<Row key={item.id} id={item.id} />`.
+
+### Generating IDs
+
+If your data has no ID, create one **when the item is created** (for example with `crypto.randomUUID()`) and store it with the item. Generating it during render is the same as `Math.random()`: a new key every time.
+
+### Further reading
+
+- [Rendering lists](https://react.dev/learn/rendering-lists), react.dev
+- [Preserving and resetting state](https://react.dev/learn/preserving-and-resetting-state), react.dev
+- [React Fiber explained](/p/react-fiber-explained), for how React walks the tree during reconciliation
+
+</DeepDive>

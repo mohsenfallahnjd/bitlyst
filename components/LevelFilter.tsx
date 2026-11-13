@@ -28,8 +28,11 @@ const idle =
 
 export default function LevelFilter() {
   const sp = useSearchParams();
-  const level = sp.get("level")?.toLowerCase() ?? "";
+  return <LevelFilterView level={sp.get("level")?.toLowerCase() ?? ""} />;
+}
 
+/** The filter for a known level, without reading the URL. Used as the prerendered fallback. */
+export function LevelFilterView({ level }: { level: string }) {
   return (
     <div className="flex flex-wrap gap-2">
       {LEVELS.map((l) => {

@@ -21,11 +21,18 @@ const SORTS = [
 
 export default function BlogList({ posts }: { posts: PostSummary[] }) {
   const sp = useSearchParams();
+  return <BlogListView posts={posts} level={(sp.get("level") || "").toLowerCase()} sort={sp.get("sort") || ""} />;
+}
+
+/**
+ * The list for a known sort and level, without reading the URL. The posts page renders it with
+ * the defaults as the Suspense fallback, so the prerendered HTML holds every post link.
+ */
+export function BlogListView({ posts, level, sort }: { posts: PostSummary[]; level: string; sort: string }) {
   // until counts load, "Most read" / "Most discussed" keep the newest-first order
-  const views = useStats()?.views ?? {};
-  const comments = useStats()?.comments ?? {};
-  const level = (sp.get("level") || "").toLowerCase();
-  const sort = sp.get("sort") || "";
+  const stats = useStats();
+  const views = stats?.views ?? {};
+  const comments = stats?.comments ?? {};
 
   let filtered = level ? posts.filter((p) => p.level === level) : posts;
   if (sort === "popular") {

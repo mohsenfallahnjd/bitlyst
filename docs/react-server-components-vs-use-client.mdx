@@ -1,0 +1,192 @@
+---
+title: "React Server Components vs 'use client': What Actually Ships to the Browser"
+summary: "Server Components send the result; Client Components send the result plus the code. What 'use client' really does, why it doesn't mean browser-only, and where to put it."
+publishedTime: "2026-11-13"
+publishOrder: 3
+level: "intermediate"
+cover: "/assets/rsc-use-client-cover.jpg"
+coverAlt: "AI-generated illustration. Same picture in both boxes. Only one also ships the machine that makes it move."
+tags: ["react", "nextjs", "server-components", "use-client", "performance"]
+---
+
+Add a log to a Client Component:
+
+```tsx
+"use client";
+
+export function LikeButton() {
+  console.log("rendering LikeButton"); // shows up in your terminal too
+  return <button>Like</button>;
+}
+```
+
+Load the page, and the message appears in the **terminal where Next.js runs**, not just in the browser console.
+
+So `"use client"` doesn't mean "runs only in the browser". It means something else, and once you see what, it's clear where to put it.
+
+---
+
+## The mental model: the result vs the result plus the code
+
+Both kinds of component render on the server first, so the browser gets real HTML. The difference is what gets sent along with it:
+
+> A Server Component sends only its **result**. A Client Component sends its result **plus the code** to run it again in the browser.
+
+The result is enough to *look* at. The code is what lets a component *react*: to clicks, typing, state and effects.
+
+![Sheet music is enough to read a song. To play it, you need the mechanism too, and that's what a Client Component ships. Photo: Jennifer Schug, CC BY-SA 4.0, via Wikimedia Commons](/assets/rsc-music-box.jpg)
+
+---
+
+## How it works
+
+In the Next.js App Router, **every component is a Server Component by default.**
+
+**A Server Component** runs only on the server, at build time or per request. It can be `async`, read a database or a file, and use secret keys. Its result is sent to the browser. **Its code is never sent.** A heavy library used only inside a Server Component adds zero bytes to your bundle.
+
+**A Client Component** also renders on the server for the first HTML. Then its JavaScript is downloaded and React **hydrates** it: attaches event handlers and starts its state, so the HTML becomes interactive.
+
+**`"use client"` marks a boundary.** The file with the directive, and **everything it imports**, goes into the browser bundle. You only write it at the entry point. The components it imports are client code automatically.
+
+| | Server Component | Client Component |
+|---|---|---|
+| Renders on the server | yes | yes (first HTML) |
+| Its code sent to the browser | no | yes |
+| `async`, database, secrets | yes | no |
+| `useState`, `useEffect`, `onClick` | no | yes |
+| Browser APIs (`window`, `localStorage`) | no | yes, in effects and handlers |
+
+### Data crossing the boundary
+
+Props passed from a Server Component to a Client Component have to travel over the network, so they must be **serializable**: strings, numbers, plain objects, arrays, dates, and a few more. A regular function can't be sent:
+
+```
+Functions cannot be passed directly to Client Components unless you
+explicitly expose it by marking it with "use server".
+```
+
+### Server Components can sit inside Client Components
+
+A Client Component can't *import* a Server Component, but it can *receive* one as `children`:
+
+```tsx
+// page.tsx (Server Component)
+<Modal>
+  <Cart /> {/* still a Server Component: its code stays on the server */}
+</Modal>
+```
+
+`<Cart />` is rendered on the server, and `Modal` only gets its result. That's how a client-side wrapper (a modal, a tab panel, a theme provider) can hold server-rendered content.
+
+---
+
+## In practice
+
+**Push `"use client"` down to the leaves.** The usual mistake is putting it at the top of a whole page because one button needs `onClick`:
+
+```tsx
+// before: page.tsx
+"use client"; // the whole page and all its imports now ship to the browser
+```
+
+```tsx
+// after: page.tsx stays a Server Component
+import { LikeButton } from "./LikeButton"; // only this file has "use client"
+
+export default async function Page() {
+  const post = await getPost();
+  return (
+    <article>
+      <h1>{post.title}</h1>
+      <PostBody post={post} />
+      <LikeButton postId={post.id} />
+    </article>
+  );
+}
+```
+
+Now only the button's code ships. The page, the data fetching and everything `PostBody` imports stay on the server.
+
+This blog works that way. Each post's MDX is compiled, and every code block is syntax-highlighted, inside a Server Component. I checked the production build: the browser chunks contain highlight.js's **CSS theme**, but **none of its JavaScript**. Readers get colored code without downloading a highlighter.
+
+**Two habits that prevent mistakes:**
+
+- Put `import "server-only"` at the top of files with secrets or database code. If a Client Component ever imports them, the build fails instead of leaking.
+- Pass plain data (`postId`) to Client Components, not whole objects with methods.
+
+**Honest stakes:** a Client Component in the wrong place still works. It costs bundle size and hydration time, which you feel on slow phones and big pages. Moving one `"use client"` from a page to a button is often the cheapest performance fix in an App Router project.
+
+---
+
+## Say it in an interview
+
+> "In the App Router, components are Server Components by default: they run only on the server, can fetch data directly, and their code never reaches the browser. `"use client"` marks a boundary: that file and everything it imports are bundled for the browser. Client Components still render on the server for the first HTML, then hydrate to become interactive. So I keep pages and data fetching on the server and put `"use client"` only on the small interactive pieces, passing them serializable props."
+
+---
+
+## Cheat sheet
+
+| Remember | Detail |
+|---|---|
+| Default | Server Component: runs on the server, code never shipped |
+| `"use client"` | Boundary: this file + its imports go to the browser |
+| Client Components | Still render on the server first, then hydrate |
+| Props across the boundary | Must be serializable: no regular functions |
+| `children` | Server Components can be passed into Client Components |
+| Where to put it | On the leaves: the button, not the page |
+
+## TL;DR
+
+- Server Components send the result. Client Components send the result plus the code.
+- `"use client"` doesn't mean browser-only: Client Components render on the server too.
+- Everything a `"use client"` file imports ships to the browser.
+- Put the directive on the smallest interactive piece and pass it plain data.
+
+<DeepDive>
+
+### What the browser actually receives
+
+On the server, Next.js renders Server Components into the **RSC Payload**, a compact description of the rendered tree. It holds:
+
+- the rendered result of every Server Component,
+- placeholders saying "a Client Component goes here", with a reference to its JavaScript file,
+- the props passed to each Client Component.
+
+On the **first load**, Next.js uses the payload plus the Client Components to produce HTML, so the page shows before any JavaScript runs. Then the browser loads the client JavaScript, React reads the payload, and hydrates the Client Components.
+
+On **later navigations**, the browser only fetches the RSC Payload for the new route (often prefetched) and React updates the page without a full reload.
+
+### `"use server"` isn't the opposite of `"use client"`
+
+There's no directive for "this is a Server Component", because that's the default. `"use server"` marks **Server Functions**: functions the client can call, which run on the server. They're the one kind of function you *can* pass as a prop to a Client Component, because React sends a reference to them, not their code.
+
+### Context providers need a client wrapper
+
+`createContext` and providers are client-only. Make a small Client Component that renders the provider around `children`, and use it in a Server Component layout. Render it as deep in the tree as you can, so more of the page stays static.
+
+### Third-party components without the directive
+
+A package component that uses hooks but doesn't ship `"use client"` breaks when rendered from a Server Component. Fix it with a one-line wrapper:
+
+```tsx
+// carousel.tsx
+"use client";
+export { Carousel } from "some-carousel-package";
+```
+
+### Environment variables
+
+Only variables starting with `NEXT_PUBLIC_` are included in client code. Others are replaced with an empty string in the browser bundle, so a secret used in a Client Component reads as empty, which is a hint it's in the wrong place.
+
+### What wasn't measured
+
+The highlight.js check above confirms the highlighter's JavaScript is not in the browser chunks of this blog's production build. It isn't a measurement of how many kilobytes it would cost if it were shipped.
+
+### Further reading
+
+- [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components), Next.js docs
+- [`'use client'` directive](https://react.dev/reference/rsc/use-client), react.dev
+- [What is 'use client' in Next.js?](/p/nextjs-use-client), the short version on this blog
+- [How SSR works in React and Next.js](/p/how-ssr-works-react-nextjs), for hydration
+
+</DeepDive>

@@ -8,6 +8,8 @@ Personal tech blog (Next.js App Router + MDX). Posts live in `docs/*.mdx` — on
 
 The blog's purpose: **make technical ideas simple enough to remember and explain in an interview.** Model posts: `docs/docker-in-2-minutes.mdx`, `docs/solid-principles.mdx`.
 
+Post ideas live in **[POST_IDEAS.md](POST_IDEAS.md)**. Save new suggestions there and check it for duplicates before suggesting topics. Move an idea to Writing when you start it and to Published when it ships.
+
 When writing, rewriting or editing any post, follow **[WRITING_GUIDE.md](WRITING_GUIDE.md)**: short hook → one mental model (analogy or one sentence) → how it works in plain words → in practice with honest stakes → "Say it in an interview" pull quote → cheat sheet / TL;DR → optional `<DeepDive>` ("Going deeper" panel) for internals, full benchmarks and caveats (the core must make sense without it). Aim for 400–800 words before "Going deeper", one concept per post, plain words before jargon, only the numbers that make the point (measured, never invented). Titles carry the searchable topic plus a hook. First person only for real experiences (made-up scenarios use "picture…" / "you", no invented people), no emoji in headings, images in every post (licensed photos or AI art, captions never just describe the image), a cover in the shared blue AI-illustration template, diagrams only when they beat prose. Soft-skill/opinion posts are articles and skip the concept-post shape.
 
 Deep-dive panel in MDX: `<DeepDive>` wraps the optional advanced section at the end of a post and renders its own "Going deeper" h2.
