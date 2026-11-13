@@ -20,7 +20,7 @@ export const JsonLd = () => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Bitlyst",
-    alternateName: ["Bitlyst Blog", "bitlyst.blog"],
+    alternateName: "Bitlyst Blog",
     url: "https://bitlyst.blog/",
     potentialAction: {
       "@type": "SearchAction",
