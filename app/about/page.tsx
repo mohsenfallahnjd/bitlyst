@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import FeaturedBadge, { FeatureIcon, featureKind } from "@/components/FeaturedBadge";
 import DonatePrompt from "@/components/DonatePrompt";
+import FeaturedBadge, { FeatureIcon, featureKind } from "@/components/FeaturedBadge";
 import NewsletterForm from "@/components/NewsletterForm";
 import PostCard from "@/components/PostCard";
 import { StatTiles } from "@/components/StatCounts";
@@ -165,13 +165,13 @@ export default function AboutPage() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {outlets.map((f) => (
-                <span
-                  key={f.name}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200 ring-1 ring-amber-300/70 dark:ring-amber-400/30"
-                >
-                  <FeatureIcon kind={featureKind(f)} className="size-3.5" />
-                  {f.name}
-                </span>
+              <span
+                key={f.name}
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-400/10 px-3 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200 ring-1 ring-amber-300/70 dark:ring-amber-400/30"
+              >
+                <FeatureIcon kind={featureKind(f)} className="size-3.5" />
+                {f.name}
+              </span>
             ))}
           </div>
           <ul className="grid gap-2">
@@ -180,7 +180,10 @@ export default function AboutPage() {
                 key={p.slug}
                 className="rounded-lg border border-gray-200/80 dark:border-gray-800 px-3 py-2.5 transition-colors hover:border-amber-300 dark:hover:border-amber-400/40"
               >
-                <Link href={`/p/${p.slug}`} className="text-sm font-semibold text-gray-900 dark:text-gray-50 hover:underline">
+                <Link
+                  href={`/p/${p.slug}`}
+                  className="text-sm font-semibold text-gray-900 dark:text-gray-50 hover:underline"
+                >
                   {p.title}
                 </Link>
                 <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
