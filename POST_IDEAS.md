@@ -18,9 +18,6 @@ Each idea: working title, the mental model (one line), and why it's worth writin
 - [ ] **HTTP caching: `Cache-Control`, `ETag` and `304`**
   - Model: the browser asks "still fresh?" before downloading again.
   - Why: completes `cdn-explained-nextjs` and the Next.js caching posts.
-- [ ] **XSS vs CSRF: two attacks, two different fixes**
-  - Model: XSS runs the attacker's code on your page; CSRF makes your browser send a request you didn't mean to.
-  - Why: completes a security trio with `httpOnly-cookies-guide` and `cors-explained-simple`. Asked in almost every frontend interview.
 
 ### Book Bites (book briefs, see BOOK_BRIEF_GUIDE.md)
 
@@ -38,4 +35,6 @@ Each idea: working title, the mental model (one line), and why it's worth writin
 - [ ] **React Server Components vs `"use client"`** → `react-server-components-vs-use-client`
 
 ## Published
+
+- [x] **XSS vs CSRF: two attacks, two different fixes** → `xss-vs-csrf`
 

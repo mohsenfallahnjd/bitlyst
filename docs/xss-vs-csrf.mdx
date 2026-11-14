@@ -1,0 +1,139 @@
+---
+title: "XSS vs CSRF: Two Browser Attacks With Two Different Fixes"
+summary: "XSS runs the attacker's code on your page. CSRF makes the browser send a request you didn't mean to. Each cookie flag stops only one of them."
+publishedTime: "2026-11-14"
+level: "intermediate"
+cover: "/assets/xss-csrf-cover.jpg"
+coverAlt: "AI-generated illustration. One intruder is already inside the page; the other only needs the browser to deliver a letter."
+tags: ["xss", "csrf", "security", "cookies", "interview"]
+---
+
+Picture two bugs that both end with the user doing something they didn't mean to.
+
+A comment on your site renders this:
+
+```html
+<img src="x" onerror="fetch('/api/transfer',{method:'POST',body:JSON.stringify({to:'attacker'})})">
+```
+
+A page on another site does this:
+
+```html
+<form action="https://yourapp.example/transfer" method="POST">
+  <input name="to" value="attacker" />
+</form>
+<script>document.forms[0].submit()</script>
+```
+
+Both ride the victim's browser. Against a normal session cookie, **only the first one still works.** They are different attacks, and the fix for one does nothing for the other.
+
+## The mental model: inside the page, or only borrowing the browser
+
+**XSS** (cross-site scripting) means the attacker's code runs **on your origin**, as if you had written it. It can read the page, change it, and call your API.
+
+**CSRF** (cross-site request forgery) means the attacker's code stays **on their origin**. It tricks the browser into sending a request to you, and the browser attaches the user's cookies. The attacker never sees the response.
+
+> XSS is the attacker sitting at the keyboard on your site. CSRF is the attacker dropping a letter into the mailbox the browser already delivers.
+
+![AI-generated illustration. One of them is already on your origin. The other never gets in, and only needs the browser to deliver the cookie.](/assets/xss-csrf-letter.jpg)
+
+## How it works
+
+The browser's **same-origin policy** is the wall between sites. JavaScript on `evil.example` cannot read a page or a response from `yourapp.example`.
+
+XSS climbs over that wall by becoming part of your page. Once the script runs on your origin, the wall doesn't apply: the DOM and `fetch("/api/me")` are allowed. For that tab, the script **is** your site.
+
+CSRF doesn't climb the wall. A form on one site can POST to another, and the browser attaches the session cookie if the user is logged in. The attacker's page still can't read the reply, so CSRF forges an **action**, not a look at the page.
+
+The two flags from [HttpOnly cookies](/p/httpOnly-cookies-guide) point opposite ways:
+
+| Flag | Against XSS | Against CSRF |
+|---|---|---|
+| `HttpOnly` | The script can't read the cookie | No help. The browser sends it anyway |
+| `SameSite=Lax` | No help. The script is already on your site | The cookie stays home on a cross-site POST |
+
+`HttpOnly` limits XSS to the open tab. The script can still `fetch("/api/transfer")` and read the response, but it cannot copy the token out. `SameSite=Lax` limits CSRF, and browsers default a missing `SameSite` to `Lax`, so the form above no longer carries the session. [CORS](/p/cors-explained-simple) doesn't help: it only decides whether JavaScript may **read** a cross-origin response, and the forged form never reads one.
+
+## In practice
+
+Stop XSS by never letting untrusted text become code. React already escapes text in JSX:
+
+```jsx
+<p>{comment.body}</p> // "<img onerror=...>" shows up as text, not as a tag
+```
+
+The holes are where you opt out: `dangerouslySetInnerHTML`, `element.innerHTML`, and HTML built as a string on the server. Escape on the way **out**, for the spot you're writing into: HTML text, an attribute, or a URL. A check on the way in misses the value that looks harmless until it lands in `src`.
+
+Stop CSRF by not treating every cookie-bearing request as intent.
+
+- Session cookie: `HttpOnly; Secure; SameSite=Lax`.
+- State changes go on `POST`, `PUT` or `DELETE`. `Lax` still sends the cookie when someone clicks a cross-site link, and a link is a GET.
+- If a cookie has to be `SameSite=None` (a widget embedded on other sites), add a **CSRF token**: a secret rendered in your page that a foreign form can't read, sent back with the action, and checked on the server.
+
+**Honest stakes:** with `Lax` as the default, that cross-site form POST rarely carries a normal session cookie. XSS is the bug you'll actually ship, usually through one HTML sink. CSRF comes back when you set `SameSite=None`, or when a GET request changes data.
+
+## Say it in an interview
+
+> "XSS is the attacker's JavaScript running on your origin, so it can read the page and call your API as the user. CSRF is a request the browser sends to your site from another site, cookies attached, while the attacker can't read the response. Escaping output stops XSS, because untrusted data never becomes code. SameSite=Lax stops most CSRF; if the cookie must be sent cross-site, add a CSRF token the foreign page can't see."
+
+## Cheat sheet
+
+| | XSS | CSRF |
+|---|---|---|
+| Where the code runs | On your origin | On the attacker's origin |
+| What they get | The page, and API calls as the user | A state change, not the response |
+| `HttpOnly` | Blocks token theft, not the action | Does nothing |
+| `SameSite=Lax` | Does nothing | Blocks the cookie on a cross-site POST |
+| The fix | Escape output. Don't put user text in `innerHTML` | `SameSite`, no state-changing GET, a CSRF token when Lax isn't enough |
+
+## TL;DR
+
+- XSS runs the attacker's code on your page. CSRF only borrows the browser to send a request.
+- `HttpOnly` limits XSS. `SameSite` limits CSRF. Each flag is useless against the other attack.
+- React's `{text}` is already escaped. The bug hides in `dangerouslySetInnerHTML` and raw HTML.
+- Cookies default to `SameSite=Lax`, so classic CSRF is rare unless you opt out or change state on GET.
+
+<DeepDive>
+
+### Three ways the script gets in
+
+- **Stored.** The payload is saved (a comment, a username, a CMS field) and served later to whoever opens the page. One save, many victims.
+- **Reflected.** The payload is in the request, and the server copies it straight into the HTML. The attacker sends the victim a link.
+- **DOM-based.** The server's HTML is clean. Your own client code writes untrusted data into the page with `innerHTML` or `document.write`.
+
+The fix is the same for all three: that data must stay data.
+
+### Why a GET can still be CSRF
+
+`SameSite=Lax` withholds the cookie on a cross-site POST, on `fetch`, and in an iframe. It **sends** the cookie on a top-level navigation the user clicks, and that navigation is a GET. So this is still CSRF if the handler changes state:
+
+```html
+<a href="https://yourapp.example/transfer?to=attacker&amount=100">view the invoice</a>
+```
+
+That's why state changes don't belong on GET. `Lax` assumes you already followed that rule.
+
+### Same site is not same origin
+
+`SameSite` looks at the **site** (the registrable domain, `example.com`), not the origin. `https://app.example.com` and `https://evil.example.com` are the same site, so a `Lax` cookie is sent from one to the other. `Strict` doesn't close this either: the request was never cross-site. A subdomain you don't fully control can forge requests to the app. A CSRF token still works, because that subdomain can't read your page.
+
+### What a CSRF token has to be
+
+A random value rendered into the real page (a hidden form field, or a header your frontend sets), stored in the user's session, and checked on the state-changing request. The foreign page can't read it, because of the same-origin policy. A forged form can send the cookie and still fail the check.
+
+That check assumes the attacker can't read your HTML. XSS can, so an XSS bug defeats the token. The two fixes don't substitute for each other.
+
+Checking the `Origin` header is a simpler version of the same idea: on a state-changing request, require it to be your own site. The attacker's page cannot set that header. Do the check on the server.
+
+### Content-Security-Policy
+
+A **CSP** (Content-Security-Policy) is a response header that lists where scripts may load from. A strict one (`script-src` with a nonce or a hash, and no `unsafe-inline`) refuses an injected `<script>` or an `onerror` handler even if it lands in the HTML. It's a seatbelt for the XSS you haven't found. It doesn't make raw `innerHTML` correct, and it does nothing for CSRF.
+
+### Further reading
+
+- [OWASP: Cross Site Scripting Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
+- [OWASP: Cross-Site Request Forgery Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+- [MDN: Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie)
+- [HttpOnly cookies](/p/httpOnly-cookies-guide) and [CORS](/p/cors-explained-simple) on this blog
+
+</DeepDive>
