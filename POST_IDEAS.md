@@ -37,4 +37,5 @@ Each idea: working title, the mental model (one line), and why it's worth writin
 ## Published
 
 - [x] **XSS vs CSRF: two attacks, two different fixes** → `xss-vs-csrf`
+- [x] **useEffect vs useLayoutEffect: why the tooltip flashes, then jumps** → `useeffect-vs-uselayouteffect`
 

@@ -1,0 +1,116 @@
+---
+title: "useEffect vs useLayoutEffect: Why the Tooltip Flashes, Then Jumps"
+summary: "useEffect runs after the browser paints. useLayoutEffect runs before that paint, so a measurement can fix the screen before anyone sees the wrong frame."
+publishedTime: "2026-11-15"
+level: "intermediate"
+cover: "/assets/useeffect-layout-cover.jpg"
+coverAlt: "AI-generated illustration. One character straightens the frame while the curtain is still closed. The other walks on after it opens."
+tags: ["react", "hooks", "useEffect", "useLayoutEffect", "interview"]
+---
+
+Picture a tooltip that should sit above a button. For one frame it shows up at the top of the box, then it jumps into place.
+
+The measurement was right. It ran too late. `useEffect` let the browser paint the first, wrong position.
+
+## The mental model: before the curtain, or after
+
+React updates the DOM, then the browser paints what the user sees. There is a gap between those two, like the moment before a curtain opens.
+
+> `useLayoutEffect` runs in that gap, while the curtain is closed. `useEffect` runs after the curtain opens, once the user can already see the frame.
+
+Both take the same arguments: a setup function, a dependency list, and an optional cleanup. The only difference is **when** the setup runs.
+
+![AI-generated illustration. A fix made while the curtain is closed never becomes a flash. A fix made after it opens does.](/assets/useeffect-layout-curtain.jpg)
+
+<FlowDiagram
+  title="One update, from commit to paint"
+  nodes="React writes the DOM → useLayoutEffect → Browser paints → useEffect"
+  notes="The new elements are in the document|Measure and correct, still invisible|This is the frame the user sees|Fetch, subscribe, log"
+  caption="The user only sees the frame after useLayoutEffect has finished."
+/>
+
+## How it works
+
+`useEffect` is the one for work that talks to the outside world: a fetch, a subscription, a timer, a log line. The browser paints first, so the effect doesn't hold the frame up. The user sees the new UI, then the effect runs.
+
+`useLayoutEffect` is for the case where that first paint would be a lie. You need a number the browser only knows after layout, such as a height from `getBoundingClientRect`, and you need to change what's on screen with it.
+
+```jsx
+useEffect(() => {
+  const { height } = tipRef.current.getBoundingClientRect();
+  setTop(buttonBottom - height); // one frame at top: 0, then it jumps
+}, [buttonBottom]);
+```
+
+Swap in `useLayoutEffect` and that `setTop` is flushed **before** the browser paints. React may render the tooltip twice, first at `top: 0` and then at the measured spot. The user only sees the second render.
+
+That correction is also the cost. The code inside `useLayoutEffect`, and any state update it schedules, **blocks the paint**. A slow one delays the frame. [The React docs](https://react.dev/reference/react/useLayoutEffect) say to prefer `useEffect` unless that blocking is the point.
+
+The dependency list works the same on both. It still decides when the effect re-runs, and a stale value is still stale. Timing doesn't change that. The rules are in [useEffect dependencies](/p/react-useeffect-dependencies).
+
+## In practice
+
+Start with `useEffect`. Move to `useLayoutEffect` only after you've seen a flash.
+
+The flash shows up when you **read layout and then write the screen**:
+
+- A tooltip or menu that must flip above or below, depending on the space left.
+- A textarea whose height follows its content.
+- Scrolling or focusing an element before the user sees it in the wrong place.
+
+Leave fetching, subscriptions, and logging on `useEffect`. They don't change the frame that's about to paint. Running them in `useLayoutEffect` makes that paint wait for work the user didn't need to wait for.
+
+**Honest stakes:** most components never measure the DOM. You'll want `useLayoutEffect` a handful of times, usually on something floating. Reaching for it to be safe makes the first paint slower. Wait until something flickers.
+
+## Say it in an interview
+
+> "useEffect and useLayoutEffect take the same arguments. useLayoutEffect runs after React commits DOM changes and before the browser paints, so you can measure layout and correct it without a visible flash. useEffect runs after the paint, so it doesn't block the frame. State updates inside useLayoutEffect are flushed before that paint. Default to useEffect, and switch only when the user would otherwise see one wrong frame."
+
+## Cheat sheet
+
+| | useEffect | useLayoutEffect |
+|---|---|---|
+| When it runs | After the browser paints | After the DOM update, before the paint |
+| Blocks the paint? | No | Yes |
+| Use it for | Fetch, subscribe, log | Measure layout, then fix what the user would see |
+| A state update inside | Shows up on a later frame | Flushed before the paint |
+| The default | This one | Only after you've seen a flash |
+
+## TL;DR
+
+- `useLayoutEffect` runs before the paint. `useEffect` runs after it.
+- The layout version can measure the DOM and correct it before anyone sees the wrong frame.
+- That correction blocks the paint, so a slow one delays the frame.
+- Start with `useEffect`. Switch when something flickers.
+
+<DeepDive>
+
+### What "flushed before paint" means
+
+The tooltip renders once with `top: 0`. The effect measures it, and `setTop` asks for another render. Inside `useLayoutEffect`, React does that second render, and the DOM update that follows, before the browser paints. Two commits, one frame the user sees.
+
+Inside `useEffect`, React lets the browser paint the `top: 0` frame first, then processes the update. That's the flash. On a fast machine you may not catch it. The React docs reproduce it by slowing the render down. The extra frame is still there when you don't.
+
+Writing the style on the node itself, `tipRef.current.style.top = ...`, also lands before the paint, and it skips the second render. Setting state is the usual fix. It costs that extra render, still hidden behind the curtain.
+
+### A state update there runs the other effects early
+
+One caveat from the React docs: if `useLayoutEffect` sets state, React runs the remaining effects immediately, including `useEffect`. The paint is still waiting. So "useEffect runs after the paint" is the normal case. A layout effect that sets state can pull a passive effect forward into the same gap.
+
+### The server warning
+
+Effects don't run during server rendering. There is no layout to measure, and React warns that `useLayoutEffect` does nothing on the server.
+
+A Next.js client component is still pre-rendered to HTML. A tooltip that depends on a measurement will be in the wrong place in that HTML, then jump once JavaScript runs. If showing the first result is acceptable, use `useEffect`. If the component only makes sense in the browser, don't render it on the server: keep a `mounted` flag that starts `false` and flips to `true` inside a `useEffect`, and render the measured UI only after that.
+
+### Strict Mode runs the setup twice, in development
+
+With Strict Mode, React runs an extra setup and cleanup before the real setup, in development only. Both hooks do this. If the double run breaks something, the cleanup isn't undoing the setup. [useEffect dependencies](/p/react-useeffect-dependencies) walks through that cycle.
+
+### Further reading
+
+- [useLayoutEffect](https://react.dev/reference/react/useLayoutEffect), react.dev
+- [useEffect](https://react.dev/reference/react/useEffect), react.dev
+- [useEffect dependencies](/p/react-useeffect-dependencies), on this blog
+
+</DeepDive>
