@@ -1,0 +1,138 @@
+---
+title: "Barrel Files (`index.ts`): Why One Import Can Slow Your Build"
+summary: "A barrel re-exports a whole folder. Tree shaking may still drop unused code, but the bundler often walks every file behind that index first."
+publishedTime: "2026-11-16"
+publishOrder: 2
+level: "intermediate"
+series: "common-mistakes"
+seriesOrder: 1
+cover: "/assets/barrel-files-cover.jpg"
+coverAlt: "AI-generated illustration. One import from a shelf still makes the bundler read every book on it."
+tags: ["typescript", "bundler", "performance", "barrel-files", "tree-shaking"]
+---
+
+You add a tidy folder: ten components, one `index.ts` that re-exports them all, and a single import line in the app:
+
+```ts
+import { Button } from "@/components/ui";
+```
+
+You only wanted **Button**. The dev build still feels heavier than it should.
+
+## The mental model: the whole shelf
+
+> A **barrel file** is an `index.ts` that re-exports a folder so you can import from one path. It's convenient. It's also like asking the library for **one book** and having the librarian pull **every book on that shelf** into the room before they hand you the right one.
+
+The bundler's job is to follow every `export * from` and `export { X } from` while it figures out what your entry file actually needs. Tree shaking can still drop unused code from the final bundle. The work of **reading and linking** the rest of the shelf often happens anyway.
+
+![AI-generated illustration. One index card fans out to many modules behind it.](/assets/barrel-files-barrel.jpg)
+
+## How it works
+
+A typical barrel:
+
+```ts
+// components/ui/index.ts
+export * from "./button";
+export * from "./dialog";
+export * from "./data-table";
+```
+
+Each file may import heavy packages:
+
+```ts
+// data-table.ts
+import { LineChart } from "recharts";
+export function DataTable() { /* ... */ }
+```
+
+Your page only imports `Button`:
+
+```ts
+import { Button } from "@/components/ui";
+```
+
+Modern bundlers (esbuild, Rollup, Turbopack, webpack) **can** leave `DataTable` and `recharts` out of the shipped JavaScript if nothing references them. The catch is what they must **walk** to be sure.
+
+I measured a tiny demo on my machine with esbuild 0.25, three modules behind one barrel (`lodash/get`, `date-fns/format`, `recharts`), and one entry file that imports only `pickA` from the barrel:
+
+| Import path | Modules esbuild had to read | Minified bundle | esbuild time |
+|---|---:|---:|---:|
+| `./direct/a` (no barrel) | 54 | 8.4 KB | 5 ms |
+| `./barrel` (re-export all) | 471 | 8.4 KB | 43 ms |
+
+Same shipped size. **About eight times more files parsed**, and **about eight times longer** to bundle that one entry, because the barrel pulled the resolver through every re-exported file and its dependencies.
+
+That gap is what you feel in a big app: slower first compile, slower HMR, TypeScript and ESLint spending time on modules you never imported at runtime, and CI builds that redo the same graph on every push.
+
+Barrels hurt more when:
+
+- **Side effects** at the top of a re-exported file (`import "./polyfill"`) force those modules to stay in the bundle even if you never call them.
+- **Libraries** ship their own barrels (`@mui/material`, some icon packs) so deep imports are the documented fix.
+- **Monorepos** nest barrels (`packages/ui/index.ts` → ten more `index.ts` files) and multiply the graph.
+
+## In practice
+
+Keep barrels for **public package APIs** you publish to npm. Inside an app, prefer **direct imports** on hot paths:
+
+```ts
+// before
+import { Button } from "@/components/ui";
+
+// after
+import { Button } from "@/components/ui/button";
+```
+
+If you like the short path, use a **subpath** in `package.json` (`"exports"`) instead of a giant `export *` file. Your editor and bundler then resolve one file, not a fan-out.
+
+Run your own check when a folder grows past a handful of files: build one route with the barrel import and again with a direct import, compare the bundler's module count or build time. You don't need a guess. The shelf either shows up in the stats or it doesn't.
+
+Honest stakes: on a ten-file hobby project, you may never notice. On a design-system folder imported from hundreds of routes, barrels are a common reason **cold `next dev` and CI builds** feel slower than the code changed.
+
+> **Say it in an interview:** A barrel file re-exports a folder from one `index.ts` so imports look clean. Tree shaking can still drop unused exports from the final bundle, but the bundler usually has to parse and analyze every re-exported module first. That's extra build work and can pull in side effects. I reach for direct imports or package `exports` maps on hot paths, and keep barrels for library public APIs.
+
+## Cheat sheet
+
+| What you write | What often happens |
+|---|---|
+| `import { Button } from "./ui"` via `index.ts` | Resolver walks every file the barrel re-exports |
+| Same runtime bundle as direct import | Often yes, when tree shaking works |
+| Same build cost as direct import | Often no: more files parsed and typed |
+| `export *` + side-effect imports | Unused modules can still ship |
+| Fix on hot paths | Import the file directly or use `exports` subpaths |
+
+<DeepDive>
+
+### How I measured the table
+
+Fresh temp project with `lodash`, `date-fns`, and `recharts` in `node_modules`. Three small modules, each importing one of those packages. One `barrel/index.ts` with `export * from` each module.
+
+Two entry files, both only calling `pickA()`:
+
+- `entry-direct.ts` → `import { pickA } from "./direct/a"`
+- `entry-barrel.ts` → `import { pickA } from "./barrel"`
+
+esbuild 0.25 on an Apple Silicon Mac, `--bundle --platform=browser --minify`, with `--metafile` for input counts. Times are single runs (not medians); the ratio stayed stable across repeats.
+
+### When the bundle *does* grow
+
+If any re-exported file runs code at import time, tree shaking cannot drop it:
+
+```ts
+// dialog.ts
+import "./focus-trap-polyfill"; // runs on import
+export function Dialog() { /* ... */ }
+```
+
+Importing **anything** from the barrel can drag that polyfill into the client bundle even if you never open a dialog.
+
+### TypeScript and the editor
+
+Barrels also widen the **type graph**: opening a file that imports `@/components/ui` can make the language service load types for every re-export behind the index. That shows up as slower autocomplete and higher memory in large repos, separate from bundler time.
+
+### Further reading
+
+- [TypeScript performance wiki — barrel files](https://github.com/microsoft/TypeScript/wiki/Performance#using-large-union-types)
+- [Package `"exports"` field](https://nodejs.org/api/packages.html#exports) for clean entry points without `export *` soup
+
+</DeepDive>

@@ -23,7 +23,6 @@ export const SERIES: Record<string, Series> = {
     mascot: { sprite: "twisty", name: "Twisty", bio: "Has read the spec. Is still surprised every time." },
     upcoming: [
       "The birthday that showed up a day early",
-      "The forEach that didn't wait for await",
       "The regex that matched every other time",
     ],
   },
@@ -49,6 +48,28 @@ export const SERIES: Record<string, Series> = {
       "Software books in one sitting: the few ideas worth keeping, how to use them on Monday, and whether to read the whole thing.",
     mascot: { sprite: "folio", name: "Folio", bio: "Reads the whole book. Keeps only the pages you'll actually use." },
     upcoming: [],
+  },
+  "common-mistakes": {
+    name: "Common Mistakes",
+    description:
+      "Patterns that look fine in code review until production, the bundler, or an interview question proves otherwise.",
+    mascot: { sprite: "oops", name: "Oops", bio: "Has left the same comment on three PRs this week. Politely." },
+    upcoming: [
+      "The useEffect that only derived state",
+      "The forEach that did not wait for await",
+      "The secret that NEXT_PUBLIC_ copied into git",
+    ],
+  },
+  engineering: {
+    name: "Engineering",
+    description:
+      "Ideas behind reliable systems: idempotency, flags, indexes, and the vocabulary seniors expect in design interviews.",
+    mascot: { sprite: "rivet", name: "Rivet", bio: "Cares about the diagram on the whiteboard, not the syntax on the screen." },
+    upcoming: [
+      "The payment retry that must not charge twice",
+      "Deploy is not release",
+      "One trip to the shop with a list",
+    ],
   },
 };
 

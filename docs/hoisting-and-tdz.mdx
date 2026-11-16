@@ -1,0 +1,150 @@
+---
+title: "Hoisting and the TDZ: Why let Throws and var Is undefined"
+summary: "var and let are both registered when the scope starts. var is already undefined. let stays untouchable until its line runs."
+publishedTime: "2026-11-16"
+publishOrder: 1
+level: "beginner"
+series: "js-plot-twists"
+seriesOrder: 6
+cover: "/assets/hoisting-tdz-cover.jpg"
+coverAlt: "AI-generated illustration. One name is already in hand. The other stays behind the rope until its line runs."
+tags: ["javascript", "hoisting", "tdz", "let", "var", "interview"]
+---
+
+```js
+console.log(a); // undefined
+var a = 1;
+```
+
+```js
+console.log(b); // ReferenceError
+let b = 1;
+```
+
+Both names exist before those lines. Only one of them lets you touch it.
+
+## The mental model: a rope in front of the name
+
+When a scope starts, JavaScript registers every name declared inside it. The assignments stay where you wrote them. Nothing is moved to the top of the file.
+
+> `var` is registered as `undefined`, so reading it early is safe and useless. `let` is registered too, but it sits behind a rope until its line runs. Touching it early throws.
+
+That rope is the **temporal dead zone**. Temporal means time: from the moment the scope starts until the declaration line runs.
+
+![AI-generated illustration. The name behind the rope already exists. Touching it before its line runs is what throws.](/assets/hoisting-tdz-rope.jpg)
+
+<FlowDiagram
+  title="What a scope does with a name"
+  nodes="Enter the scope → Register every declared name"
+  branch1="[green] var → Already undefined → Reading it returns undefined"
+  branch2="[orange] let or const → Behind the rope → Reading it throws until its line runs"
+  caption="The assignment never moves. Only the registration happens early."
+/>
+
+## How it works
+
+Hoisting is that early registration. People picture the engine cutting the `var` line and pasting it at the top. It doesn't. The name is created up front. The `= 1` stays put.
+
+```js
+function demo() {
+  console.log(x); // undefined
+  if (false) {
+    var x = 1; // this assignment never runs
+  }
+}
+```
+
+`x` becomes `undefined` when `demo` starts, even though the `var` sits in an `if` that never runs. `var` is function-scoped: one registration for the whole function, ignoring the block.
+
+`let` and `const` are block-scoped, and they start with no value:
+
+```js
+{
+  console.log(y); // ReferenceError
+  let y = 1;      // the rope drops here
+}
+```
+
+Before that line, `y` has a name and nothing you may read. Reading it, writing it, even `typeof y`, throws `ReferenceError`. After the line, `y` is `1`. `const` uses the same rope. Its line must set the value, and you can't assign a new one later.
+
+`typeof` is the proof that the name is real and still forbidden:
+
+```js
+typeof missing; // "undefined"  — there is no such binding
+typeof later;   // ReferenceError — the binding exists, the rope is up
+let later = 1;
+```
+
+A name that was never declared is a quiet `"undefined"`. A `let` you haven't reached yet is an error, because the scope already knows the name.
+
+## In practice
+
+Declare `let` and `const` before any line in that block that reads them. If the value isn't ready, compute it first, then declare.
+
+Prefer them to `var`. The throw is the useful part. `var` handing back `undefined` lets a bug travel, and you meet it later as a wrong value.
+
+**Honest stakes:** you'll hit the rope when one block reads a `const` declared further down, or when an inner `let` reuses a name from outside. Declaring at the top of the block means you won't see it in ordinary code. Interviews ask anyway, because the two answers look almost the same until you say when the value appears.
+
+## Say it in an interview
+
+> "var and let are both hoisted: the name is registered when the scope starts, and the assignment stays on its line. var is initialized to undefined, so reading it early gives undefined. let and const stay uninitialized until their line runs. That gap is the temporal dead zone, and touching the name throws ReferenceError. typeof on a missing name is undefined, but typeof on a let still in the zone throws, because the name exists."
+
+## Cheat sheet
+
+| | var | let and const |
+|---|---|---|
+| Registered when | The function starts | The block starts |
+| Before its line | `undefined` | No value. Don't touch it |
+| Read it early | `undefined` | `ReferenceError` |
+| Scope | The whole function | The block |
+| `typeof` before its line | `"undefined"` | `ReferenceError` |
+
+## TL;DR
+
+- The name is registered when the scope starts. The assignment stays on its line.
+- `var` starts as `undefined`. Reading it early does not throw.
+- `let` and `const` stay behind the rope until their line runs. Touching them throws `ReferenceError`.
+- `typeof` on a name that doesn't exist is `"undefined"`. `typeof` on a `let` still behind the rope throws.
+
+<DeepDive>
+
+### An inner let hides the outer one for the whole block
+
+```js
+let n = 1;
+{
+  console.log(n); // ReferenceError, not 1
+  let n = 2;
+}
+```
+
+The inner `let n` is the name for every line of that block, including the lines above it. The outer `n` is hidden, and the inner one is still behind the rope. Same spelling, two bindings. The inner one owns the block from the first line.
+
+### A function declaration arrives already filled in
+
+```js
+greet(); // "hi"
+function greet() {
+  return "hi";
+}
+
+wave(); // TypeError: wave is not a function
+var wave = function () {};
+```
+
+A `function` declaration is registered and given its value when the scope starts, so a call above the line works. `var wave = function () {}` only hoists the name `wave`, as `undefined`. The function value arrives on the assignment line. Calling `undefined` throws `TypeError`, which is a different error from the dead zone's `ReferenceError`.
+
+### class uses the same rope
+
+A `class` declaration is hoisted like `let`, not like `function`. The name exists for the whole scope, and using it before its line throws `ReferenceError`.
+
+### The rope shows up across modules too
+
+ES module bindings are live. In a circular import, module A can see module B's export before B has run the line that sets it. Reading that export throws the same `ReferenceError`. The binding exists. Its line hasn't run.
+
+### Further reading
+
+- [Hoisting](https://developer.mozilla.org/en-US/docs/Glossary/Hoisting), MDN
+- [`let` and the temporal dead zone](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let#temporal_dead_zone_tdz), MDN
+
+</DeepDive>

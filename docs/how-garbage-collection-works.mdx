@@ -1,0 +1,139 @@
+---
+title: "How Garbage Collection Works: It Never Looks for Unused Memory"
+summary: "The collector paints every object reachable from the stack and globals. Whatever the paint misses is unused, even if objects still point at each other."
+publishedTime: "2026-11-16"
+level: "intermediate"
+cover: "/assets/gc-reachability-cover.jpg"
+coverAlt: "AI-generated illustration. The gold thread is what the program can still reach. A pair that only holds each other has no thread back."
+tags: ["javascript", "garbage-collection", "memory", "v8", "interview"]
+---
+
+Picture two snippets that feel like they should do the opposite.
+
+```js
+let a = {};
+let b = {};
+a.friend = b;
+b.friend = a;
+a = null;
+b = null; // both objects can be freed, even though each still points at the other
+```
+
+```js
+function load() {
+  const pages = new Array(100_000).fill("page");
+  return () => pages.length;
+}
+const size = load(); // this little function keeps the whole array alive
+```
+
+The pair that only points at itself can be thrown away. The tiny function keeps 100,000 strings. The collector is not searching for things you finished with. It is searching for what the program can still reach.
+
+## The mental model: paint from the roots
+
+Your code never grabs an object out of thin air. It starts from something it already holds and follows references: a property, an array slot, a variable a function closed over.
+
+Those starting points are the **roots**. A local variable in a function that's running is a root. So is a global.
+
+> The collector paints every object it can reach by following references from the roots. Whatever the paint misses is unused, because no future line of code can touch it.
+
+![AI-generated illustration. A handshake with nothing else attached is already unused. A function you kept is a root, so the stack it closes over stays.](/assets/gc-reachability-roots.jpg)
+
+<FlowDiagram
+  title="How one collection decides"
+  nodes="Start at the roots → Follow every reference → Paint what you can reach"
+  branch1="[green] Painted → The program can still get here → Keep it"
+  branch2="[orange] Never reached → No code can touch it → Reuse the memory"
+  caption="Garbage is whatever the paint walk never arrives at."
+/>
+
+## How it works
+
+The walk is called **marking**. Start at the roots. From each object, visit every reference, and paint the object at the other end. A cycle doesn't help the pair above: `a` and `b` point at each other, but after both variables are `null`, no root leads in, so the walk never enters.
+
+Then the engine reclaims everything with no paint. It does not need a list of "deleted" objects. Unreachable memory is unused by definition.
+
+V8 does the reclaim in two different ways, depending on the object's age. In the young space it copies the painted objects out and abandons the rest of the room. In the old space it sweeps the unpainted ones. What that copying costs is the subject of [why middle-aged objects are expensive](/p/v8-garbage-collector-survivors). This post is only the decision that comes first: painted or not.
+
+You don't free an object. You drop the last path from a root.
+
+```js
+let user = { name: "Ada" };
+user = null; // the object is now unreachable
+```
+
+`delete user.name` is different. It removes one property. The object stored in `user` is still reachable through the variable.
+
+## In practice
+
+A leak is a root you forgot about. The object looks finished, and something still reaches it:
+
+- A module-level cache, array, or `Map` that only ever grows.
+- A `setInterval` or an event listener whose callback closes over a big object, and that you never clear.
+- A function you stored, like `size` above, which quietly keeps every variable it closed over.
+
+When a long-lived page's memory climbs, a heap snapshot shows the **retainer path**: the chain of references from a root to the object you expected to be gone. That chain is the bug. The object itself is doing what the rule says.
+
+**Honest stakes:** a script that runs and exits rarely makes you care. You'll meet this on a page or a server process that stays up, when one forgotten root keeps appending. Short-lived objects, the ones nobody keeps a reference to, are the ones the collector handles without your help.
+
+## Say it in an interview
+
+> "The garbage collector doesn't look for unused objects. It starts from roots, the call stack and globals, and marks every object it can reach by following references. Anything unmarked is unreachable, so the program can never use it again, and the memory can be reused. A cycle with no outside reference is still garbage. A closure you kept can keep a large object alive. You free memory by dropping the last path from a root, not by calling delete."
+
+## Cheat sheet
+
+| | What it means |
+|---|---|
+| Root | A starting point: a live local variable, or a global |
+| Mark | Follow every reference from the roots and paint what you reach |
+| Unpainted | Unreachable. No code can touch it. The memory can be reused |
+| A cycle | Still garbage, if nothing outside the cycle is a way in |
+| A closure you kept | A root. Everything it closed over stays alive |
+| How you free something | Drop the last path from a root |
+
+## TL;DR
+
+- The collector paints what it can reach from the stack and from globals.
+- Anything the paint misses is unused, even if those objects still point at each other.
+- A function you kept alive keeps every variable it closed over.
+- You don't free objects. You drop the last reference that a root can follow.
+
+<DeepDive>
+
+### Why a reference count would get the cycle wrong
+
+One way to track memory is to count incoming pointers. `a` points at `b` and `b` points at `a`, so each count is 1 even after you drop both variables. The count never hits zero, and the pair leaks.
+
+JavaScript engines don't do that. They trace from the roots. A count of pointers inside the cycle doesn't matter, because the walk never arrives. Tracing finds the pair. Counting does not.
+
+### Young space copies, old space sweeps
+
+Finding the painted set is the same in both generations. Reclaiming it is not.
+
+In the young space, V8 copies each painted object into a fresh area and then treats the whole old area as empty. Dead objects are never visited. In the old space it walks the unmarked gaps and sweeps them, then compacts what's left so the free space isn't a scatter of holes.
+
+Copying is why a collection's cost follows the number of survivors, not the amount of garbage. The measurements are in [why middle-aged objects are expensive](/p/v8-garbage-collector-survivors).
+
+### A reference the walk does not follow
+
+`WeakMap`, `WeakSet`, and `WeakRef` hold an object without painting it. If a `WeakMap` key is reachable only through that map, the mark walk skips it, the key can be collected, and the entry disappears with it.
+
+That's why a `WeakMap` isn't a list you can loop over. Its contents depend on what the collector has already decided, and asking for "everything in here" would have no stable answer.
+
+### Nothing runs at the moment you drop the reference
+
+`user = null` makes the object **eligible**. The engine collects when it decides to, often because it wants the memory, not because that line ran. There is no destructor that fires on a schedule you can rely on.
+
+`FinalizationRegistry` lets you ask for a callback after an object is collected. The callback can be delayed or skipped, so it is the wrong place to close a socket or cancel a request. Close those yourself, in a `finally`. Leave the collector to memory.
+
+### A small value can keep a huge one
+
+Reachability follows the real pointer, not the size you think you stored. In V8, a short slice of a string can point back at the original. Keep the slice and the whole original stays painted. [Sliced strings](/p/v8-sliced-string-memory-retention) is that case with the measurement.
+
+### Further reading
+
+- [Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Memory_management), MDN
+- [Trash talk: the Orinoco garbage collector](https://v8.dev/blog/trash-talk), v8.dev
+- [Why middle-aged objects are expensive](/p/v8-garbage-collector-survivors) and [sliced strings](/p/v8-sliced-string-memory-retention), on this blog
+
+</DeepDive>

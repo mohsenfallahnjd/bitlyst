@@ -42,7 +42,7 @@ That gives every object one of three fates:
 
 V8 splits the heap by age, because most objects die young. New objects go into a small **young space**. When it fills, a quick collection called a **scavenge** copies the living objects out and throws away the rest in one go.
 
-A dead object is never touched, so it costs nothing. A survivor must be found and copied. The price of a scavenge depends on how many objects are *alive*, not how many you created.
+A dead object is never touched, so it costs nothing. A survivor must be found and copied: anything still reachable from the stack or a global. [How the collector decides that](/p/how-garbage-collection-works). The price of a scavenge depends on how many objects are *alive*, not how many you created.
 
 The test uses a ring buffer that keeps the last `keep` objects alive:
 

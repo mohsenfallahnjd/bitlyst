@@ -111,6 +111,8 @@ seriesOrder: 1
 - **Next.js Field Notes** — tricks and traps from production App Router apps.
 - **Under the Benchmark** — performance ideas made simple. Each part: one mental model of what the engine or hardware does, one measured number that proves it, and when it actually matters.
 - **Book Bites** — one brief per software book: the 3–5 ideas worth keeping and how to use them. Briefs have their own shape and copyright rules: follow [BOOK_BRIEF_GUIDE.md](BOOK_BRIEF_GUIDE.md).
+- **Common Mistakes** — one bug pattern per post: what you wrote, what actually runs, and the habit that prevents it.
+- **Engineering** — system-design staples in plain words: the mental model, when it matters, and the interview answer.
 
 When a part is published, remove its title from `upcoming` in `lib/series.ts`.
 
