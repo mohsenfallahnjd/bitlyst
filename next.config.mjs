@@ -8,10 +8,10 @@ const nextConfig = {
   reactCompiler: true,
   experimental: { turbopackRustReactCompiler: true },
   cacheLife: {
-    // read and comment counts behind /api/stats: refresh in the background every 30 minutes.
+    // read and comment counts behind /api/stats: refresh in the background every 12 hours.
     // Only that one small route uses it. Pages must not read stats on the server, or every
     // page inherits this lifetime and re-renders on each crawl (Fluid Active CPU).
-    stats: { stale: 300, revalidate: 1800, expire: 86_400 },
+    stats: { stale: 300, revalidate: 12 * 60 * 60, expire: 86_400 },
   },
   // API routes read post slugs from disk at runtime
   outputFileTracingIncludes: {

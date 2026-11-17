@@ -14,10 +14,10 @@ const LINKS = [
   { label: "X", href: "https://x.com/themohsenme", external: true },
 ];
 
-/** Current year, recomputed daily — reading the clock directly would block prerendering. */
+/** Current year, recomputed monthly — reading the clock directly would block prerendering. */
 async function CopyrightYear() {
   "use cache";
-  cacheLife("days");
+  cacheLife("max");
   return <>{new Date().getFullYear()}</>;
 }
 

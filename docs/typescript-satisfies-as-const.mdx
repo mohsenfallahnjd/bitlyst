@@ -1,0 +1,181 @@
+---
+title: "satisfies, as, and as const: How TypeScript Labels a Value"
+summary: "as const keeps the exact value. satisfies checks a type and keeps it. as replaces the type, and the new label can be wrong."
+publishedTime: "2026-11-17"
+level: "intermediate"
+cover: "/assets/satisfies-as-const-cover.jpg"
+coverAlt: "AI-generated illustration. A lock keeps the exact label. A gold stamp checks it without swapping the card."
+tags: ["typescript", "satisfies", "as-const", "types", "interview"]
+---
+
+```ts
+type Config = { mode: "dark" | "light"; home: `/${string}` };
+
+const config: Config = { mode: "dark", home: "/" };
+
+config.mode; // "dark" | "light" — the exact "dark" is gone
+config.home; // `/${string}` — the exact "/" is gone
+```
+
+You wrote `"dark"` and `"/"`. The annotation stored the whole allowed set. A function that only accepts `"dark"` now rejects `config.mode`.
+
+## The mental model: a name tag
+
+> TypeScript likes a general label. `as const` laminates the exact letters. `satisfies` checks your value against a type, then hands the original tag back. `as` writes a new tag, and the new tag can be a lie.
+
+A bare `const` string is already exact: `const home = "/"` has the type `"/"`. Objects are where the letters disappear. With no annotation, `{ mode: "dark" }` is `{ mode: string }`.
+
+![AI-generated illustration. The lock keeps the exact letters, the stamp checks them, and the blank sticker is a label you wrote yourself.](/assets/satisfies-as-const-tags.jpg)
+
+## `as const` laminates the exact value
+
+```ts
+const routes = {
+  home: "/",
+  about: "/about",
+} as const;
+
+routes.home; // "/"
+routes.home = "/nope"; // error: readonly
+```
+
+The type is `{ readonly home: "/"; readonly about: "/about" }`. From that you can build the union people usually want instead of an enum:
+
+```ts
+type Route = (typeof routes)[keyof typeof routes]; // "/" | "/about"
+```
+
+A list works the same way. `["red", "green"]` is `string[]`. `["red", "green"] as const` is `readonly ["red", "green"]`, so `(typeof colors)[number]` is `"red" | "green"`. That pattern is the one in [TypeScript enums vs alternatives](/p/typescript-enums-vs-alternatives).
+
+## A type annotation replaces the label
+
+```ts
+const config: Config = { mode: "dark", home: "/" };
+config.mode; // "dark" | "light"
+```
+
+The `: Config` checks the object. A missing key is an error, and so is `mode: "nope"`. After the check, the variable's type **is** `Config`. `"dark"` has been replaced by `"dark" | "light"`, and `"/"` by "a string that starts with `/`".
+
+## `satisfies` checks, then hands the label back
+
+```ts
+const config = { mode: "dark", home: "/" } satisfies Config;
+
+config.mode; // "dark"
+config.home; // "/"
+```
+
+`Config` is the guest list. `"dark"` has to be one of the modes, `home` has to start with `/`, and an extra key is an error. Then the original letters stay. `config.mode` is `"dark"`, so it passes a function that only accepts `"dark"`.
+
+Because the property's type is the literal `"dark"`, assigning `"light"` later is an error, even though `Config` allows both. The property is still writable. It only accepts `"dark"`. If you need to change `mode` afterward, the annotation is the label you want.
+
+One limit: if the property in `Config` is a plain `string`, `satisfies` widens it to `string` too. The exact letters survive when that property's type is a union of literals, a template literal type like `` `/${string}` ``, or when you laminate first:
+
+```ts
+const config = { mode: "dark", home: "/" } as const satisfies Config;
+```
+
+`as const` runs first, then `satisfies` checks the frozen value. The result is readonly, and it still has to match `Config`.
+
+## `as` writes a new label
+
+```ts
+const mode = "nope" as "dark" | "light"; // no error
+mode; // "dark" | "light"
+```
+
+Both sides are strings, so the checker steps aside. The type says `"dark" | "light"`. The value at runtime is still `"nope"`. Nothing throws.
+
+Use `as` where a value enters typed code from outside it: `JSON.parse(text) as Config`, or a DOM node you already proved is there. The proof is yours. The checker will not repeat it.
+
+## In practice
+
+Use `as const` on route maps, option lists, and config you want as a union. Use `satisfies` when an object must match a shape and you still want the specific values. Use `as const satisfies` when you want both the shape check and the readonly literals.
+
+Save `as` for the boundary. Inside the app, start from `unknown` and narrow with a check, so a wrong value fails in the type instead of in production.
+
+**Honest stakes:** all three are erased when TypeScript becomes JavaScript. They cannot catch a bad value at runtime. A wrong `as` compiles and fails later, on a property that is not there. You will type `as const` most weeks. `satisfies` shows up on config objects. A file full of `as` usually means a type that should have been written down.
+
+## Say it in an interview
+
+> "`as const` stops TypeScript from widening an object or array, so `"dark"` stays `"dark"` and the properties become readonly. A type annotation checks the value, then the variable's type becomes that annotation, so the specifics are gone. `satisfies` runs the same check and keeps the specific type. `as` replaces the type without that check whenever the two types overlap, so `"nope" as "dark"` compiles. None of them exist at runtime."
+
+## Cheat sheet
+
+| | What the variable's type becomes | Catches a bad value? | At runtime |
+|---|---|---|---|
+| `as const` | The exact literals, marked readonly | No. It only freezes what you wrote | Erased |
+| `: Config` | `Config` | Yes | Erased |
+| `satisfies Config` | The exact value, which must be a `Config` | Yes | Erased |
+| `as Config` | `Config` | Only when the two types do not overlap | Erased |
+
+## TL;DR
+
+- Objects and arrays widen. `{ mode: "dark" }` is `{ mode: string }`. A bare `const` string stays `"dark"`.
+- `as const` keeps the exact literals and marks them readonly.
+- An annotation checks the value, then the variable's type becomes the annotation.
+- `satisfies` checks the value and leaves the exact type in place.
+- `as` overwrites the type. `"nope" as "dark"` compiles, and the value is still `"nope"`.
+
+<DeepDive>
+
+### When the union has two different shapes
+
+`satisfies` earns its place when one property may be two kinds of value, and you still want the kind you actually wrote:
+
+```ts
+type RGB = [number, number, number];
+type Palette = Record<"red" | "green" | "blue", string | RGB>;
+
+const palette: Palette = {
+  red: [255, 0, 0],
+  green: "#00ff00",
+  blue: [0, 0, 255],
+};
+
+palette.green.toUpperCase(); // error: green might be an RGB triple
+```
+
+With `satisfies Palette`, `green` stays a `string` and `red` stays a triple of three numbers. `toUpperCase()` compiles. A typo in a key still fails.
+
+### `!` is the same kind of claim as `as`
+
+```ts
+const input = document.querySelector("input");
+input.value; // error: input might be null
+input!.value; // you said it is not
+```
+
+The postfix `!` drops `null` and `undefined` from the type. It does not look at the DOM. If the element is missing, that line throws when it runs.
+
+### `as unknown as` forces a lie the checker rejected
+
+A direct assertion has to be plausible. `{ mode: "nope", home: "/" } as Config` fails, because `"nope"` and `"dark" | "light"` do not overlap. Two steps get around that:
+
+```ts
+const config = { mode: "nope", home: "/" } as unknown as Config; // compiles
+```
+
+`unknown` overlaps with everything, so the second `as` is unchecked. Treat that pair as a sign the types are fighting the value.
+
+### `const` type parameters are `as const` for arguments
+
+TypeScript 5.0 lets a function ask for the narrow type, so callers do not write `as const` themselves:
+
+```ts
+function routeOf<const T extends string>(path: T) {
+  return path;
+}
+
+routeOf("/"); // type is "/"
+```
+
+`<const T extends readonly string[]>(values: T)` does the same for a list: `["red", "green"]` is inferred as `readonly ["red", "green"]`.
+
+### Further reading
+
+- [Const assertions](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions), TypeScript 3.4
+- [The satisfies operator](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html#the-satisfies-operator), TypeScript 4.9
+- [Const type parameters](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html#const-type-parameters), TypeScript 5.0
+
+</DeepDive>
