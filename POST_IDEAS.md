@@ -122,7 +122,8 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ## Published
 
-- [x] **`satisfies`, `as`, and `as const`: how TypeScript labels a value** → `typescript-satisfies-as-const`
+- [x] **`Boolean(x)` vs `!!x`, `Number` vs `parseInt`, and `String()` vs `toString()`** → `boolean-vs-bang-number-vs-parseint`
+- [x] **`satisfies`, `as`, `as const`, and `is`: how TypeScript labels a value** → `typescript-satisfies-as-const`
 - [x] **XSS vs CSRF: two attacks, two different fixes** → `xss-vs-csrf`
 - [x] **useEffect vs useLayoutEffect: why the tooltip flashes, then jumps** → `useeffect-vs-uselayouteffect`
 - [x] **How garbage collection works: it never looks for unused memory** → `how-garbage-collection-works`

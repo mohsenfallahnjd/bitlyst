@@ -1,0 +1,187 @@
+---
+title: "Boolean(x) vs !!x, Number vs parseInt, and String() vs toString()"
+summary: "Boolean and !! match. Number and + match, except a BigInt. String(null) is \"null\"; null.toString() throws."
+publishedTime: "2026-11-17"
+publishOrder: 1
+level: "beginner"
+cover: "/assets/boolean-number-coercion-cover.jpg"
+coverAlt: "AI-generated illustration. Two switches do the same job. The ruler stops before the end of the strip."
+tags: ["javascript", "boolean", "numbers", "parseint", "strings", "performance", "interview"]
+---
+
+```js
+Number("12px");    // NaN
++"12px";           // NaN
+parseInt("12px");  // 12
+```
+
+`Boolean(x)` and `!!x` get recommended as the fast spelling. So do `+x` and `parseInt`. On a million values they took the same few nanoseconds. The thing that changes the result is which tool you picked.
+
+## The mental model: two switches, one short ruler
+
+> `Boolean(x)` and `!!x` are two spellings of one question: is this value filled in? `Number(x)` and `+x` are two spellings of another: read the whole value as a number. `parseInt` is a shorter ruler. It reads digits from the start and stops at the first character that doesn't fit. `String(x)` writes text for any value. `x.toString()` asks the value to write it, so `null` has nobody to ask.
+
+![AI-generated illustration. The two switches match. The ruler covers only the start of the strip, which is what parseInt does with "12px".](/assets/boolean-number-coercion-tools.jpg)
+
+## How the two spellings behave
+
+`!!x` is "not not x". Each `!` flips the answer, so two flips land on the same yes-or-no as `Boolean(x)`. Both use the language's ordinary truthiness. `0`, `""`, `null`, `undefined`, `NaN`, and `false` are empty. Everything else is filled in, including `"0"`, `"false"`, and `[]`.
+
+```js
+Boolean("0"); // true
+!!"0";        // true
+Boolean("");  // false
+!!"";         // false
+```
+
+Call `Boolean` without `new`. `new Boolean(false)` is an object, so it counts as filled in.
+
+`Number(x)` and `+x` agree on strings, booleans, `null`, and arrays. `Number("")` and `+""` are `0`. `Number("1e2")` and `+"1e2"` are `100`. `Number("12px")` and `+"12px"` are `NaN`, because the whole string has to be a number.
+
+One input splits them. A BigInt converts through `Number` and throws through `+`:
+
+```js
+Number(1n); // 1
++1n;        // TypeError
+```
+
+`Number` may turn a BigInt into a number, and a huge one can round. Unary `+` refuses a BigInt so an implicit conversion cannot drop digits.
+
+`parseInt` answers a third question: what integer is at the start of this text?
+
+```js
+parseInt("12px", 10); // 12
+parseInt("1e2", 10);  // 1     the e stops it
+parseInt("", 10);     // NaN
+Number("");           // 0
+```
+
+Pass the radix. `parseInt("0x10")` is `16`, because a missing radix lets it notice the hex prefix. `parseInt("0x10", 10)` is `0`. The full set of disagreements, including `.map(parseInt)` reading the index as the radix, is in [why map(parseInt) checks the wrong rows](/p/javascript-map-parseint).
+
+## `String()` writes the text. `toString()` asks the value
+
+```js
+String(null);        // "null"
+null.toString();     // TypeError
+String(undefined);   // "undefined"
+(255).toString(16);  // "ff"   String has no radix
+```
+
+`String(x)` accepts every value. `null` becomes `"null"`, `undefined` becomes `"undefined"`, and `[]` becomes `""` because an array's text is its items joined with commas. `.toString()` is a method call. `null` and `undefined` have no method, so the call throws before any conversion.
+
+A symbol is the case that splits the third spelling, `x + ""`:
+
+```js
+const id = Symbol("id");
+String(id);     // "Symbol(id)"
+id.toString();  // "Symbol(id)"
+id + "";        // TypeError
+```
+
+`String(id)` and `id.toString()` agree. Concatenation uses the ordinary string conversion, and that conversion refuses a symbol, the same way `+` refuses a BigInt.
+
+On a million numbers, `n + ""` took about 1.7 ns, `n.toString()` about 3.7, and `String(n)` about 5.3. That gap is real in a loop that only converts. It is still a few nanoseconds. The minified functions were 100 bytes for `String(x)` and 103 for `x.toString()`.
+
+## What the speed and the bundle actually were
+
+Timed the same way, `Boolean(x)`, `!!x`, and a plain `if (x)` were about 1.7 ns. `Number(x)`, `+x`, and `parseInt(x, 10)` were about 3 ns on clean digits, and about 15 ns together on a mix that included `"12px"`, `""`, and `"1e2"`. None of them import a module. Bun's minifier left both spellings in place: `!!x` was 7 bytes shorter than `Boolean(x)`, and 2 bytes after gzip. The method is in Going deeper.
+
+## In practice
+
+Use `Boolean`, `Number`, and `String` when you hand a function to `filter` or `map`. `!!`, `+`, and `.toString()` need an arrow: `xs.filter((x) => !!x)`, `xs.map((x) => +x)`, `xs.map((x) => x.toString())`. `xs.map(String)` survives a `null`. `xs.map((x) => x.toString())` throws on one. Give `parseInt` its own arrow and a radix, `xs.map((s) => parseInt(s, 10))`, so the index is not read as the base. Use `.toString(radix)` when you want a base other than 10.
+
+Pick `parseInt` when trailing text is expected and you want the leading integer: a CSS value, a heading like `"12px"`. Pick `Number` or `+` when the whole string must be a number and junk should become `NaN`.
+
+**Honest stakes:** you will not find a few nanoseconds in a profile, and you will not find these spellings in a bundle report. You will find `parseInt("12px")` turning into `12` in a form, `Number("")` turning into `0`, and `value.toString()` throwing because `value` was `null`.
+
+## Say it in an interview
+
+> "`Boolean(x)` and `!!x` are the same truthiness check. `Number(x)` and `+x` both read the whole value as a number, except `Number(1n)` is `1` and `+1n` throws. `parseInt` stops early, so `parseInt("12px", 10)` is `12` while `Number("12px")` is `NaN`. `String(null)` is `"null"`, and `null.toString()` throws because there is no method to call. On Node 26 the boolean and number spellings were the same few nanoseconds. `String(n)` was slower than `n.toString()` in a tight loop, still about 5 ns, and I still pick the one that handles `null`."
+
+## Cheat sheet
+
+| Input | `Boolean` / `!!` | `Number` / `+` | `parseInt(x, 10)` |
+|---|---|---|---|
+| `"12"` | `true` | `12` | `12` |
+| `"12px"` | `true` | `NaN` | `12` |
+| `""` | `false` | `0` | `NaN` |
+| `"1e2"` | `true` | `100` | `1` |
+| `1n` | `true` | `Number`: `1`, `+`: throws | `1` |
+
+| Input | `String(x)` | `x.toString()` | `x + ""` |
+|---|---|---|---|
+| `null` | `"null"` | throws | `"null"` |
+| `undefined` | `"undefined"` | throws | `"undefined"` |
+| `255` in base 16 | no radix argument | `"ff"` | `"255"` |
+| `Symbol("id")` | `"Symbol(id)"` | `"Symbol(id)"` | throws |
+
+## TL;DR
+
+- `Boolean(x)` and `!!x` ask the same question. Call `Boolean` without `new`.
+- `Number(x)` and `+x` read the whole value as a number. `Number(1n)` works. `+1n` throws.
+- `parseInt` stops at the first bad digit. `"12px"` becomes `12`. Pass a radix.
+- `String(null)` is `"null"`. `null.toString()` throws. `.toString(16)` is how you get `"ff"`.
+- Boolean and number spellings took the same few nanoseconds. `String(n)` was about 5 ns, `n.toString()` about 4, `n + ""` about 2. The bundle gap was a handful of bytes.
+
+<DeepDive>
+
+### How the times were measured
+
+Node v26.13.0, arm64. One million values, built before the clock started. Each candidate ran 3 untimed passes, then 11 timed passes. The reported figure is the median. The loop added every result into a number so the optimizer could not delete the call. Times used `process.hrtime.bigint`.
+
+Clean digit strings were `"1"`, `"2"`, `"10"`, `"0"`, `"42"`, `"7"`, `"99"`, `"3"`, repeating. The mix was `"1"`, `"1px"`, `""`, `"1e2"`, `"0x10"`, `"1.5"`, `" 3 "`, `"08"`. Boolean inputs were `0`, `1`, `""`, `"x"`, `null`, `undefined`, `false`, `true`.
+
+| Loop | Median |
+|---|---|
+| `Boolean(x)` | 1.66 ns |
+| `!!x` | 1.71 ns |
+| `if (x)` | 1.69 ns |
+| `Number(x)` on clean digits | 3.00 ns |
+| `+x` on clean digits | 3.02 ns |
+| `parseInt(x, 10)` on clean digits | 2.97 ns |
+| `s.length` on those strings | 0.86 ns |
+| `Number(x)` on the mix | 15.36 ns |
+| `+x` on the mix | 15.38 ns |
+| `parseInt(x, 10)` on the mix | 16.57 ns |
+| `String(n)` on small integers | 5.32 ns |
+| `n.toString()` on small integers | 3.68 ns |
+| `n + ""` on small integers | 1.67 ns |
+
+The string rows used the integers 1 through 8 and added `.length`, so the new string could not be thrown away. The mix is slower because some strings fail or stop. `Number` and `+` still matched each other there.
+
+A first version called each spelling through a fresh arrow, `inputs.map((x) => !!x)`. That version made `!!` look slower than `Boolean`, and the gap changed between runs. Inlining the call removed it. The arrow was the cost. A microbenchmark of a one-nanosecond operation mostly measures the loop you wrapped around it.
+
+### Bundle bytes
+
+Bun 1.4.4, `bun build --minify`, one function that walks an array and pushes the conversion:
+
+| Source | Minified | Gzip |
+|---|---|---|
+| `Boolean(x)` | 101 B | 126 B |
+| `!!x` | 94 B | 124 B |
+| `Number(x)` | 99 B | 126 B |
+| `+x` | 92 B | 121 B |
+| `parseInt(x, 10)` | 104 B | 134 B |
+| `String(x)` | 100 B | 124 B |
+| `x.toString()` | 103 B | 129 B |
+
+The minifier did not rewrite `Boolean` into `!!` or `Number` into `+`. There is no imported helper to tree-shake. The gzip rows include the gzip header, which is why they can be larger than the file.
+
+### `new` builds a different thing
+
+```js
+typeof Boolean(false);     // "boolean"
+typeof new Boolean(false); // "object"
+!!new Boolean(false);      // true
+```
+
+`new Number(0)` is the same kind of object. It is filled in as a value, and `Number(new Number(0))` unwraps it back to `0`. You want the function call, which returns a plain boolean or a plain number.
+
+### Further reading
+
+- [`Boolean()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean/Boolean), MDN
+- [Unary plus](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Unary_plus) and [`Number()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/Number), MDN
+- [`parseInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt), MDN
+- [Number ( value )](https://tc39.es/ecma262/2026/multipage/numbers-and-dates.html#sec-number-constructor-number-value), ECMAScript 2026: a BigInt becomes a Number here, and unary `+` still goes through `ToNumber`, which throws
+
+</DeepDive>
