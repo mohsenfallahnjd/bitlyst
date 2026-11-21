@@ -38,7 +38,7 @@ export function toSummary({ content: _content, ...rest }: DocMeta): PostSummary 
 }
 
 const BLOG_DIR = path.join(process.cwd(), "docs");
-const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me", avatar: "/mohsen.png" }];
+const DEFAULT_AUTHORS = [{ name: "Mohsen Fallahnejad", url: "https://themohsen.me", avatar: "/mohsen-pic.png" }];
 
 function calcReadingTime(content: string): number {
   const words = content

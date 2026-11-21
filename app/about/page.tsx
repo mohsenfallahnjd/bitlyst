@@ -85,7 +85,7 @@ export default function AboutPage() {
               "@type": "Person",
               name: "Mohsen Fallahnejad",
               url: "https://themohsen.me",
-              image: "https://bitlyst.blog/mohsen.png",
+              image: "https://bitlyst.blog/mohsen-pic.png",
               jobTitle: "Frontend developer",
               sameAs: LINKS.map((l) => l.href),
               knowsAbout: topics.map((t) => t.name),
@@ -98,7 +98,7 @@ export default function AboutPage() {
       <section className="space-y-6">
         <div className="flex items-center gap-5">
           <Image
-            src="/mohsen.png"
+            src="/mohsen-pic.png"
             alt="Mohsen Fallahnejad"
             width={88}
             height={88}
