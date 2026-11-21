@@ -10,6 +10,7 @@ const LINKS = [
   { label: "Sync devices", href: "/sync" },
   // a feed file, not a page: a <Link> would prefetch it as an RSC payload
   { label: "RSS", href: "/rss.xml", plain: true },
+  { label: "llms.txt", href: "/llms.txt", plain: true },
   { label: "GitHub", href: "https://github.com/mohsenfallahnjd/bitlyst", external: true },
   { label: "X", href: "https://x.com/themohsenme", external: true },
 ];

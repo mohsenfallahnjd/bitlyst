@@ -24,6 +24,8 @@ Series are registered in `lib/series.ts` and joined via `series` + `seriesOrder`
 
 Posts sharing a `publishedTime` date are ordered by `publishOrder` frontmatter (higher shows first, default 0), then by slug. Newest written goes on top: when a post shares its date with another, give it the next number above the highest one that day.
 
+AI agents discover the site via `https://bitlyst.blog/llms.txt` (index) and `https://bitlyst.blog/llms-full.txt` (full post text). Generated in `lib/llmsTxt.ts`; refresh is automatic on deploy.
+
 ## Caching (Cache Components is on)
 
 `cacheComponents: true` and `partialPrefetching: true` in `next.config.mjs`. Route segment configs (`revalidate`, `dynamic`, `dynamicParams`, `runtime`) are not allowed.

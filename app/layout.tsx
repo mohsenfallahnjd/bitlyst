@@ -54,7 +54,10 @@ export const metadata: Metadata = {
     "tutorials",
   ],
   alternates: {
-    types: { "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }] },
+    types: {
+      "application/rss+xml": [{ url: "/rss.xml", title: "Bitlyst RSS" }],
+      "text/plain": [{ url: "/llms.txt", title: "Bitlyst llms.txt (for AI agents)" }],
+    },
   },
   openGraph: {
     title: "Bitlyst — Bite-sized JavaScript, React, and Next.js tips",
