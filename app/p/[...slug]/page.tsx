@@ -77,7 +77,7 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
             {
               "@context": "https://schema.org",
               "@type": "BlogPosting",
-              headline: post.title,
+              headline: post.seoTitle ?? post.title,
               description: post.summary,
               datePublished: post.publishedTime,
               dateModified: post.modifiedTime || post.publishedTime,
@@ -289,14 +289,15 @@ export async function generateMetadata(props: PageProps<"/p/[...slug]">): Promis
   }
 
   const image = shareImage(page);
+  const title = page.seoTitle ?? page.title;
 
   return {
-    title: page.title,
+    title,
     description: page.summary,
     keywords: ["bitlyst", ...(page.tags || [])],
     authors: page.authors,
     openGraph: {
-      title: page.title,
+      title,
       description: page.summary,
       publishedTime: page.publishedTime as string,
       modifiedTime: (page.modifiedTime || page.publishedTime) as string,
@@ -305,13 +306,13 @@ export async function generateMetadata(props: PageProps<"/p/[...slug]">): Promis
       type: "article",
       authors: page.authors.map((a) => a.name),
       siteName: "Bitlyst",
-      images: [{ url: image, alt: page.title, ...(page.cover ? {} : { width: 1200, height: 630 }) }],
+      images: [{ url: image, alt: title, ...(page.cover ? {} : { width: 1200, height: 630 }) }],
     },
     twitter: {
       card: "summary_large_image",
-      title: page.title,
+      title,
       description: page.summary,
-      images: [{ url: image, alt: page.title }],
+      images: [{ url: image, alt: title }],
     },
     alternates: { canonical: `https://bitlyst.blog/p/${slugPath}` },
   };

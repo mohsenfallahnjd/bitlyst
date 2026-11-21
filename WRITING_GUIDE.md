@@ -96,6 +96,16 @@ The model posts are the early ones: [Docker in 2 minutes](docs/docker-in-2-minut
   - ❌ `Array.prototype.sort` (topic, no reason to click)
 - Summary: one or two sentences, under ~160 characters, says what the reader will be able to explain by the end.
 
+### Search
+
+The posts that rank in Google put the phrase people type at the **start** of the title: `Frontend Design Patterns — A Practical Guide` ranks for "frontend design pattern".
+
+- **Lead with the searched words.** Before writing the title, say the query out loud ("javascript closures", "nextjs use client") and start the title with those words. The hook goes after a colon or dash.
+- **Keep it under ~55 characters.** The site adds ` · Bitlyst`, and Google cuts titles at about 60.
+- **Story titles get a `seoTitle`.** If the on-page title is a story hook (`The $4.35 Item That Was Charged $4.34`), keep it and add `seoTitle: "JavaScript Floating Point: Why 0.1 + 0.2 !== 0.3"`. It replaces the title in the search result, share card and structured data. The page still shows the hook.
+- **Say the phrase again in the summary and the first paragraph,** in plain words. That's what Google shows under the title.
+- **Link related posts to each other** with descriptive link text (`[how SSR works](/p/...)`, not "here").
+
 ---
 
 ## 6. Series
@@ -138,5 +148,5 @@ Career, teamwork and opinion posts (for example `ai-is-your-junior-developer.mdx
 - [ ] Code snippets are minimal and show the surprising output.
 - [ ] Any diagram earns its place and has a `title`.
 - [ ] Cover follows the template; post has at least one more image with a useful caption.
-- [ ] Title has the searchable topic plus a hook.
+- [ ] Title starts with the searched phrase, under ~55 characters. Story-hook titles have a `seoTitle`.
 - [ ] Frontmatter: `title`, `summary`, `publishedTime`, `level`, `tags` (+ `series`, `seriesOrder`; + `publishOrder` if another post shares the date, higher shows first and the newest written gets the highest; + `cover`, `coverAlt`).

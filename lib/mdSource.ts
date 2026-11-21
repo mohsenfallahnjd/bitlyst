@@ -5,6 +5,8 @@ import matter from "gray-matter";
 export type DocMeta = {
   slug: string;
   title: string;
+  /** search-result and share title when the on-page title is a story hook without the searched phrase */
+  seoTitle?: string;
   summary?: string;
   publishedTime?: string;
   modifiedTime?: string;
@@ -51,6 +53,7 @@ function parseDoc(slug: string, src: string): DocMeta {
   return {
     slug,
     title: data.title ?? slug,
+    seoTitle: (data.seoTitle as string | undefined) ?? undefined,
     summary: data.summary ?? "",
     publishedTime: data.publishedTime ?? "",
     modifiedTime: data.modifiedTime ?? data.publishedTime ?? "",

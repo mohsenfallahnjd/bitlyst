@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(p.modifiedTime || p.publishedTime || Date.now()),
     changeFrequency: "monthly",
     priority: 0.8,
-    images: [`${site}/og?slug=${p.slug}`],
+    images: [p.cover ? new URL(p.cover, site).href : `${site}/og?slug=${p.slug}`],
   }));
 
   // only topics with enough posts — single-post topic pages are noindex
