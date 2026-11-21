@@ -119,6 +119,7 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ## Published
 
+- [x] **What runs first in a Next.js page: Server Components, render, effects** → `react-nextjs-render-order`
 - [x] **You don't need that `useEffect`: derived state in React** (Common Mistakes #2) → `react-derived-state-useeffect`
 - [x] **`Boolean(x)` vs `!!x`, `Number` vs `parseInt`, and `String()` vs `toString()`** → `boolean-vs-bang-number-vs-parseint`
 - [x] **`satisfies`, `as`, `as const`, and `is`: how TypeScript labels a value** → `typescript-satisfies-as-const`

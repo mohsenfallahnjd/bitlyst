@@ -1,0 +1,127 @@
+---
+title: "What Runs First in a Next.js Page: Server Components, Render, Effects"
+summary: "Server first, browser second. Render goes down the tree, effects come back up. The order of every hook from request to state update, measured."
+publishedTime: "2026-11-21"
+publishOrder: 1
+level: "intermediate"
+cover: "/assets/render-order-cover.jpg"
+coverAlt: "AI-generated illustration. Render walks down into the innermost component. Effects climb back out, child before parent."
+tags: ["react", "nextjs", "server-components", "useeffect", "hooks", "interview"]
+---
+
+A child component's `useEffect` reads something its parent's effect was supposed to set up. It's `undefined`. You add a `console.log` to both and find the child's effect ran **first**, even though the parent rendered first.
+
+Nothing is broken. That's the order React promises.
+
+## The mental model: down, then back up
+
+> The server goes first, the browser second. Inside the browser, render walks **down** the tree, parent before child. Effects walk back **up**, child before parent. The screen updates in between.
+
+Picture nested boxes. Rendering opens them from the outside in. Effects close them from the inside out, because a parent isn't finished until its children are.
+
+![AI-generated illustration. The server builds the page, the HTML travels, the browser shows it, and only then does the JavaScript switch it on.](/assets/render-order-relay.jpg)
+
+## The full order, from request to click
+
+<FlowDiagram
+  title="One page load in the App Router"
+  nodes="Server Components run → Client Components render on the server → HTML reaches the browser → JavaScript loads → Client Components render again → DOM updated, refs attached → useLayoutEffect → Paint → useEffect"
+  notes="Data fetching, async components. They never run in the browser|'use client' components still render to HTML here. No effects, no state updates|The user sees the page. Buttons don't respond yet|The bundle for your Client Components downloads|Hydration: same components, same props, matched against the HTML|React writes the DOM and hands you the elements|Child first, then parent. The browser hasn't painted yet|The user sees the result|Child first, then parent. Runs after the screen updates"
+  caption="A Server Component always renders before the Client Components it passes props to. With streaming, a slow part behind Suspense can arrive after the rest of the page is already interactive."
+/>
+
+**On the server.** Server Components run first: they fetch data and pass it down as props. Then React renders your `"use client"` components too, to turn them into HTML. That's the surprise for many people: a Client Component renders on the server. Only its effects and event handlers are skipped there. I ran a two-level tree through `renderToString` and the log showed the `useState` initializer, `useMemo`, and both render functions. No effect of any kind ran.
+
+**In the browser.** The HTML is already on screen. When the JavaScript arrives, React renders the Client Components again (this is [hydration](/p/how-ssr-works-react-nextjs)), then runs the effects. Here's the hydration log from a `Parent` that renders a `Child`, on React 19.3.1:
+
+```txt
+Parent useState initializer
+Parent useMemo
+Parent render
+Child render
+Child ref attached
+Child useLayoutEffect
+Parent useLayoutEffect
+Child useEffect
+Parent useEffect
+```
+
+Inside one render, hooks run in the order you wrote them. `useState` and `useMemo` run during the render itself. Effects only run after React has updated the DOM.
+
+## When state changes
+
+Calling `setCount(1)` repeats the browser half, with one addition: every old effect is cleaned up before any new one runs. The log, with the `useMemo` and ref lines left out:
+
+```txt
+Parent render (count=1)
+Child render (props.count=1)
+Child useLayoutEffect cleanup
+Parent useLayoutEffect cleanup
+Child useLayoutEffect
+Parent useLayoutEffect
+Child useEffect cleanup
+Parent useEffect cleanup
+Child useEffect
+Parent useEffect
+```
+
+The parent renders first, so the child receives the new props in the same pass. A state change re-renders that component and everything under it. Nothing above it runs.
+
+## In practice
+
+- **A parent's effect can't prepare something for a child's effect.** The child's runs first. Pass the value down as a prop, or create it during render.
+- **Measure the DOM in `useLayoutEffect`.** It runs after the DOM exists and before paint, so a fix doesn't flash. Everything else goes in `useEffect`. See [useEffect vs useLayoutEffect](/p/useeffect-vs-uselayouteffect).
+- **Don't read `window` during render in a Client Component.** It renders on the server, where `window` doesn't exist. Read it in an effect.
+- **Fetch in a Server Component when you can.** It runs before any browser code, so the data is in the first HTML instead of arriving after an effect.
+
+**Honest stakes:** most components never notice the order. You meet it when two effects depend on each other, when a measurement flickers, or when code that touches `window` crashes the server render.
+
+## Say it in an interview
+
+> "In the App Router, Server Components run first on the server and pass props down. Client Components also render on the server to produce HTML, but their effects don't run there. In the browser, React hydrates: it renders top-down, parent before child, updates the DOM and attaches refs, then runs layout effects bottom-up, child before parent, before paint, and regular effects bottom-up after paint. On a state update, the cleanups for the old effects run before the new effects."
+
+## Cheat sheet
+
+| Step | Where | Order |
+|---|---|---|
+| Server Component | Server only | First, parents before children |
+| Client Component render (`useState`, `useMemo`, JSX) | Server, then browser | Parent before child |
+| Refs attached, `useLayoutEffect` | Browser, before paint | Child before parent |
+| `useEffect` | Browser, after paint | Child before parent |
+| On update: cleanups | Browser | All old cleanups before the new effects |
+
+## TL;DR
+
+- Server Components run first, only on the server.
+- Client Components render on the server too. Their effects don't run there.
+- Render goes down the tree. Effects come back up.
+- `useLayoutEffect` runs before paint, `useEffect` after it.
+- On an update, old effects are cleaned up before new ones run.
+
+<DeepDive>
+
+### How I logged the order
+
+React 19.3.1 and react-dom 19.3.1, under Bun. Every hook in a `Parent` and a `Child` pushed a line to one array. The server log came from `renderToString`. The browser log came from `hydrateRoot` on that same HTML inside a happy-dom document, wrapped in `act` so effects flushed. The update log came from calling `setCount(1)` inside `act`.
+
+A test document doesn't paint, so the logs can't show where paint happens. The "before paint" and "after paint" positions come from the React docs for `useLayoutEffect` and `useEffect`.
+
+### Insertion effects run before everything
+
+`useInsertionEffect` ran right after render and before refs were attached. It exists for CSS-in-JS libraries that must add `<style>` tags before any layout is read. You'll almost never write one.
+
+### Strict Mode runs it twice in development
+
+In development, Strict Mode mounts each component, runs its cleanup, and mounts it again, so you see every effect run twice. That's on purpose: it checks your cleanups work. Production runs each effect once.
+
+### Batching
+
+Several `setState` calls in one event handler produce one render, not several. React 18 and later also batch updates inside promises and timeouts.
+
+### Further reading
+
+- [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components), Next.js docs
+- [useLayoutEffect](https://react.dev/reference/react/useLayoutEffect) and [useEffect](https://react.dev/reference/react/useEffect), React docs
+- [React Server Components vs "use client"](/p/react-server-components-vs-use-client) on this blog
+
+</DeepDive>
