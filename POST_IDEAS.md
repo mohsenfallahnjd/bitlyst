@@ -48,9 +48,6 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ### Common mistakes (`common-mistakes`)
 
-- [ ] **You don't need that `useEffect`: derived state in React**
-  - Model: if you can calculate it from props or state, it is not state.
-  - Why: the most common React mistake in code review; pairs with `react-useeffect-dependencies`.
 - [ ] **`forEach` ignores your `await`**
   - Model: `forEach` fires every callback and walks away; nobody waits for the promises.
   - Why: classic bug, short post. Pairs with `async-await-not-parallel`.
@@ -122,6 +119,7 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ## Published
 
+- [x] **You don't need that `useEffect`: derived state in React** (Common Mistakes #2) → `react-derived-state-useeffect`
 - [x] **`Boolean(x)` vs `!!x`, `Number` vs `parseInt`, and `String()` vs `toString()`** → `boolean-vs-bang-number-vs-parseint`
 - [x] **`satisfies`, `as`, `as const`, and `is`: how TypeScript labels a value** → `typescript-satisfies-as-const`
 - [x] **XSS vs CSRF: two attacks, two different fixes** → `xss-vs-csrf`

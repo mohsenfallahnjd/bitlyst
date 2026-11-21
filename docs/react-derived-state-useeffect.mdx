@@ -1,0 +1,135 @@
+---
+title: "You Don't Need That useEffect: Derived State in React"
+summary: "If you can calculate a value from props or state, it isn't state. Copying it with useEffect costs an extra render and shows a stale value first."
+publishedTime: "2026-11-21"
+level: "beginner"
+series: "common-mistakes"
+seriesOrder: 2
+cover: "/assets/derived-state-cover.jpg"
+coverAlt: "AI-generated illustration. The list is the only thing worth keeping. The filtered view gets worked out on the spot."
+tags: ["react", "useeffect", "state", "hooks", "interview"]
+---
+
+A search box over a list. It works, and it shows up in code review every week:
+
+```jsx
+function Results({ items, query }) {
+  const [filtered, setFiltered] = useState(items);
+
+  useEffect(() => {
+    setFiltered(items.filter((item) => item.name.includes(query)));
+  }, [items, query]);
+
+  return <List items={filtered} />;
+}
+```
+
+Type a letter and the list updates. Nothing looks broken. But every keystroke renders `Results` twice, and the first render shows the old list.
+
+## The mental model: a copy that runs late
+
+> If you can calculate it from props or state, it isn't state. Calculate it while rendering.
+
+`filtered` is a copy of an answer you already have. `items` and `query` are the source. A copy kept in its own state has to be updated after the source changes, and until then it's out of date.
+
+![AI-generated illustration. The copy on the left trails behind its source. The view on the right reads the source directly, so it can't fall behind.](/assets/derived-state-copies.jpg)
+
+## How the copy goes wrong
+
+Follow one keystroke through the code above:
+
+1. `query` changes, so React renders `Results`.
+2. That render still reads the old `filtered`, because the effect hasn't run yet. React puts the old list on screen.
+3. After the screen updates, the effect runs and calls `setFiltered`.
+4. That state change renders `Results` again, this time with the right list.
+
+I counted this with React 19.3.1. Over 5,000 items, changing the query to `"item 42"` rendered the effect version **twice**. The first render still had all **5,000** items. The second had the right **111**. Steps 2 and 3 are the [useEffect-after-paint gap](/p/useeffect-vs-uselayouteffect): a slow device can show the stale list for a frame.
+
+The fix deletes code:
+
+```jsx
+function Results({ items, query }) {
+  const filtered = items.filter((item) => item.name.includes(query));
+  return <List items={filtered} />;
+}
+```
+
+Same test, **one** render, already showing 111 items. Nothing to keep in sync, because nothing was copied.
+
+## In practice
+
+The same pattern hides behind other names:
+
+```jsx
+// before: state + effect
+const [fullName, setFullName] = useState("");
+useEffect(() => setFullName(`${first} ${last}`), [first, last]);
+
+// after: a variable
+const fullName = `${first} ${last}`;
+```
+
+Totals from a cart, `isValid` from form fields, `selectedItem` from a list plus an id: each one is a value you calculate while rendering, not a value you store.
+
+If the calculation is genuinely slow, wrap it in `useMemo`. That still runs during the render, so there's no stale frame. It only skips the work when the inputs haven't changed:
+
+```jsx
+const filtered = useMemo(
+  () => items.filter((item) => item.name.includes(query)),
+  [items, query],
+);
+```
+
+Reach for an effect only when the code talks to something outside React: fetching, a subscription, a timer, the DOM. Copying one piece of React state into another isn't on that list.
+
+**Honest stakes:** with a short list you won't see the stale frame, and the extra render costs little. The real cost is bugs. Two copies of one answer drift apart: someone updates `items` from a new place, forgets the effect's dependency list, and the screen disagrees with the data.
+
+## Say it in an interview
+
+> "If a value can be computed from props or state, I compute it during render instead of storing it. Copying it into state with useEffect means the first render uses the old value, the effect runs after paint, and its setState causes a second render. Computing it inline gives one render with the right value. If the calculation is expensive I use useMemo. Effects are for syncing with things outside React, like the network or the DOM."
+
+## Cheat sheet
+
+| You have | Write |
+|---|---|
+| A value computed from props or state | A `const` in the component body |
+| The same, but slow to compute | `useMemo` with its inputs |
+| Data from the network | An effect, or better, a data library |
+| A value the user edits | `useState` |
+
+## TL;DR
+
+- If you can calculate it, it isn't state.
+- `useState` plus a `useEffect` that sets it gives two renders and a stale first frame.
+- Calculate the value in the component body. Use `useMemo` only when it's slow.
+- Effects are for the world outside React, not for copying state.
+
+<DeepDive>
+
+### How I counted the renders
+
+React 19.3.1 and react-dom 19.3.1, rendered with `createRoot` into a happy-dom document under Bun. Each component pushed a line to a log on every render. The list had 5,000 items named `item 0` to `item 4999`. After mounting with an empty query, I re-rendered with `query="item 42"` inside `act`, which flushes effects:
+
+| Version | Renders after the change | What each render showed |
+|---|---|---|
+| `useState` + `useEffect` | 2 | 5,000 items, then 111 |
+| Computed in the body | 1 | 111 items |
+
+Both versions also mounted the same way: two renders for the effect version, one for the computed one.
+
+### Resetting state when a prop changes
+
+A related case: state that the user does edit, but which should reset when an id changes, such as a comment draft per post. Don't reset it in an effect. Give the component a `key`:
+
+```jsx
+<CommentBox key={postId} postId={postId} />
+```
+
+A new `key` makes React treat it as a new component, so its state starts fresh, in the same render. See [why React needs key](/p/react-keys-reconciliation).
+
+### Further reading
+
+- [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect), React docs
+- [useEffect dependencies](/p/react-useeffect-dependencies) on this blog
+
+</DeepDive>
