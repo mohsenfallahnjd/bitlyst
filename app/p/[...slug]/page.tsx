@@ -21,6 +21,7 @@ import PostNav from "@/components/PostNav";
 import PostTransition from "@/components/PostTransition";
 import ReadingProgress from "@/components/ReadingProgress";
 import ReadTracker from "@/components/ReadTracker";
+import ResumeReading from "@/components/ResumeReading";
 import RelatedPosts from "@/components/RelatedPosts";
 import SeriesNav from "@/components/SeriesNav";
 import ShareButton from "@/components/ShareButton";
@@ -59,6 +60,7 @@ export default async function Page(props: PageProps<"/p/[...slug]">) {
     <div data-post className="xl:grid xl:grid-cols-[minmax(0,1fr)_12rem] xl:gap-12">
       <ReadingProgress />
       <ReadTracker slug={post.slug} />
+      <ResumeReading slug={post.slug} />
 
       {/* JSON-LD in the initial HTML (next/script would inject it after hydration) */}
       <script

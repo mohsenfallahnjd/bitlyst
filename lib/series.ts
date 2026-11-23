@@ -55,7 +55,6 @@ export const SERIES: Record<string, Series> = {
       "Patterns that look fine in code review until production, the bundler, or an interview question proves otherwise.",
     mascot: { sprite: "oops", name: "Oops", bio: "Has left the same comment on three PRs this week. Politely." },
     upcoming: [
-      "The forEach that did not wait for await",
       "The secret that NEXT_PUBLIC_ copied into git",
     ],
   },

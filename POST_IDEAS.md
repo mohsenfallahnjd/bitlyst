@@ -48,9 +48,6 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ### Common mistakes (`common-mistakes`)
 
-- [ ] **`forEach` ignores your `await`**
-  - Model: `forEach` fires every callback and walks away; nobody waits for the promises.
-  - Why: classic bug, short post. Pairs with `async-await-not-parallel`.
 - [ ] **`try/catch` doesn't catch what you think: lost promise errors**
   - Model: `try` only guards what you `await`; a promise you don't await fails somewhere else, later.
   - Why: explains unhandled rejections and swallowed errors in one go.
@@ -120,6 +117,7 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 ## Published
 
 - [x] **What runs first in a Next.js page: Server Components, render, effects** → `react-nextjs-render-order`
+- [x] **forEach and async/await: why your loop doesn't wait** (Common Mistakes #3) → `foreach-async-await`
 - [x] **You don't need that `useEffect`: derived state in React** (Common Mistakes #2) → `react-derived-state-useeffect`
 - [x] **`Boolean(x)` vs `!!x`, `Number` vs `parseInt`, and `String()` vs `toString()`** → `boolean-vs-bang-number-vs-parseint`
 - [x] **`satisfies`, `as`, `as const`, and `is`: how TypeScript labels a value** → `typescript-satisfies-as-const`

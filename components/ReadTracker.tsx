@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { getPostBody } from "@/lib/postBody";
+import { articleScrollProgress } from "@/lib/articleScroll";
 import { saveProgress } from "@/lib/reader";
 
-/** Remembers how far you got in this post (powers "Continue reading" + Read badges). */
+/** Tracks max read progress for badges (bookmarks are set manually via ArticleBookmark). */
 export default function ReadTracker({ slug }: { slug: string }) {
   useEffect(() => {
     let max = 0;
@@ -14,12 +14,7 @@ export default function ReadTracker({ slug }: { slug: string }) {
     const measure = () => {
       frame = 0;
       // progress through the article body itself, not the comments/related block below it
-      const body = getPostBody();
-      if (!body) {
-        return;
-      }
-      const rect = body.getBoundingClientRect();
-      const p = rect.height > 0 ? (window.innerHeight - rect.top) / rect.height : 1;
+      const p = articleScrollProgress();
       if (p > max) {
         max = p;
         if (Date.now() - lastSave > 1000) {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatCount } from "@/lib/format";
 import { getPostBody } from "@/lib/postBody";
 import { useStats } from "@/lib/useStats";
+import ArticleBookmark from "./ArticleBookmark";
 import ShareButton from "./ShareButton";
 import { CommentIcon } from "./StatIcons";
 
@@ -121,6 +122,7 @@ export function PostActionBar({ slug, title, url, readingTime }: Props) {
             <CommentIcon />
             {comments > 0 && formatCount(comments)}
           </a>
+          <ArticleBookmark slug={slug} layout="bar" />
           <ShareButton title={title} url={url} variant="icon" className="!shadow-none !ring-0 !bg-transparent" />
         </div>
       </div>
@@ -155,6 +157,7 @@ export function PostRailActions({ slug, title, url, readingTime }: Props) {
         >
           <span aria-hidden>↑</span> Back to top
         </button>
+        <ArticleBookmark slug={slug} layout="rail" />
       </div>
       <ShareButton title={title} url={url} />
     </div>

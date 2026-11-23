@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
  * you turn on cross-device sync (see lib/readerSync.ts).
  */
 export type ReaderState = {
-  /** slug → { p: max scroll progress 0..1, t: last opened (ms) } */
-  history: Record<string, { p: number; t: number }>;
+  /** slug → p: max scroll progress, b: manual bookmark, t: last updated (ms) */
+  history: Record<string, { p: number; b?: number; t: number }>;
   streak: { day: string; count: number; best: number };
   /** start of the current session (ms) */
   lastVisit: number;
@@ -22,6 +22,39 @@ const EVENT = "bitlyst:reader";
 /** Fired only for changes made on this device — what sync pushes. */
 export const LOCAL_EVENT = "bitlyst:reader-local";
 export const READ_THRESHOLD = 0.85;
+/** Show "pick up where you left off" between these bounds. */
+export const RESUME_MIN = 0.08;
+
+export function resumeProgress(entry: { b?: number } | undefined) {
+  if (entry?.b === undefined) {
+    return null;
+  }
+  const p = entry.b;
+  return p >= RESUME_MIN && p < 1 ? p : null;
+}
+
+export function setBookmark(slug: string, progress: number) {
+  const state = readState();
+  const prev = state.history[slug];
+  const b = Math.min(1, Math.max(0, progress));
+  const p = prev?.p ?? 0;
+  writeState({
+    ...state,
+    history: { ...state.history, [slug]: { p, b, t: Date.now() } },
+  });
+}
+
+export function clearBookmark(slug: string) {
+  const state = readState();
+  const prev = state.history[slug];
+  if (prev?.b === undefined) {
+    return;
+  }
+  writeState({
+    ...state,
+    history: { ...state.history, [slug]: { p: prev.p, t: prev.t } },
+  });
+}
 
 const EMPTY: ReaderState = { history: {}, streak: { day: "", count: 0, best: 0 }, lastVisit: 0, prevVisit: 0 };
 
@@ -62,11 +95,13 @@ export function applyRemote(remote: Pick<ReaderState, "history" | "streak">) {
   const history = { ...state.history };
   let changed = false;
   for (const [slug, r] of Object.entries(remote.history)) {
-    const l = history[slug];
-    const p = Math.max(l?.p ?? 0, r.p);
-    const t = Math.max(l?.t ?? 0, r.t);
-    if (!l || l.p !== p || l.t !== t) {
-      history[slug] = { p, t };
+    const local = history[slug];
+    const p = Math.max(local?.p ?? 0, r.p);
+    const t = Math.max(local?.t ?? 0, r.t);
+    const b = local?.b ?? r.b;
+    const next = b !== undefined ? { p, b, t } : { p, t };
+    if (!local || local.p !== p || local.t !== t || local.b !== b) {
+      history[slug] = next;
       changed = true;
     }
   }
@@ -116,11 +151,13 @@ export function registerVisit() {
 export function saveProgress(slug: string, progress: number) {
   const state = readState();
   const prev = state.history[slug];
-  const p = Math.max(prev?.p ?? 0, Math.min(1, progress));
+  const last = Math.min(1, Math.max(0, progress));
+  const p = Math.max(prev?.p ?? 0, last);
   if (prev && prev.p === p && Date.now() - prev.t < 60_000) {
     return;
   }
-  writeState({ ...state, history: { ...state.history, [slug]: { p, t: Date.now() } } });
+  const entry = prev?.b !== undefined ? { p, b: prev.b, t: Date.now() } : { p, t: Date.now() };
+  writeState({ ...state, history: { ...state.history, [slug]: entry } });
 }
 
 /** Reactive view of the reader state; null until mounted (avoids hydration mismatch). */

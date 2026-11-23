@@ -1,0 +1,121 @@
+---
+title: "forEach and async/await: Why Your Loop Doesn't Wait"
+summary: "forEach with async/await doesn't wait. It starts every callback and returns undefined, so your code moves on early and errors skip your try/catch. Use for...of or Promise.all."
+publishedTime: "2026-11-23"
+level: "beginner"
+series: "common-mistakes"
+seriesOrder: 3
+cover: "/assets/foreach-await-cover.jpg"
+coverAlt: "AI-generated illustration. The loop has already left. The work it started is still in the air, and nobody is waiting for it."
+tags: ["javascript", "async-await", "promises", "foreach", "interview"]
+---
+
+`forEach` with `async`/`await` looks like it waits. It doesn't. This passes code review all the time:
+
+```js
+const results = [];
+
+ids.forEach(async (id) => {
+  results.push(await fetchUser(id));
+});
+
+console.log(results); // []
+```
+
+Each `fetchUser` takes 100 ms. The log runs at **0 ms** and prints an empty array. About 150 ms later the array holds all three users, but by then nobody is reading it.
+
+## The mental model
+
+**`forEach` starts every callback and walks away.**
+
+An `async` function returns a promise as soon as it hits its first `await`. `forEach` calls your callback, gets that promise back, throws it away and calls the next one. When all calls have *started*, `forEach` returns `undefined`. There is nothing to await, so `await ids.forEach(...)` doesn't help.
+
+## How it works
+
+The `await` inside the callback is real. It pauses *that callback*. It doesn't pause the loop, and it doesn't pause the function around the loop.
+
+So three things happen:
+
+1. **The code after the loop runs too early.** It sees empty or half-filled data.
+2. **The work runs in parallel, not in order.** You may have expected one at a time.
+3. **Errors escape.** A `try`/`catch` around the `forEach` catches nothing. The rejection shows up later as an `unhandledRejection`, which crashes a Node process by default.
+
+```js
+try {
+  ids.forEach(async () => {
+    throw new Error("boom");
+  });
+} catch {
+  // never runs
+}
+```
+
+![Three lanes of blocks: launched with no one at the finish, in single file, and side by side through a gold gate](/assets/foreach-await-loops.jpg)
+_Pick the lane on purpose: forEach launches and forgets, for...of goes one at a time, Promise.all goes together and waits at the gate._
+
+## The two fixes
+
+**One at a time, in order: `for...of`.**
+
+```js
+for (const id of ids) {
+  results.push(await fetchUser(id));
+}
+```
+
+This one waits for real. Three 100 ms calls took **303 ms**. Use it when order matters, when each step depends on the last, or when you must not hammer an API.
+
+**All at once, and wait for all: `Promise.all` + `map`.**
+
+```js
+const results = await Promise.all(ids.map((id) => fetchUser(id)));
+```
+
+`map` keeps the promises that `forEach` threw away. `Promise.all` waits for them and keeps the input order. The same three calls took **102 ms**. If one rejects, the `await` throws, so your `try`/`catch` works again.
+
+Need every result even when some fail? Use `Promise.allSettled`. The [Promise APIs comparison](/p/promise-apis-comparison) covers the full set, and [async/await is not parallel](/p/async-await-not-parallel) covers the sequential trap from the other side.
+
+## In practice
+
+The bug is quiet. Tests with fast mocks often pass, because the data arrives before anyone checks. In production it shows up as a save that "sometimes" misses rows, a response sent before the writes finish, or a serverless function that ends while the work is still running.
+
+The same goes for `filter`, `some` and `reduce` with an async callback: they don't wait either. `filter(async ...)` keeps every item, because a promise is always truthy.
+
+> **Say it in an interview:** "`forEach` ignores the promise your async callback returns. It starts every call, returns `undefined`, and moves on, so code after it runs early and errors skip the `try`/`catch`. I use `for...of` when I need one at a time, or `await Promise.all(items.map(...))` when they can run together."
+
+## Cheat sheet
+
+| You want | Use | Waits? |
+| --- | --- | --- |
+| One at a time, in order | `for (const x of xs) await f(x)` | Yes |
+| All together, all results | `await Promise.all(xs.map(f))` | Yes |
+| All together, keep failures | `await Promise.allSettled(xs.map(f))` | Yes |
+| Fire and forget, on purpose | `xs.forEach(f)` | No |
+
+**TL;DR:** `forEach` never waits for async callbacks. Use `for...of` for one at a time, or `Promise.all` with `map` for all at once.
+
+<DeepDive>
+
+### Why `forEach` can't wait
+
+The spec for `Array.prototype.forEach` calls the callback and ignores its return value. A sync function returns `undefined`, an async one returns a promise, and `forEach` treats both the same. Changing that would break every page that relies on it, so it stays.
+
+### Timings
+
+Measured on Node 22.18.0 with three fake calls of 100 ms each:
+
+| Pattern | Result right after | Total time |
+| --- | --- | --- |
+| `forEach(async ...)` | `[]` at 0 ms | Full when checked at 150 ms, but nobody waited |
+| `for...of` + `await` | `[1, 2, 3]` | 303 ms |
+| `Promise.all(map)` | `[1, 2, 3]` | 102 ms |
+
+### Limit how many run at once
+
+`Promise.all` over 10,000 items starts 10,000 requests. For large lists, process in chunks (`for...of` over slices, with `Promise.all` inside each one) or use a small pool library such as `p-limit`.
+
+### `for await...of`
+
+`for await (const x of xs)` is for async *iterables*, such as streams. On a plain array of promises it works, but it awaits them in order, and a rejection in a later promise can go unhandled while an earlier one is still pending. Prefer `Promise.all` for arrays.
+
+</DeepDive>
