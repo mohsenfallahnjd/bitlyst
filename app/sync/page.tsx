@@ -3,7 +3,8 @@ import SyncPanel from "./SyncPanel";
 
 export const metadata: Metadata = {
   title: "Sync devices",
-  description: "Keep what you've read and where you stopped in sync across your phone, tablet and computer.",
+  description:
+    "Keep read progress, bookmarks, and streak in sync across your phone, tablet, and computer.",
   alternates: { canonical: "/sync" },
   robots: { index: false },
 };

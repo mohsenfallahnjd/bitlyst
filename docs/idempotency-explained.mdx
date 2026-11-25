@@ -1,0 +1,102 @@
+---
+title: "Idempotency: Why a Retried Payment Can't Charge Twice"
+summary: "Idempotency means doing something twice has the same effect as doing it once. Learn how idempotency keys make retries safe, and why PUT is idempotent but POST isn't."
+publishedTime: "2026-11-25"
+level: "intermediate"
+series: "engineering"
+seriesOrder: 1
+cover: "/assets/idempotency-cover.jpg"
+coverAlt: "AI-generated illustration. Press the button five times, and one lift still comes."
+tags: ["system-design", "api", "http", "payments", "interview"]
+---
+
+Picture a user tapping **Pay** on a train with bad signal. The request reaches your server, the card is charged, and then the response gets lost on the way back. The app sees a timeout and does the sensible thing: it retries.
+
+Without idempotency, that retry charges the card a second time.
+
+## The mental model
+
+**Pressing the lift button five times still calls one lift.**
+
+An operation is **idempotent** when doing it twice has the same effect as doing it once. The first press changes the world. Every press after that changes nothing, because the world is already in that state.
+
+## How it works
+
+Some operations are idempotent by nature. "Set the email to `a@b.com`" gives the same result no matter how many times it runs. "Delete order 42" leaves order 42 gone, whether it ran once or three times.
+
+Others are not. "Add $20 to the balance" or "create a new order" changes the world **every** time it runs. Those are the ones that hurt when a request is retried.
+
+The client can't tell the difference between "the request never arrived" and "it arrived, but the answer got lost". Both look like a timeout. So retrying is the only safe move for the client, and that means the **server** has to make retries harmless.
+
+The usual fix is an **idempotency key**: a unique ID the client generates once per action and sends with every attempt.
+
+```js
+const key = crypto.randomUUID(); // created once, when the user taps Pay
+
+await fetch("/api/payments", {
+  method: "POST",
+  headers: { "Idempotency-Key": key }, // same key on every retry
+  body: JSON.stringify({ amount: 2000 }),
+});
+```
+
+On the server:
+
+1. **Look up the key.** Seen it before? Return the saved response. Don't charge again.
+2. **New key?** Do the work, then save the key together with the response.
+3. **Same key, different body?** Reject it. That's a bug in the client, not a retry.
+
+![A request with a tag gets one receipt; the copy with the same tag gets that same receipt back](/assets/idempotency-key-receipt.jpg)
+_The key is the tag. Same tag, same receipt: the second request gets the answer the first one already earned._
+
+## HTTP methods: PUT vs POST
+
+HTTP builds the idea into its methods:
+
+- **GET, PUT, DELETE** are idempotent by spec. `PUT /users/7` with the same body sets the same state every time.
+- **POST** is not. `POST /orders` means "create one more", so two calls make two orders.
+- **PATCH** depends on the patch. "Set name to Sam" is idempotent; "increment count" is not.
+
+That's why browsers warn before re-sending a form, and why payment APIs such as [Stripe accept an `Idempotency-Key` header](https://docs.stripe.com/api/idempotent_requests) on their POST endpoints.
+
+## In practice
+
+You need this anywhere a duplicate costs money or trust: payments, orders, sending emails or SMS, and message-queue consumers. Most queues deliver **at least once**, so your handler will see the same message twice sooner or later.
+
+You mostly don't need it for reads, or for writes that already set a value instead of adding to it.
+
+Two details matter. Generate the key **once per user action**, not once per attempt, or every retry looks new. And on the frontend, disabling the button after the first tap helps, but it is not a fix: the network can still retry for you.
+
+> **Say it in an interview:** "An idempotent operation has the same effect whether it runs once or many times. Networks fail after the server has done the work, so clients must retry, and the server has to make those retries safe. For non-idempotent calls like payments, the client sends an idempotency key, and the server stores it with the result and returns the saved result on a repeat."
+
+## Cheat sheet
+
+| Question | Answer |
+| --- | --- |
+| Idempotent means | Once or ten times, same effect |
+| Why it matters | Timeouts force retries; retries must be harmless |
+| The fix for POST | Client sends an `Idempotency-Key`; server stores key + response |
+| Idempotent methods | GET, PUT, DELETE (POST is not) |
+| Key created | Once per user action, reused on every retry |
+
+**TL;DR:** you can't stop retries, so make them harmless. Same key, same result, one charge.
+
+<DeepDive>
+
+### Two retries at the same moment
+
+"Look up, then do the work" has a race: two copies can both miss the lookup and both charge. Claim the key first with an atomic write, such as a unique constraint in the database or Redis `SET key value NX`, and only the winner does the work. The loser waits for the result or gets a `409 Conflict`.
+
+### Store the key with the work
+
+If the charge commits but saving the key fails, the next retry charges again. Keep the key and the side effect in the same database transaction when you can. When the work calls an outside service, pass your key along so that service deduplicates too.
+
+### How long to keep keys
+
+Keys only need to outlive the retry window. Stripe, for example, keeps them for at least 24 hours. Expire them after that so the table doesn't grow forever.
+
+### Idempotent is not the same as safe
+
+In HTTP terms, a **safe** method doesn't change anything (GET, HEAD). DELETE is idempotent but not safe: the first call changes the world, the rest don't. Also, the *response* can differ: a second DELETE may return `404`, and that's still idempotent, because the state is the same.
+
+</DeepDive>

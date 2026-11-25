@@ -5,7 +5,8 @@ import { applyRemote, LOCAL_EVENT, readState } from "@/lib/reader";
 
 /**
  * Cross-device reading sync. Devices that share a secret sync code share one copy of the
- * reading state on the server. No account: the code is the only key, so treat it like a password.
+ * reading state on the server (read progress, bookmarks, streak). No account: the code is the
+ * only key, so treat it like a password.
  *
  * Each sync sends this device's state and merges back the combined one. It runs on page load,
  * a few seconds after local progress changes, when the tab comes back, and when it's hidden.

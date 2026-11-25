@@ -66,9 +66,6 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ### Engineering (`engineering`)
 
-- [ ] **Idempotency: why retrying a payment must not charge twice**
-  - Model: pressing the lift button five times still calls one lift.
-  - Why: system-design staple; explains idempotency keys and PUT vs POST.
 - [ ] **Feature flags: deploy is not release**
   - Model: the code ships dark; a switch turns it on.
   - Why: core idea behind trunk-based development and safe rollouts.
@@ -116,6 +113,7 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ## Published
 
+- [x] **Idempotency: why retrying a payment must not charge twice** (Engineering #1) → `idempotency-explained`
 - [x] **What runs first in a Next.js page: Server Components, render, effects** → `react-nextjs-render-order`
 - [x] **forEach and async/await: why your loop doesn't wait** (Common Mistakes #3) → `foreach-async-await`
 - [x] **You don't need that `useEffect`: derived state in React** (Common Mistakes #2) → `react-derived-state-useeffect`

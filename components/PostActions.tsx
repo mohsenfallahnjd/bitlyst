@@ -21,7 +21,8 @@ export function useArticleProgress() {
       }
       const rect = body.getBoundingClientRect();
       const p = rect.height > 0 ? (window.innerHeight * 0.5 - rect.top) / rect.height : 0;
-      setProgress(Math.min(1, Math.max(0, p)));
+      const next = Math.min(1, Math.max(0, p));
+      setProgress((prev) => (Math.abs(next - prev) < 0.008 ? prev : next));
     };
     const onScroll = () => {
       frame ||= requestAnimationFrame(measure);
@@ -82,27 +83,56 @@ export function PostActionBar({ slug, title, url, readingTime }: Props) {
 
   useEffect(() => {
     let lastY = window.scrollY;
-    const onScroll = () => {
+    let frame = 0;
+    let revealed = false;
+    let downPx = 0;
+    let upPx = 0;
+
+    const measure = () => {
+      frame = 0;
       const y = window.scrollY;
-      // reveal when scrolling up or near the end, hide while skimming down
-      setShow(y > 500 && (y < lastY - 4 || progressRef.current > 0.92));
-      if (Math.abs(y - lastY) > 4) {
-        lastY = y;
+      const dy = y - lastY;
+
+      if (dy > 0.5) {
+        downPx += dy;
+        upPx = 0;
+        if (downPx >= 28) {
+          revealed = false;
+          downPx = 0;
+        }
+      } else if (dy < -0.5) {
+        upPx += -dy;
+        downPx = 0;
+        if (upPx >= 14) {
+          revealed = true;
+          upPx = 0;
+        }
       }
+
+      const next = y > 500 && (revealed || progressRef.current > 0.92);
+      setShow((prev) => (prev === next ? prev : next));
+      lastY = y;
     };
+
+    const onScroll = () => {
+      frame ||= requestAnimationFrame(measure);
+    };
+
+    measure();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-50 xl:hidden pb-[env(safe-area-inset-bottom)] transition-transform duration-300 ${
-        show ? "translate-y-0" : "translate-y-[120%]"
+      className={`fixed inset-x-0 bottom-0 z-50 xl:hidden pb-[env(safe-area-inset-bottom)] transform-gpu transition-transform duration-300 ease-out ${
+        show ? "translate-y-0" : "translate-y-[calc(100%+1rem)] pointer-events-none"
       }`}
     >
-      <div className="mx-3 mb-3 flex items-center justify-between gap-1 rounded-full border border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-lg shadow-black/5 px-2 py-1">
+      <div className="mx-3 mb-3 flex min-h-11 items-center justify-between gap-1 rounded-full border border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-lg shadow-black/5 px-2 py-1">
         <button
           type="button"
           onClick={() => {

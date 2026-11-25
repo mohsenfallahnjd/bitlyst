@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { articleScrollProgress, scrollToArticleProgress } from "@/lib/articleScroll";
 import { clearBookmark, setBookmark, useReader } from "@/lib/reader";
 
@@ -25,36 +26,39 @@ export default function ArticleBookmark({
   const reader = useReader();
   const b = reader?.history[slug]?.b;
   const pct = b !== undefined ? Math.round(b * 100) : null;
+  const lastTap = useRef(0);
 
   const save = () => {
     setBookmark(slug, articleScrollProgress());
   };
 
   if (layout === "bar") {
+    const onBarTap = () => {
+      if (pct === null) {
+        save();
+        return;
+      }
+      const now = Date.now();
+      if (now - lastTap.current < 450) {
+        save();
+        lastTap.current = 0;
+        return;
+      }
+      lastTap.current = now;
+      scrollToArticleProgress(b!);
+    };
+
     return (
-      <>
-        {pct !== null && (
-          <button
-            type="button"
-            onClick={() => scrollToArticleProgress(b!)}
-            className={iconBtn}
-            aria-label={`Jump to bookmark at ${pct}%`}
-            title={`Bookmark at ${pct}%`}
-          >
-            <BookmarkIcon filled />
-            <span className="tabular-nums">{pct}%</span>
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={save}
-          className={iconBtn}
-          aria-label={pct !== null ? "Update bookmark to here" : "Bookmark this spot"}
-          title={pct !== null ? "Update bookmark" : "Bookmark here"}
-        >
-          <BookmarkIcon filled={pct !== null} />
-        </button>
-      </>
+      <button
+        type="button"
+        onClick={onBarTap}
+        className={`${iconBtn} min-w-[2.75rem] shrink-0 justify-center`}
+        aria-label={pct !== null ? `Jump to bookmark at ${pct}%. Double-tap to update.` : "Bookmark this spot"}
+        title={pct !== null ? `Bookmark at ${pct}% · double-tap to update` : "Bookmark here"}
+      >
+        <BookmarkIcon filled={pct !== null} />
+        {pct !== null ? <span className="tabular-nums">{pct}%</span> : null}
+      </button>
     );
   }
 

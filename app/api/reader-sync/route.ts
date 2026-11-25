@@ -6,7 +6,7 @@ import { isPost, rateLimit, readJsonBody } from "@/lib/requestGuards";
 /**
  * Cross-device reading sync. A device sends its whole reading state with a secret sync code;
  * the server merges it into the stored copy (highest progress / latest open per post, latest
- * streak day) and returns the merged state. One call both pushes and pulls.
+ * bookmark per post by bt, latest streak day) and returns the merged state.
  *
  * The code is never stored: keys are derived from its salted hash.
  */
@@ -16,16 +16,29 @@ const DAY_RE = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
 const MAX_POSTS = 2000;
 const TTL_SECONDS = 60 * 60 * 24 * 365;
 
-// KEYS: progress hash, opened-at hash, streak hash
-// ARGV: ttl, dayNum, day, count, best, then (slug, p, t) triples
+// KEYS: progress, opened-at, streak, bookmark, bookmark-at
+// ARGV: ttl, dayNum, day, count, best, then (slug, p, t, b, bt) per post
 const MERGE = `
-for i = 6, #ARGV, 3 do
+for i = 6, #ARGV, 5 do
   local s = ARGV[i]
   if tonumber(ARGV[i + 1]) > tonumber(redis.call('HGET', KEYS[1], s) or '-1') then
     redis.call('HSET', KEYS[1], s, ARGV[i + 1])
   end
   if tonumber(ARGV[i + 2]) > tonumber(redis.call('HGET', KEYS[2], s) or '-1') then
     redis.call('HSET', KEYS[2], s, ARGV[i + 2])
+  end
+  local bt_new = tonumber(ARGV[i + 4] or '0')
+  if bt_new > 0 then
+    local bt_old = tonumber(redis.call('HGET', KEYS[5], s) or '0')
+    if bt_new > bt_old then
+      redis.call('HSET', KEYS[5], s, ARGV[i + 4])
+      local b = ARGV[i + 3]
+      if b == nil or b == '' then
+        redis.call('HDEL', KEYS[4], s)
+      else
+        redis.call('HSET', KEYS[4], s, b)
+      end
+    end
   end
 end
 local n = tonumber(ARGV[2])
@@ -41,10 +54,10 @@ if n > 0 then
     redis.call('HSET', KEYS[3], 'best', ARGV[5])
   end
 end
-for k = 1, 3 do
+for k = 1, 5 do
   redis.call('EXPIRE', KEYS[k], ARGV[1])
 end
-return {redis.call('HGETALL', KEYS[1]), redis.call('HGETALL', KEYS[2]), redis.call('HGETALL', KEYS[3])}
+return {redis.call('HGETALL', KEYS[1]), redis.call('HGETALL', KEYS[2]), redis.call('HGETALL', KEYS[3]), redis.call('HGETALL', KEYS[4]), redis.call('HGETALL', KEYS[5])}
 `;
 
 function num(v: unknown, min: number, max: number) {
@@ -74,19 +87,27 @@ export async function POST(req: NextRequest) {
   }
 
   const now = Date.now();
-  const triples: string[] = [];
+  const quintuples: string[] = [];
   const history = body.history && typeof body.history === "object" ? (body.history as Record<string, unknown>) : {};
   for (const [slug, entry] of Object.entries(history).slice(0, MAX_POSTS)) {
     if (!isPost(slug) || !entry || typeof entry !== "object") {
       continue;
     }
-    const { p, t } = entry as { p?: unknown; t?: unknown };
+    const { p, t, b, bt } = entry as { p?: unknown; t?: unknown; b?: unknown; bt?: unknown };
     const progress = num(p, 0, 1);
     const opened = num(t, 0, now + 60_000);
     if (progress === null || opened === null) {
       continue;
     }
-    triples.push(slug, String(progress), String(Math.round(opened)));
+    const bookmark = b === undefined ? "" : String(num(b, 0, 1) ?? "");
+    const bookmarkAt = num(bt, 0, now + 60_000) ?? 0;
+    quintuples.push(
+      slug,
+      String(progress),
+      String(Math.round(opened)),
+      bookmark,
+      bookmarkAt > 0 ? String(Math.round(bookmarkAt)) : "0",
+    );
   }
 
   const streak = body.streak && typeof body.streak === "object" ? (body.streak as Record<string, unknown>) : {};
@@ -107,21 +128,41 @@ export async function POST(req: NextRequest) {
       .slice(0, 32);
     const prefix = `readersync:${id}`;
     const result = (await redis.eval(MERGE, {
-      keys: [`${prefix}:p`, `${prefix}:t`, `${prefix}:streak`],
+      keys: [
+        `${prefix}:p`,
+        `${prefix}:t`,
+        `${prefix}:streak`,
+        `${prefix}:bm`,
+        `${prefix}:bt`,
+      ],
       arguments: [
         String(TTL_SECONDS),
         String(dayNum),
         m ? day : "",
         String(Math.round(count)),
         String(Math.round(best)),
-        ...triples,
+        ...quintuples,
       ],
     })) as unknown[];
 
     const opened = new Map(pairs(result[1]));
-    const merged: Record<string, { p: number; t: number }> = {};
+    const bookmarks = new Map(pairs(result[3]));
+    const bookmarkAt = new Map(pairs(result[4]));
+    const merged: Record<string, { p: number; t: number; b?: number; bt?: number }> = {};
     for (const [slug, p] of pairs(result[0])) {
-      merged[slug] = { p: Number(p), t: Number(opened.get(slug) ?? 0) };
+      const entry: { p: number; t: number; b?: number; bt?: number } = {
+        p: Number(p),
+        t: Number(opened.get(slug) ?? 0),
+      };
+      const bt = Number(bookmarkAt.get(slug) ?? 0);
+      if (bt > 0) {
+        entry.bt = bt;
+        const bm = bookmarks.get(slug);
+        if (bm !== undefined) {
+          entry.b = Number(bm);
+        }
+      }
+      merged[slug] = entry;
     }
     const s = Object.fromEntries(pairs(result[2]));
 

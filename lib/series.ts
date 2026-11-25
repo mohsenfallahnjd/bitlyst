@@ -64,7 +64,6 @@ export const SERIES: Record<string, Series> = {
       "Ideas behind reliable systems: idempotency, flags, indexes, and the vocabulary seniors expect in design interviews.",
     mascot: { sprite: "rivet", name: "Rivet", bio: "Cares about the diagram on the whiteboard, not the syntax on the screen." },
     upcoming: [
-      "The payment retry that must not charge twice",
       "Deploy is not release",
       "One trip to the shop with a list",
     ],

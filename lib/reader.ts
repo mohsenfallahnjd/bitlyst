@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
  * you turn on cross-device sync (see lib/readerSync.ts).
  */
 export type ReaderState = {
-  /** slug → p: max scroll progress, b: manual bookmark, t: last updated (ms) */
-  history: Record<string, { p: number; b?: number; t: number }>;
+  /** slug → p, t (progress), b (bookmark), bt (bookmark set/clear time, for sync) */
+  history: Record<string, { p: number; b?: number; t: number; bt?: number }>;
   streak: { day: string; count: number; best: number };
   /** start of the current session (ms) */
   lastVisit: number;
@@ -38,9 +38,10 @@ export function setBookmark(slug: string, progress: number) {
   const prev = state.history[slug];
   const b = Math.min(1, Math.max(0, progress));
   const p = prev?.p ?? 0;
+  const now = Date.now();
   writeState({
     ...state,
-    history: { ...state.history, [slug]: { p, b, t: Date.now() } },
+    history: { ...state.history, [slug]: { p, b, t: prev?.t ?? now, bt: now } },
   });
 }
 
@@ -50,9 +51,10 @@ export function clearBookmark(slug: string) {
   if (prev?.b === undefined) {
     return;
   }
+  const now = Date.now();
   writeState({
     ...state,
-    history: { ...state.history, [slug]: { p: prev.p, t: prev.t } },
+    history: { ...state.history, [slug]: { p: prev.p, t: prev.t, bt: now } },
   });
 }
 
@@ -66,10 +68,39 @@ function localDay(offsetDays = 0) {
 export function readState(): ReaderState {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
+    if (!raw) {
+      return EMPTY;
+    }
+    const parsed = { ...EMPTY, ...JSON.parse(raw) } as ReaderState;
+    for (const entry of Object.values(parsed.history)) {
+      if (entry.b !== undefined && !entry.bt) {
+        entry.bt = entry.t;
+      }
+    }
+    return parsed;
   } catch {
     return EMPTY;
   }
+}
+
+function mergeBookmark(
+  local: { b?: number; bt?: number } | undefined,
+  remote: { b?: number; bt?: number },
+): { b?: number; bt?: number } {
+  const lbt = local?.bt ?? 0;
+  const rbt = remote.bt ?? 0;
+  if (rbt > lbt) {
+    return remote.b !== undefined ? { b: remote.b, bt: rbt } : { bt: rbt };
+  }
+  if (lbt > rbt) {
+    return local?.b !== undefined ? { b: local.b, bt: lbt } : lbt ? { bt: lbt } : {};
+  }
+  const b = local?.b ?? remote.b;
+  const bt = Math.max(lbt, rbt);
+  if (b !== undefined) {
+    return bt ? { b, bt } : { b };
+  }
+  return bt ? { bt } : {};
 }
 
 function writeState(next: ReaderState, { remote = false } = {}) {
@@ -89,7 +120,7 @@ function dayNum(day: string) {
   return y && m && d ? y * 10_000 + m * 100 + d : 0;
 }
 
-/** Merges state synced from other devices: highest progress and latest open per post, latest streak day. */
+/** Merges state synced from other devices: max progress, latest bookmark (by bt), latest streak day. */
 export function applyRemote(remote: Pick<ReaderState, "history" | "streak">) {
   const state = readState();
   const history = { ...state.history };
@@ -98,9 +129,8 @@ export function applyRemote(remote: Pick<ReaderState, "history" | "streak">) {
     const local = history[slug];
     const p = Math.max(local?.p ?? 0, r.p);
     const t = Math.max(local?.t ?? 0, r.t);
-    const b = local?.b ?? r.b;
-    const next = b !== undefined ? { p, b, t } : { p, t };
-    if (!local || local.p !== p || local.t !== t || local.b !== b) {
+    const next = { p, t, ...mergeBookmark(local, r) };
+    if (!local || JSON.stringify(local) !== JSON.stringify(next)) {
       history[slug] = next;
       changed = true;
     }
@@ -156,7 +186,12 @@ export function saveProgress(slug: string, progress: number) {
   if (prev && prev.p === p && Date.now() - prev.t < 60_000) {
     return;
   }
-  const entry = prev?.b !== undefined ? { p, b: prev.b, t: Date.now() } : { p, t: Date.now() };
+  const entry = {
+    p,
+    t: Date.now(),
+    ...(prev?.b !== undefined ? { b: prev.b } : {}),
+    ...(prev?.bt !== undefined ? { bt: prev.bt } : {}),
+  };
   writeState({ ...state, history: { ...state.history, [slug]: entry } });
 }
 
