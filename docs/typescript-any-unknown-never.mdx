@@ -1,0 +1,106 @@
+---
+title: "any vs unknown vs never in TypeScript, Simply"
+summary: "any vs unknown vs never in TypeScript: any skips the checks, unknown makes you check first, never means it can't happen. When to use each, with short examples."
+publishedTime: "2026-11-27"
+publishOrder: 3
+level: "beginner"
+cover: "/assets/ts-any-unknown-never-cover.jpg"
+coverAlt: "AI-generated illustration. One parcel skips security, one waits at the scanner, and one slot can never hold anything."
+tags: ["typescript", "types", "interview"]
+---
+
+`JSON.parse` returns `any`. So does a bare `catch (e)` in older configs. Both quietly turn off TypeScript for everything they touch, and the bug shows up at runtime instead.
+
+`any`, `unknown` and `never` sound alike, but they mean three very different things.
+
+## The mental model
+
+**Think of airport security.**
+
+- **`any`** walks around the scanner. Nothing is checked, and anything goes.
+- **`unknown`** is a sealed bag on the belt. You can hold it, but you can't open it until you scan it.
+- **`never`** is a gate nothing can pass through. If code reaches it, something is wrong.
+
+## How it works
+
+**`any` switches the checker off.** You can call anything on it, and TypeScript says nothing.
+
+```ts
+const data: any = JSON.parse('"hi"');
+data.toFixed(2); // compiles fine, crashes at runtime
+```
+
+Worse, it spreads. Pass `data` into a typed function and the result is often `any` too.
+
+**`unknown` says "check before use".** You can store it and pass it around, but you can't use it until you prove what it is. That proof is called **narrowing**: a `typeof`, `instanceof` or other check that tells TypeScript the real type.
+
+```ts
+const data: unknown = JSON.parse('"hi"');
+data.toUpperCase(); // error: 'data' is of type 'unknown'
+
+if (typeof data === "string") {
+  data.toUpperCase(); // fine: scanned, it's a string
+}
+```
+
+![A hand inspects a sealed box with a magnifying glass, next to a tray where each shape sits in its own slot](/assets/ts-unknown-narrowing.jpg)
+_unknown isn't less safe than a real type. It's a real type you haven't opened yet._
+
+**`never` says "this cannot happen".** No value has type `never`. You see it in two places: a function that never returns (it always throws or loops forever), and a branch TypeScript has proven impossible.
+
+## In practice
+
+The most useful trick is the **exhaustive check**. Picture a `switch` over every shape:
+
+```ts
+type Shape = "circle" | "square";
+
+function area(s: Shape) {
+  switch (s) {
+    case "circle": return 1;
+    case "square": return 2;
+    default: {
+      const done: never = s; // only compiles if every case is handled
+      return done;
+    }
+  }
+}
+```
+
+Add `"triangle"` to `Shape` and forget the case: `s` is now `"triangle"` in the `default` branch, not `never`, so the build fails and points at the line you forgot.
+
+Simple rules:
+
+- Data from outside (API responses, `JSON.parse`, `catch` errors, user input): type it as **`unknown`** and check it, or validate it with a library such as Zod.
+- **`any`** only as a short-lived escape hatch, for example while migrating JavaScript. Leave a comment saying why.
+- **`never`** for exhaustive checks and functions that always throw.
+
+If you enable `strict`, `catch (e)` gives you `unknown` already (via `useUnknownInCatchVariables`), which is a good sign of which one TypeScript itself prefers.
+
+> **Say it in an interview:** "`any` turns type checking off for that value, so mistakes reach runtime. `unknown` also accepts any value, but you have to narrow it with a check before you can use it, so it's the safe choice for outside data. `never` is the type with no values: it marks code that can't be reached, and I use it in a `switch` default to make the compiler catch missing cases."
+
+## Cheat sheet
+
+| Type | Airport picture | Can you use it directly? | Use for |
+| --- | --- | --- | --- |
+| `any` | Skips the scanner | Yes, nothing is checked | Temporary escape hatch |
+| `unknown` | Sealed bag | No, narrow it first | Outside data, errors |
+| `never` | Gate nothing passes | There's no value to use | Exhaustive checks, always-throw functions |
+
+**TL;DR:** reach for `unknown` where you'd type `any`, and let `never` tell you when you forgot a case.
+
+<DeepDive>
+
+### Top type and bottom type
+
+In type-theory terms, `unknown` is the **top type**: every type can be assigned to it. `never` is the **bottom type**: it can be assigned to every type, and nothing (except `never`) can be assigned to it. `any` breaks the rules both ways, which is why it's an escape hatch rather than a real place in the hierarchy.
+
+### `never` in unions and conditional types
+
+`string | never` is just `string`; `never` disappears from unions. That's why conditional types use it to filter: `type NonNull<T> = T extends null ? never : T` drops `null` from a union.
+
+### Linting `any` away
+
+`@typescript-eslint/no-explicit-any` flags written `any`, and the `no-unsafe-*` rules catch `any` that sneaks in from libraries. Together they keep the escape hatch from becoming the default.
+
+</DeepDive>

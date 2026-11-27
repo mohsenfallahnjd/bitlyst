@@ -21,24 +21,15 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 - [ ] **WeakMap and WeakRef: references that don't keep things alive** — `under-the-benchmark`
   - Model: a sticky note on an object instead of a rope tied to it.
   - Why: short follow-up to the GC posts, and the fix for the cache leak in the memory-leaks post.
-- [ ] **Sessions vs JWT: where does the login actually live?** — `engineering`
-  - Model: a session is a coat-check ticket (server keeps the coat); a JWT is a signed wristband (you carry the proof).
-  - Why: completes the security set with `httpOnly-cookies-guide`, `xss-vs-csrf` and `cors-explained-simple`.
 - [ ] **What happens when you type a URL and press Enter** — `engineering`
   - Model: a relay race: DNS → TCP/TLS → HTTP → parse → render.
   - Why: the most asked frontend interview question.
-- [ ] **`async` vs `defer`: why script order breaks your page** — —
-  - Model: both download in parallel; `async` runs the moment it lands, `defer` waits in line until the HTML is parsed.
-  - Why: short, visual (fits `<ParallelFlow>`), asked often.
 - [ ] **Why `z-index: 9999` does nothing: stacking contexts** — —
   - Model: z-index only competes inside its own folder; a child can never climb above its parent's folder.
   - Why: everyone hits it, few can explain it. First CSS post on the blog.
 - [ ] **`==` vs `===`: the coercion rules in one table** — `js-plot-twists`
   - Model: `==` converts first, then compares; `===` refuses to convert.
   - Why: joins the plot-twists posts next to `javascript-map-parseint` and the sort post.
-- [ ] **`any` vs `unknown` vs `never` in TypeScript** — —
-  - Model: `any` switches the checker off, `unknown` says "check before use", `never` says "this cannot happen".
-  - Why: only one TypeScript post so far (`typescript-enums-vs-alternatives`); common interview question.
 - [ ] **WebSockets vs SSE vs polling: three ways to get live data** — `engineering`
   - Model: polling is asking "anything new?" on repeat, SSE is a radio broadcast, a WebSocket is a phone call.
   - Why: system-design interview staple; pairs with `broadcastchannel-api`.
@@ -105,14 +96,16 @@ Each idea: working title, **series** (slug from `lib/series.ts`, or —), the me
 
 ## Writing
 
-- [ ] **A Philosophy of Software Design** (Book Bites #1) → `a-philosophy-of-software-design-book-summary`
-
-- [ ] **How V8 makes JS fast: Ignition, Sparkplug, Maglev, TurboFan** → `v8-compiler-tiers`
-- [ ] **Why React needs `key`** → `react-keys-reconciliation`
-- [ ] **React Server Components vs `"use client"`** → `react-server-components-vs-use-client`
-
 ## Published
 
+- [x] **A Philosophy of Software Design** (Book Bites #1) → `a-philosophy-of-software-design-book-summary`
+
+- [x] **How V8 makes JS fast: Ignition, Sparkplug, Maglev, TurboFan** → `v8-compiler-tiers`
+- [x] **Why React needs `key`** → `react-keys-reconciliation`
+- [x] **React Server Components vs `"use client"`** → `react-server-components-vs-use-client`
+- [x] **`any` vs `unknown` vs `never` in TypeScript** → `typescript-any-unknown-never`
+- [x] **Sessions vs JWT: where does the login actually live?** (Engineering #2) → `sessions-vs-jwt`
+- [x] **`async` vs `defer`: why script order breaks your page** → `async-vs-defer-script`
 - [x] **Idempotency: why retrying a payment must not charge twice** (Engineering #1) → `idempotency-explained`
 - [x] **What runs first in a Next.js page: Server Components, render, effects** → `react-nextjs-render-order`
 - [x] **forEach and async/await: why your loop doesn't wait** (Common Mistakes #3) → `foreach-async-await`

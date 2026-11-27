@@ -1,0 +1,87 @@
+---
+title: "async vs defer: Why Script Order Breaks Your Page"
+summary: "async vs defer on a script tag: both download without blocking, but async runs the moment it arrives and defer waits for the HTML, in order. Learn which to pick."
+publishedTime: "2026-11-27"
+publishOrder: 1
+level: "beginner"
+cover: "/assets/async-defer-cover.jpg"
+coverAlt: "AI-generated illustration. Same delivery, two rules: serve it the moment it lands, or wait until the table is set."
+tags: ["javascript", "html", "performance", "browser", "interview"]
+---
+
+You add `async` to two script tags to speed up the page. Now it breaks one load in ten with `$ is not defined`. The plugin ran before the library it needs.
+
+`async` vs `defer` is a question about **when** a script runs, not how it downloads.
+
+## The mental model
+
+**Both download in the background. `async` runs the moment it lands. `defer` waits in line until the HTML is done.**
+
+Picture food deliveries arriving while you set a table. `async` serves each dish the second it comes through the door, in whatever order the drivers arrive. `defer` puts every dish on a shelf and serves them in menu order once the table is fully set.
+
+## How it works
+
+The browser reads your HTML top to bottom and builds the page as it goes. That's called **parsing**. A script tag can interrupt it in three ways:
+
+| Tag | Download | Runs | Order kept? |
+| --- | --- | --- | --- |
+| `<script>` | Stops parsing to download | Right away | Yes |
+| `<script async>` | In the background | As soon as it arrives, pausing parsing | No |
+| `<script defer>` | In the background | After the HTML is parsed, before `DOMContentLoaded` | Yes |
+
+A plain `<script>` is the worst case: the page stops building until the file is downloaded **and** run. That's why old advice said "put scripts at the bottom of `<body>`".
+
+`async` fixes the download, but it still runs whenever it arrives. That can be mid-page, and two `async` scripts run in whichever order the network delivers them.
+
+`defer` fixes both. It never pauses the page, and deferred scripts run in the order they appear in the HTML.
+
+![Three ribbons: one cut by a block, one dented by a block dropped mid-way, one unbroken with gold blocks waiting at its end](/assets/async-defer-lanes.jpg)
+_Plain, async, defer. Only the last one lets the page finish in one piece and still keeps the scripts in line._
+
+## In practice
+
+Use **`defer`** for your own app code, and for anything that depends on another script or on the DOM. It's the safe default.
+
+Use **`async`** for scripts that stand alone and don't care about order: analytics, ads, a chat widget. If it would be fine for it to run first or last, it can be `async`.
+
+```html
+<script defer src="/lib.js"></script>
+<script defer src="/plugin.js"></script> <!-- always after lib.js -->
+<script async src="https://analytics.example.com/a.js"></script>
+```
+
+Two quick facts help here. **Module scripts** (`type="module"`) are deferred by default. And both attributes only work on scripts with a `src`; on an inline script, they do nothing.
+
+How often will you hit this? Frameworks like Next.js already load their own bundles the right way. You meet it when you add a third-party snippet by hand, and that's exactly where the "works on my machine" order bug comes from.
+
+> **Say it in an interview:** "Both `async` and `defer` download the script without blocking the HTML parser. `async` runs as soon as it's downloaded, in any order, so it's for independent scripts like analytics. `defer` waits until the HTML is parsed and runs scripts in document order, so it's the default for app code that depends on the DOM or on other scripts."
+
+## Cheat sheet
+
+- **Plain script:** stops the page, downloads, runs. Avoid in `<head>`.
+- **`async`:** serve the moment it lands. Any order. For independent scripts.
+- **`defer`:** wait until the table is set, then serve in menu order. For app code.
+- **`type="module"`:** deferred by default.
+- Inline scripts ignore both attributes.
+
+**TL;DR:** if order matters, use `defer`. If it doesn't, `async` is fine.
+
+<DeepDive>
+
+### Both attributes at once
+
+`<script async defer>` acts as `async` in every modern browser. It was a trick for very old browsers that only knew `defer`. You don't need it today.
+
+### `async` on a module
+
+`<script type="module" async>` drops the wait-for-HTML rule: it runs as soon as it and its imports are ready, like a normal `async` script.
+
+### Scripts added from JavaScript
+
+A script created with `document.createElement("script")` acts as `async` by default. Set `script.async = false` to make dynamically added scripts run in insertion order.
+
+### Further reading
+
+The [HTML spec diagram for script loading](https://html.spec.whatwg.org/multipage/scripting.html#attr-script-async) shows all the cases on one timeline.
+
+</DeepDive>

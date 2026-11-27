@@ -1,0 +1,83 @@
+---
+title: "Sessions vs JWT: Where Does Your Login Actually Live?"
+summary: "Sessions vs JWT explained with a coat check and a wristband: who stores the login, why JWTs are hard to revoke, and which one to pick for a web app."
+publishedTime: "2026-11-27"
+publishOrder: 2
+level: "intermediate"
+series: "engineering"
+seriesOrder: 2
+cover: "/assets/sessions-jwt-cover.jpg"
+coverAlt: "AI-generated illustration. A ticket only means something to the counter that issued it. A wristband carries its own proof."
+tags: ["authentication", "security", "jwt", "system-design", "interview"]
+---
+
+You log in once, and the next fifty requests still know who you are. HTTP forgets everything between requests, so something has to carry your login along.
+
+There are two classic answers: a **session** or a **JWT**. The difference is one question: **who keeps the proof?**
+
+## The mental model
+
+**A session is a coat-check ticket. A JWT is a signed festival wristband.**
+
+With a coat check, the server keeps your coat (your login data) and gives you a numbered ticket. The ticket means nothing on its own. With a wristband, you carry the proof yourself. The guard at the door doesn't look anything up; they check the seal.
+
+## How it works
+
+**Sessions.** You log in, and the server saves a record like `{ id: "a8f3", userId: 7 }` in a database or Redis. It sends back only the ID, usually in a cookie. On every request, the server looks up `a8f3` to find out who you are.
+
+**JWT** (JSON Web Token). You log in, and the server writes your details into a token, such as `{ userId: 7, role: "admin", exp: ... }`, and **signs** it with a secret key. The signature is the seal: change one letter and the check fails. On every request, the server checks the signature and reads the data straight from the token. No lookup.
+
+| | Session (ticket) | JWT (wristband) |
+| --- | --- | --- |
+| Where the login data lives | Server | In the token you carry |
+| Each request | Look up the ID | Check the signature |
+| Log out / ban a user | Delete the record. Done. | Hard: the token is valid until it expires |
+| Scaling many servers | All need the same store | Any server with the key can check it |
+
+## In practice
+
+The big trade-off is **revoking**. Delete a session, and that user is out on the next request. A JWT has no record to delete, so a stolen or outdated token keeps working until its `exp` time. If you just removed someone's admin role, their old token still says `"admin"`.
+
+![A guard with scissors stands by torn tickets while a person with a gold wristband walks past him](/assets/sessions-jwt-revoke.jpg)
+_The guard can tear up any ticket. He can't cut a wristband he never kept a record of._
+
+That's why most JWT setups use **short-lived access tokens** (minutes) plus a **refresh token** stored on the server. And once you store refresh tokens to make logout work, you've brought back a server-side record: a session by another name.
+
+So, which one?
+
+- **A normal web app with one backend:** sessions in an [`httpOnly` cookie](/p/httpOnly-cookies-guide). Simple, easy to revoke.
+- **Many services or third parties that must check identity without calling you:** JWTs, with short expiry.
+
+Two myths to drop: a JWT is **signed, not encrypted**, so anyone can read what's inside. Never put secrets in it. And JWT vs session is not the same choice as cookie vs `localStorage`: a JWT can live in a cookie too, and where it lives decides your [XSS and CSRF](/p/xss-vs-csrf) risks.
+
+> **Say it in an interview:** "With sessions, the server stores the login and the client holds only an ID, so every request needs a lookup, but logout and bans are instant. A JWT is a signed token that carries the user data itself, so any server can verify it without a lookup, but you can't easily revoke it before it expires. For a typical web app I use sessions in an httpOnly cookie; I reach for short-lived JWTs when several services need to verify identity on their own."
+
+## Cheat sheet
+
+- **Session = coat-check ticket:** server keeps the data, you hold an ID.
+- **JWT = signed wristband:** you carry the data, the server checks the seal.
+- Sessions are **easy to revoke**; JWTs live **until they expire**.
+- JWTs are **signed, not encrypted**: readable by anyone.
+- Default for web apps: **session + `httpOnly` cookie**.
+
+**TL;DR:** sessions trust a lookup, JWTs trust a signature. Pick the one whose weakness you can live with.
+
+<DeepDive>
+
+### What a JWT looks like
+
+Three Base64URL parts joined by dots: `header.payload.signature`. The header names the algorithm, the payload holds the claims (`sub`, `exp`, your own fields), and the signature covers both. Paste one into a decoder and you can read the payload without any key. That's the "signed, not encrypted" point in action.
+
+### Ways to revoke a JWT anyway
+
+- Keep access tokens short (5 to 15 minutes is common) so a stolen one dies soon.
+- Keep a blocklist of revoked token IDs (`jti`). That's a lookup on every request again.
+- Store a per-user "token version" and bump it on logout or password change.
+
+Each of these trades some of the "no lookup" benefit for control.
+
+### Signing algorithms
+
+`HS256` uses one shared secret to sign and to check, so every checker can also create tokens. `RS256` and `ES256` sign with a private key and check with a public key, which suits many services that only need to verify. Always pin the expected algorithm on the server; never trust the `alg` field in the token alone.
+
+</DeepDive>
